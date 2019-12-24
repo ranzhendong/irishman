@@ -1,0 +1,4 @@
+# configure
+consul:
+  host: 172.16.0.51:8500
+  format: json

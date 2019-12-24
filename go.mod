@@ -4,6 +4,7 @@ go 1.13
 
 require (
 	consul v1.1.2
+	datastruck v1.1.2
 	github.com/armon/go-metrics v0.0.0-20190430140413-ec5e00d3c878 // indirect
 	github.com/coreos/etcd v3.3.18+incompatible // indirect
 	github.com/google/uuid v1.1.1 // indirect
@@ -22,7 +23,12 @@ require (
 	golang.org/x/text v0.3.2 // indirect
 	google.golang.org/genproto v0.0.0-20190404172233-64821d5d2107 // indirect
 	google.golang.org/grpc v1.23.0 // indirect
+	initconfig v1.1.2 // indirect
 	sigs.k8s.io/yaml v1.1.0 // indirect
 )
 
 replace consul v1.1.2 => ./pkg/consul
+
+replace initconfig v1.1.2 => ./pkg/initconfig
+
+replace datastruck v1.1.2 => ./pkg/datastruck

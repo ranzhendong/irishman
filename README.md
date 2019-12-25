@@ -1,10 +1,10 @@
 # lrishman
 
-![GitHub Workflow Status](https://img.shields.io/github/workflow/status/ranzhendong/lrishman/LrishManCI?label=GithubBuild&logo=github&style=plastic)
-![Travis (.org) branch](https://img.shields.io/travis/ranzhendong/lrishman?label=TravisBulid&logo=travis&style=plastic)
-![GitHub release (latest by date including pre-releases)](https://img.shields.io/github/v/release/ranzhendong/lrishman?include_prereleases&style=plastic)
-![GitHub last commit ](https://img.shields.io/github/last-commit/ranzhendong/lrishman/master?style=plastic)
-![GitHub](https://img.shields.io/github/license/ranzhendong/lrishman?style=plastic)
+![GitHub Workflow Status](https://img.shields.io/github/workflow/status/ranzhendong/irishman/LrishManCI?label=GithubBuild&logo=github&style=plastic)
+![Travis (.org) branch](https://img.shields.io/travis/ranzhendong/irishman?label=TravisBulid&logo=travis&style=plastic)
+![GitHub release (latest by date including pre-releases)](https://img.shields.io/github/v/release/ranzhendong/irishman?include_prereleases&style=plastic)
+![GitHub last commit ](https://img.shields.io/github/last-commit/ranzhendong/irishman/master?style=plastic)
+![GitHub](https://img.shields.io/github/license/ranzhendong/irishman?style=plastic)
 
 
 

@@ -1,6 +1,6 @@
 # lrishman
 
-![GitHub Workflow Status](https://img.shields.io/github/workflow/status/ranzhendong/irishman/LrishManCI?label=GithubBuild&logo=github&style=plastic)
+![GitHub Workflow Status](https://img.shields.io/github/workflow/status/ranzhendong/irishman/IrishManCI?label=GithubBuild&logo=github&style=plastic)
 ![Travis (.org) branch](https://img.shields.io/travis/ranzhendong/irishman?label=TravisBulid&logo=travis&style=plastic)
 ![GitHub release (latest by date including pre-releases)](https://img.shields.io/github/v/release/ranzhendong/irishman?include_prereleases&style=plastic)
 ![GitHub last commit ](https://img.shields.io/github/last-commit/ranzhendong/irishman/master?style=plastic)

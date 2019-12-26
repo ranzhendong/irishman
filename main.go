@@ -4,6 +4,7 @@ import (
 	"consul"
 	"encoding/json"
 	"log"
+	"time"
 )
 
 type Test struct {
@@ -26,7 +27,6 @@ func main() {
 		err error
 		t   Test
 	)
-
 	// set key to consul
 	t = Test{
 		"zhendong",
@@ -35,16 +35,24 @@ func main() {
 			"hangzhou",
 		},
 	}
-
 	v, err := json.Marshal(t)
 	//fmt.Println(string(v))
 	if err = consul.SetKey("info", v); err != nil {
 		return
 	}
-
 	// get key to consul
 	if err = consul.GetKey("info"); err != nil {
 		return
+	}
+
+	consul.ConsulWatcher()
+
+	var count int
+	count = 1
+	for {
+		log.Println("检查次数:[", count, "]")
+		count = count + 1
+		time.Sleep(time.Duration(2) * time.Second)
 	}
 
 }

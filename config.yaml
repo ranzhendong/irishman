@@ -1,4 +1,4 @@
 # configure
-consul:
-  host: 172.16.0.51:8500
+etcd:
+  host: 172.16.0.51:2379
   format: json

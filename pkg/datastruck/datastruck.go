@@ -1,10 +1,10 @@
 package datastruck
 
 type Config struct {
-	Consul consul `yaml:"consul"`
+	Etcd etcd `yaml:"etcd"`
 }
 
-type consul struct {
+type etcd struct {
 	Host   string `yaml:"host"`
 	Format string `yaml:"format"`
 }

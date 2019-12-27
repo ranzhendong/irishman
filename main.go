@@ -1,8 +1,8 @@
 package main
 
 import (
-	"consul"
-	"encoding/json"
+	"etcd"
+	"initconfig"
 	"log"
 	"time"
 )
@@ -25,34 +25,29 @@ func init() {
 func main() {
 	var (
 		err error
-		t   Test
 	)
-	// set key to consul
-	t = Test{
-		"zhendong",
-		"0922",
-		Info{
-			"hangzhou",
-		},
-	}
-	v, err := json.Marshal(t)
-	//fmt.Println(string(v))
-	if err = consul.SetKey("info", v); err != nil {
-		return
-	}
-	// get key to consul
-	if err = consul.GetKey("info"); err != nil {
+
+	if err = initconfig.ConfigAnalysis(); err != nil {
 		return
 	}
 
-	consul.ConsulWatcher()
+	if err = etcd.EtcPut("info", "zhendong"); err != nil {
+		return
+	}
+
+	if err = etcd.EtcGet("info"); err != nil {
+		return
+	}
+
+	if err = etcd.EtcWatcher(); err != nil {
+		return
+	}
 
 	var count int
 	count = 1
 	for {
-		log.Println("检查次数:[", count, "]")
+		//log.Println("检查次数:[", count, "]")
 		count = count + 1
 		time.Sleep(time.Duration(2) * time.Second)
 	}
-
 }

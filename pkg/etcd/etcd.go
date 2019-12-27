@@ -239,9 +239,9 @@ func EtcWatcher() (err error) {
 				for _, event = range watchResp.Events {
 					switch event.Type {
 					case mvccpb.PUT:
-						fmt.Println("修改为", string(event.Kv.Value))
+						fmt.Println("key patch", string(event.Kv.Value))
 					case mvccpb.DELETE:
-						fmt.Println("删除了", string(event.Kv.Key))
+						fmt.Println("key delete", string(event.Kv.Key))
 					}
 				}
 			}

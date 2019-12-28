@@ -11,11 +11,11 @@ require (
 	github.com/json-iterator/go v1.1.9 // indirect
 	github.com/modern-go/reflect2 v1.0.1 // indirect
 	github.com/spf13/viper v1.6.1
-	initconfig v1.1.2
+	init v1.1.2
 	sigs.k8s.io/yaml v1.1.0 // indirect
 )
 
 replace (
 	datastruck v1.1.2 => ../datastruck
-	initconfig v1.1.2 => ../initconfig
+	init v1.1.2 => ../init
 )

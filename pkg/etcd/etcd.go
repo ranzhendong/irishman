@@ -16,7 +16,7 @@ var (
 	c datastruck.Config
 )
 
-func EtcGet(key string) (err error) {
+func EtcGet(key string) (err error, val string) {
 	var (
 		config clientv3.Config
 		client *clientv3.Client
@@ -28,7 +28,7 @@ func EtcGet(key string) (err error) {
 
 	// Unmarshal to struck
 	if err = viper.Unmarshal(&c); err != nil {
-		log.Printf("[Main] Unable To Decode Into Config Struct, %v", err)
+		log.Printf("[EtcGet] Unable To Decode Into Config Struct, %v", err)
 		return
 	}
 
@@ -39,24 +39,30 @@ func EtcGet(key string) (err error) {
 	}
 
 	if client, err = clientv3.New(config); err != nil {
-		fmt.Println(err)
+		log.Printf("[EtcGet] Client Init failed, ERR: %v", err)
 		return
 	}
 
 	// 用于读写etcd的键值对
 	kv = clientv3.NewKV(client)
-
 	// 创建Op
 	getOp = clientv3.OpGet(key)
 
 	// 执行Op
 	if opResp, err = kv.Do(context.TODO(), getOp); err != nil {
-		fmt.Println(err)
+		log.Printf("[EtcGet] KV.DO Get Key {%v} Failed, ERR: %v", key, err)
 		return
 	}
 
-	fmt.Println("数据Revision", opResp.Get().Kvs[0].ModRevision)
-	fmt.Println("数据value", string(opResp.Get().Kvs[0].Value))
+	defer func() {
+		_ = recover()
+		if val == "" {
+			log.Printf("[EtcGet]: No Key { %v } in etcd", key)
+			err = fmt.Errorf("[EtcGet]: No Key { %v } in etcd", key)
+		}
+	}()
+
+	val = string(opResp.Get().Kvs[0].Value)
 
 	return
 }
@@ -70,7 +76,7 @@ func EtcPut(key, val string) (err error) {
 
 	// Unmarshal to struck
 	if err = viper.Unmarshal(&c); err != nil {
-		log.Printf("[Main] Unable To Decode Into Config Struct, %v", err)
+		log.Printf("[EtcPut] Unable To Decode Into Config Struct, %v", err)
 		return
 	}
 
@@ -81,16 +87,15 @@ func EtcPut(key, val string) (err error) {
 	}
 
 	if client, err = clientv3.New(config); err != nil {
-		fmt.Println(err)
+		log.Printf("[EtcPut] Client Init failed, ERR: %v", err)
 		return
 	}
 
 	// 用于读写etcd的键值对
 	kv = clientv3.NewKV(client)
-
 	// 写入
 	if _, err = kv.Put(context.TODO(), key, val); err != nil {
-		fmt.Println(err)
+		log.Printf("[EtcPut] KV.DO Failed, ERR: %v", err)
 		return
 	}
 

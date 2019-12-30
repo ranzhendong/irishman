@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"etcd"
 	"fmt"
+	"io"
 	"log"
 	"net/http"
 )
@@ -21,38 +22,59 @@ func strFirstToUpper(str string) string {
 }
 
 // Get upstream
-func GetUpstream(r *http.Request, u datastruck.Upstream) {
+func GetUpstream(w http.ResponseWriter, u datastruck.Upstream) (err error) {
+	var val string
+	// Characters joining together
+	EtcUpstreamName := "Upstream" + strFirstToUpper(u.UpstreamName)
 
+	//get key from etcd
+	if err, val = etcd.EtcGet(EtcUpstreamName); err != nil {
+		return
+	}
+
+	log.Printf("[GetUpstream]: Get key {%v} Successful! Values %v ", u.UpstreamName, val)
+
+	//return to user
+	_, _ = io.WriteString(w, val)
+	return
 }
 
-// Full Update upstream
-func PutUpstream(r *http.Request, u datastruck.Upstream) {
+// Full Update upstream, but in this
+func PutUpstream(w http.ResponseWriter, u datastruck.Upstream) (err error) {
 
+	return
 }
 
 // Create Update upstream
-func PostUpstream(r *http.Request, u datastruck.Upstream) (err error) {
+func PostUpstream(w http.ResponseWriter, u datastruck.Upstream) (err error) {
 	var (
 		jsonU []byte
 	)
+
+	// Characters joining together
 	EtcUpstreamName := "Upstream" + strFirstToUpper(u.UpstreamName)
-	log.Println(EtcUpstreamName)
 	if jsonU, err = json.Marshal(u); err != nil {
 		log.Printf("[PostUpstream] Json datastruck.Upstream ERR: %v\n", err)
 		err = fmt.Errorf("[PostUpstream] Json datastruck.Upstream ERR: %v\n", err)
 		return
 	}
-	log.Printf("[PostUpstream] The Request Body: %v", string(jsonU))
-	_ = etcd.EtcPut(EtcUpstreamName, string(jsonU))
+
+	//etcd put
+	if err = etcd.EtcPut(EtcUpstreamName, string(jsonU)); err != nil {
+		return
+	}
+
+	log.Printf("[PostUpstream]: Set to etcd Successful!  Key [ %v ], Values [%v] ", EtcUpstreamName, string(jsonU))
+
 	return
 }
 
 // Partial upstream
-func PatchUpstream(r *http.Request, u datastruck.Upstream) {
-
+func PatchUpstream(w http.ResponseWriter, u datastruck.Upstream) (err error) {
+	return
 }
 
 // Delete upstream
-func DeleteUpstream(r *http.Request, u datastruck.Upstream) {
-
+func DeleteUpstream(w http.ResponseWriter, u datastruck.Upstream) (err error) {
+	return
 }

@@ -3,6 +3,7 @@ package main
 import (
 	"datastruck"
 	"fmt"
+	"govalidators"
 	myInit "init"
 	"io"
 	"log"
@@ -25,6 +26,12 @@ func init() {
 }
 
 func main() {
+
+	if err = myInit.Config(); err != nil {
+		log.Printf("[MAIN] Init Config filed ! ERR: %v ", err)
+		return
+	}
+
 	server := http.Server{
 		Addr:        ":8080",
 		Handler:     &myHandler{},
@@ -66,6 +73,7 @@ func (*myHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 }
 
 func lua(w http.ResponseWriter, r *http.Request) {
+
 	fmt.Println("lua")
 }
 
@@ -73,24 +81,31 @@ func upstream(w http.ResponseWriter, r *http.Request) {
 
 	//loading request body
 	var u datastruck.Upstream
-	err, u = myInit.InitializeBody(r.Body)
-	log.Printf("[Upstream] loadding body %v", u)
+	if err, u = myInit.InitializeBody(r.Body); err != nil {
+		log.Printf("[Upstream] Can Not Loading body %v", u)
+		return
+	}
 
 	switch r.Method {
 	case "GET":
-		myUpstream.GetUpstream(r, u)
+		_ = myUpstream.GetUpstream(w, u)
 		log.Println("MY GET")
 	case "PUT":
-		myUpstream.PutUpstream(r, u)
+		_ = myUpstream.PutUpstream(w, u)
 		log.Println("MY PUT")
 	case "POST":
-		myUpstream.PostUpstream(r, u)
+		validator := govalidators.New()
+		if err := validator.Validate(u); err != nil {
+			fmt.Println(err)
+			return
+		}
+		_ = myUpstream.PostUpstream(w, u)
 		log.Println("MY POST")
 	case "PATCH":
-		myUpstream.PatchUpstream(r, u)
+		_ = myUpstream.PatchUpstream(w, u)
 		log.Println("MY PATCH")
 	case "DELETE":
-		myUpstream.DeleteUpstream(r, u)
+		_ = myUpstream.DeleteUpstream(w, u)
 		log.Println("MY DELETE")
 	default:
 		log.Printf("[ServeHTTP Upstream] Not Support %v", r.Method)

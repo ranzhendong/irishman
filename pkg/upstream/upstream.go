@@ -22,8 +22,7 @@ func strFirstToUpper(str string) string {
 }
 
 // Get upstream
-func GetUpstream(w http.ResponseWriter, u datastruck.Upstream) (err error) {
-	var val string
+func GetUpstream(w http.ResponseWriter, u datastruck.Upstream) (err error, val string) {
 	// Characters joining together
 	EtcUpstreamName := "Upstream" + strFirstToUpper(u.UpstreamName)
 
@@ -34,14 +33,23 @@ func GetUpstream(w http.ResponseWriter, u datastruck.Upstream) (err error) {
 
 	log.Printf("[GetUpstream]: Get key {%v} Successful! Values %v ", u.UpstreamName, val)
 
-	//return to user
-	_, _ = io.WriteString(w, val)
 	return
 }
 
 // Full Update upstream, but in this
 func PutUpstream(w http.ResponseWriter, u datastruck.Upstream) (err error) {
+	var b []byte
+	if err, _ = GetUpstream(w, u); err != nil {
+		log.Printf("[PutUpstream]: Get key {%v} Failed ! It Not Exist !", u.UpstreamName)
+		return
+	}
+	_ = PostUpstream(w, u)
+	//return to user
 
+	if b, err = json.Marshal(u); err == nil {
+	}
+
+	_, _ = io.WriteString(w, string(b))
 	return
 }
 
@@ -76,5 +84,7 @@ func PatchUpstream(w http.ResponseWriter, u datastruck.Upstream) (err error) {
 
 // Delete upstream
 func DeleteUpstream(w http.ResponseWriter, u datastruck.Upstream) (err error) {
+	EtcUpstreamName := "Upstream" + strFirstToUpper(u.UpstreamName)
+	_ = etcd.EtcDelete(EtcUpstreamName)
 	return
 }

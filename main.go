@@ -2,6 +2,7 @@ package main
 
 import (
 	"datastruck"
+	"encoding/json"
 	"fmt"
 	"govalidators"
 	myInit "init"
@@ -80,7 +81,10 @@ func lua(w http.ResponseWriter, r *http.Request) {
 func upstream(w http.ResponseWriter, r *http.Request) {
 
 	//loading request body
-	var u datastruck.Upstream
+	var (
+		u datastruck.Upstream
+		b []byte
+	)
 	if err, u = myInit.InitializeBody(r.Body); err != nil {
 		log.Printf("[Upstream] Can Not Loading body %v", u)
 		return
@@ -88,10 +92,15 @@ func upstream(w http.ResponseWriter, r *http.Request) {
 
 	switch r.Method {
 	case "GET":
-		_ = myUpstream.GetUpstream(w, u)
+		_, val := myUpstream.GetUpstream(w, u)
+		//return to user
+		_, _ = io.WriteString(w, val)
 		log.Println("MY GET")
 	case "PUT":
 		_ = myUpstream.PutUpstream(w, u)
+		if b, err = json.Marshal(u); err == nil {
+			_, _ = io.WriteString(w, string(b))
+		}
 		log.Println("MY PUT")
 	case "POST":
 		validator := govalidators.New()
@@ -100,6 +109,9 @@ func upstream(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		_ = myUpstream.PostUpstream(w, u)
+		if b, err = json.Marshal(u); err == nil {
+			_, _ = io.WriteString(w, string(b))
+		}
 		log.Println("MY POST")
 	case "PATCH":
 		_ = myUpstream.PatchUpstream(w, u)

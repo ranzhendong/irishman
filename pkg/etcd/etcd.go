@@ -102,6 +102,40 @@ func EtcPut(key, val string) (err error) {
 	return
 }
 
+func EtcDelete(key string) (err error) {
+	var (
+		config clientv3.Config
+		client *clientv3.Client
+		kv     clientv3.KV
+	)
+
+	// Unmarshal to struck
+	if err = viper.Unmarshal(&c); err != nil {
+		log.Printf("[EtcPut] Unable To Decode Into Config Struct, %v", err)
+		return
+	}
+
+	//set config
+	config = clientv3.Config{
+		Endpoints:   []string{c.Etcd.Host},
+		DialTimeout: 5 * time.Second,
+	}
+
+	if client, err = clientv3.New(config); err != nil {
+		log.Printf("[EtcPut] Client Init failed, ERR: %v", err)
+		return
+	}
+
+	kv = clientv3.NewKV(client)
+
+	if _, err = kv.Delete(context.TODO(), key); err != nil {
+		log.Printf("[EtcDelete] KV.DO Failed, ERR: %v", err)
+		return
+	}
+
+	return
+}
+
 func EtcWatcher() (err error) {
 
 	var (

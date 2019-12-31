@@ -1,7 +1,6 @@
 package init
 
 import (
-	"datastruck"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -9,10 +8,11 @@ import (
 	"log"
 )
 
-func InitializeBody(rBody io.Reader) (err error, u datastruck.Upstream) {
+func InitializeBody(rBody io.Reader) (err error, jsonObj interface{}) {
 	var (
 		body []byte
 	)
+
 	// if the body exist
 	if body, err = ioutil.ReadAll(rBody); err != nil {
 		log.Printf("[InitCheck] Read Body ERR: %v\n", err)
@@ -20,16 +20,12 @@ func InitializeBody(rBody io.Reader) (err error, u datastruck.Upstream) {
 		return
 	}
 
-	// if the body can be turn to json
-	if err = json.Unmarshal(body, &u); err != nil {
+	// if the body can be turn to interface
+	if err = json.Unmarshal(body, &jsonObj); err != nil {
 		log.Printf("[InitCheck] Unmarshal Body ERR: %v", err)
 		err = fmt.Errorf("[InitCheck] Unmarshal Body ERR: %v", err)
 		return
 	}
 
-	//// log the parameter
-	//if parameter, err := json.Marshal(u); err == nil {
-	//	log.Printf("[InitCheck] The Request Body: %v", string(parameter))
-	//}
 	return
 }

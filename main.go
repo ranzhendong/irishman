@@ -3,6 +3,8 @@ package main
 import (
 	"datastruck"
 	"encoding/json"
+	"fmt"
+	"github.com/mitchellh/mapstructure"
 	"govalidators"
 	myInit "init"
 	"io"
@@ -65,35 +67,33 @@ func (*myHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 func upstream(w http.ResponseWriter, r *http.Request) {
 	var (
-		u datastruck.Upstream
-		b []byte
+		u       datastruck.Upstream
+		gu      datastruck.GetUpstream
+		jsonObj interface{}
+		b       []byte
 	)
 
 	//loading request body
-	if err, u = myInit.InitializeBody(r.Body); err != nil {
+	if err, jsonObj = myInit.InitializeBody(r.Body); err != nil {
 		log.Printf("[Upstream] Can Not Loading body %v", u)
-		return
-	}
-
-	//judge parameter
-	validator := govalidators.New()
-
-	//new filter
-	validator.SetValidators(map[string]interface{}{
-		"ipPort": &reconstruct.IpPortValidator{},
-		"myName": &reconstruct.UpstreamNameValidator{},
-	})
-
-	//if not match
-	if err := validator.Validate(u); err != nil {
-		log.Println(err)
 		return
 	}
 
 	//restful switch
 	switch r.Method {
 	case "GET":
-		_, val := myUpstream.GetUpstream(w, u)
+
+		//turn map to struck
+		if err := mapstructure.Decode(jsonObj, &gu); err != nil {
+			fmt.Println(err)
+		}
+
+		//judge
+		if err := judgeValidator(gu); err != nil {
+			return
+		}
+
+		_, val := myUpstream.GetUpstream(w, gu)
 		//return to user
 		_, _ = io.WriteString(w, val)
 		log.Println("MY GET")
@@ -106,10 +106,16 @@ func upstream(w http.ResponseWriter, r *http.Request) {
 		log.Println("MY PUT")
 
 	case "POST":
-		_ = myUpstream.PostUpstream(w, u)
-		if b, err = json.Marshal(u); err == nil {
-			_, _ = io.WriteString(w, string(b))
+		if err := mapstructure.Decode(jsonObj, &u); err != nil {
+			fmt.Println(err)
 		}
+
+		if err := judgeValidator(u); err != nil {
+			return
+		}
+
+		_ = myUpstream.PostUpstream(w, u)
+
 		log.Println("MY POST")
 
 	case "PATCH":
@@ -124,4 +130,24 @@ func upstream(w http.ResponseWriter, r *http.Request) {
 		log.Printf("[ServeHTTP Upstream] Not Support %v", r.Method)
 	}
 
+}
+
+func judgeValidator(i interface{}) (err error) {
+	//judge parameter
+	validator := govalidators.New()
+
+	//new filter
+	validator.SetValidators(map[string]interface{}{
+		"ipPort": &reconstruct.IpPortValidator{},
+		"myName": &reconstruct.UpstreamNameValidator{},
+	})
+
+	//if not match
+	if err := validator.Validate(i); err != nil {
+		log.Println(err)
+		err := fmt.Errorf("ERR")
+		return err
+	}
+
+	return nil
 }

@@ -4,5 +4,6 @@ etcd:
   format: json
 reserved:
   - all
-  - allin
-  - health
+  - healthcheck
+  - upstream
+  - somethingElse

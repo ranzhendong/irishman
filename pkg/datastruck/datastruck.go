@@ -2,7 +2,8 @@ package datastruck
 
 //config.yaml
 type Config struct {
-	Etcd etcd `yaml:"etcd"`
+	Etcd     etcd     `yaml:"etcd"`
+	Reserved []string `yaml:"reserved"`
 }
 
 type etcd struct {
@@ -12,7 +13,7 @@ type etcd struct {
 
 //Upstream
 type Upstream struct {
-	UpstreamName string   `json:"upstreamName" validate:"required"`
+	UpstreamName string   `json:"upstreamName" validate:"required||myName"`
 	Algorithms   string   `json:"algorithms" validate:"required||in=ip-hex,round-robin"`
 	Pool         []Server `json:"pool" validate:"required"`
 }

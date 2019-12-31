@@ -2,3 +2,7 @@
 etcd:
   host: 172.16.0.51:2379
   format: json
+reserved:
+  - all
+  - allin
+  - health

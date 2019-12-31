@@ -1,7 +1,5 @@
 package datastruck
 
-import "encoding/json"
-
 //config.yaml
 type Config struct {
 	Etcd etcd `yaml:"etcd"`
@@ -20,7 +18,7 @@ type Upstream struct {
 }
 
 type Server struct {
-	IpPort string      `json:"ipPort" validate:"required"`
-	Status string      `json:"status" validate:"required"`
-	Weight json.Number `json:"weight" validate:"required"`
+	IpPort string `json:"ipPort" validate:"required||unique||ipPort"`
+	Status string `json:"status" validate:"required||in=up,down,nohc"`
+	Weight int    `json:"weight" validate:"required||integer"`
 }

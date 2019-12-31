@@ -9,6 +9,10 @@ import (
 	"io"
 	"log"
 	"net/http"
+	"reflect"
+	"regexp"
+	"strconv"
+	"strings"
 	"time"
 	myUpstream "upstream"
 )
@@ -20,6 +24,45 @@ var (
 )
 
 type myHandler struct{}
+
+//type ValidatorF func(params map[string]interface{}, val reflect.Value, args ...string) (bool, error)
+//type Validator interface {
+//	Validate(params map[string]interface{}, val reflect.Value, args ...string) (bool, error)
+//}
+
+type IpPortValidator struct {
+	EMsg string
+}
+
+func (self *IpPortValidator) Validate(params map[string]interface{}, val reflect.Value, args ...string) (bool, error) {
+	const (
+		IP = "^(25[0-5]|2[0-4]\\d|[0-1]\\d{2}|[1-9]?\\d)\\.(25[0-5]|2[0-4]\\d|[0-1]\\d{2}|[1-9]?\\d)\\.(25[0-5]|2[0-4]\\d|[0-1]\\d{2}|[1-9]?\\d)\\.(25[0-5]|2[0-4]\\d|[0-1]\\d{2}|[1-9]?\\d)$"
+	)
+
+	defer func() {
+		_ = recover()
+		if err != nil {
+			log.Printf("[Validate]: IP or Port Is Valid")
+			err = fmt.Errorf("[Validate]: IP or Port Is Valid")
+		}
+	}()
+
+	sep := ":"
+	arr := strings.Split(val.String(), sep)
+
+	if !regexp.MustCompile(IP).MatchString(arr[0]) {
+		err = fmt.Errorf("IP illegal")
+		return false, err
+	}
+
+	a, err := strconv.Atoi(arr[1])
+	if int(1024) >= a || int(65535) <= a {
+		err = fmt.Errorf("PORT illegal")
+		return false, err
+	}
+
+	return true, nil
+}
 
 //初始化log函数
 func init() {
@@ -59,17 +102,6 @@ func (*myHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		h(w, r)
 		return
 	}
-	//log.Println("[ServeHTTP] URL:" + r.URL.String() + "IS NOT EXIST")
-	//log.Println(r.Method)
-	//log.Println(r.Header)
-	//var body []byte
-	//if body, err = ioutil.ReadAll(r.Body); err != nil {
-	//	log.Printf("[InitCheck] Read Body ERR: %v\n", err)
-	//	err = fmt.Errorf("[InitCheck] Read Body ERR: %v\n", err)
-	//	return
-	//}
-	//log.Println(string(body))
-	//log.Println(r)
 	_, _ = io.WriteString(w, "[ServeHTTP] URL:"+r.URL.String()+"IS NOT EXIST")
 }
 
@@ -96,30 +128,42 @@ func upstream(w http.ResponseWriter, r *http.Request) {
 		//return to user
 		_, _ = io.WriteString(w, val)
 		log.Println("MY GET")
+
 	case "PUT":
 		_ = myUpstream.PutUpstream(w, u)
 		if b, err = json.Marshal(u); err == nil {
 			_, _ = io.WriteString(w, string(b))
 		}
 		log.Println("MY PUT")
+
 	case "POST":
 		validator := govalidators.New()
+
+		validator.SetValidators(map[string]interface{}{
+			"ipPort": &IpPortValidator{},
+		})
+
 		if err := validator.Validate(u); err != nil {
-			fmt.Println(err)
+			log.Println(err)
 			return
 		}
+
 		_ = myUpstream.PostUpstream(w, u)
 		if b, err = json.Marshal(u); err == nil {
 			_, _ = io.WriteString(w, string(b))
 		}
 		log.Println("MY POST")
+
 	case "PATCH":
 		_ = myUpstream.PatchUpstream(w, u)
 		log.Println("MY PATCH")
+
 	case "DELETE":
 		_ = myUpstream.DeleteUpstream(w, u)
 		log.Println("MY DELETE")
+
 	default:
 		log.Printf("[ServeHTTP Upstream] Not Support %v", r.Method)
 	}
+
 }

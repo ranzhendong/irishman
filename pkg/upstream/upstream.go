@@ -9,6 +9,7 @@ import (
 	"net/http"
 )
 
+//upper the first letter
 func strFirstToUpper(str string) string {
 	if len(str) < 1 {
 		return ""
@@ -22,6 +23,15 @@ func strFirstToUpper(str string) string {
 
 // Get upstream
 func GetUpstream(w http.ResponseWriter, gu datastruck.GetUpstream) (err error, val string) {
+
+	if gu.UpstreamName == "ALL" {
+		EtcUpstreamName := "Upstream"
+		//get key from etcd
+		if err, val = etcd.EtcGetAll(EtcUpstreamName); err != nil {
+			return
+		}
+		return
+	}
 	// Characters joining together
 	EtcUpstreamName := "Upstream" + strFirstToUpper(gu.UpstreamName)
 

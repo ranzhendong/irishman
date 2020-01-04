@@ -29,7 +29,6 @@ func init() {
 }
 
 func main() {
-
 	//configure read
 	if err = myInit.Config(); err != nil {
 		log.Printf("[MAIN] Init Config filed ! ERR: %v ", err)
@@ -69,8 +68,8 @@ func upstream(w http.ResponseWriter, r *http.Request) {
 	var (
 		u       datastruck.Upstream
 		gu      datastruck.GetUpstream
-		jsonObj interface{}
 		b       []byte
+		jsonObj interface{}
 	)
 
 	//loading request body
@@ -89,7 +88,7 @@ func upstream(w http.ResponseWriter, r *http.Request) {
 		}
 
 		//judge
-		if err := judgeValidator(gu); err != nil {
+		if err := judgeValidator(gu, r.Method); err != nil {
 			return
 		}
 
@@ -110,7 +109,7 @@ func upstream(w http.ResponseWriter, r *http.Request) {
 			fmt.Println(err)
 		}
 
-		if err := judgeValidator(u); err != nil {
+		if err := judgeValidator(u, r.Method); err != nil {
 			return
 		}
 
@@ -132,15 +131,20 @@ func upstream(w http.ResponseWriter, r *http.Request) {
 
 }
 
-func judgeValidator(i interface{}) (err error) {
+func judgeValidator(i interface{}, method string) (err error) {
 	//judge parameter
 	validator := govalidators.New()
 
 	//new filter
-	validator.SetValidators(map[string]interface{}{
-		"ipPort": &reconstruct.IpPortValidator{},
-		"myName": &reconstruct.UpstreamNameValidator{},
-	})
+	if method == "POST" {
+		validator.SetValidators(map[string]interface{}{
+			"ipPort":       &reconstruct.IpPortValidator{},
+			"upstreamName": &reconstruct.UpstreamNameValidator{},
+		})
+	}
+	//else if method == "GET" {
+	//
+	//}
 
 	//if not match
 	if err := validator.Validate(i); err != nil {

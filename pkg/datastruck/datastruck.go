@@ -13,7 +13,7 @@ type etcd struct {
 
 //Upstream, for put post
 type Upstream struct {
-	UpstreamName string   `json:"upstreamName" validate:"required||myName"`
+	UpstreamName string   `json:"upstreamName" validate:"required||upstreamName"`
 	Algorithms   string   `json:"algorithms" validate:"required||in=ip-hex,round-robin"`
 	Pool         []Server `json:"pool" validate:"required"`
 }

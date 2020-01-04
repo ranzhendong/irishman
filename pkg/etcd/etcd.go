@@ -12,18 +12,11 @@ import (
 	"time"
 )
 
-var (
-	c datastruck.Config
-)
-
-func EtcGet(key string) (err error, val string) {
+//etcd connect function
+func etcConnect() (err error, client *clientv3.Client) {
 	var (
 		config clientv3.Config
-		client *clientv3.Client
-		kv     clientv3.KV
-		//getResp *clientv3.GetResponse
-		getOp  clientv3.Op
-		opResp clientv3.OpResponse
+		c      datastruck.Config
 	)
 
 	// Unmarshal to struck
@@ -39,6 +32,21 @@ func EtcGet(key string) (err error, val string) {
 	}
 
 	if client, err = clientv3.New(config); err != nil {
+		log.Printf("[EtcGet] Client Init failed, ERR: %v", err)
+		return
+	}
+	return
+}
+
+func EtcGet(key string) (err error, val string) {
+	var (
+		client *clientv3.Client
+		kv     clientv3.KV
+		getOp  clientv3.Op
+		opResp clientv3.OpResponse
+	)
+
+	if err, client = etcConnect(); err != nil {
 		log.Printf("[EtcGet] Client Init failed, ERR: %v", err)
 		return
 	}
@@ -67,27 +75,39 @@ func EtcGet(key string) (err error, val string) {
 	return
 }
 
-func EtcPut(key, val string) (err error) {
+func EtcGetAll(key string) (err error, val string) {
 	var (
-		config clientv3.Config
-		client *clientv3.Client
-		kv     clientv3.KV
+		client  *clientv3.Client
+		kv      clientv3.KV
+		getResp *clientv3.GetResponse
 	)
 
-	// Unmarshal to struck
-	if err = viper.Unmarshal(&c); err != nil {
-		log.Printf("[EtcPut] Unable To Decode Into Config Struct, %v", err)
+	if err, client = etcConnect(); err != nil {
+		log.Printf("[EtcGet] Client Init failed, ERR: %v", err)
 		return
 	}
 
-	//set config
-	config = clientv3.Config{
-		Endpoints:   []string{c.Etcd.Host},
-		DialTimeout: 5 * time.Second,
+	kv = clientv3.NewKV(client)
+
+	if getResp, err = kv.Get(context.TODO(), key, clientv3.WithPrefix()); err != nil {
+		fmt.Println(err)
+		return
 	}
 
-	if client, err = clientv3.New(config); err != nil {
-		log.Printf("[EtcPut] Client Init failed, ERR: %v", err)
+	for _, v := range getResp.Kvs {
+		val = val + string(v.Value) + "\n\n"
+	}
+
+	return
+}
+
+func EtcPut(key, val string) (err error) {
+	var (
+		client *clientv3.Client
+		kv     clientv3.KV
+	)
+	if err, client = etcConnect(); err != nil {
+		log.Printf("[EtcGet] Client Init failed, ERR: %v", err)
 		return
 	}
 
@@ -104,25 +124,11 @@ func EtcPut(key, val string) (err error) {
 
 func EtcDelete(key string) (err error) {
 	var (
-		config clientv3.Config
 		client *clientv3.Client
 		kv     clientv3.KV
 	)
-
-	// Unmarshal to struck
-	if err = viper.Unmarshal(&c); err != nil {
-		log.Printf("[EtcPut] Unable To Decode Into Config Struct, %v", err)
-		return
-	}
-
-	//set config
-	config = clientv3.Config{
-		Endpoints:   []string{c.Etcd.Host},
-		DialTimeout: 5 * time.Second,
-	}
-
-	if client, err = clientv3.New(config); err != nil {
-		log.Printf("[EtcPut] Client Init failed, ERR: %v", err)
+	if err, client = etcConnect(); err != nil {
+		log.Printf("[EtcGet] Client Init failed, ERR: %v", err)
 		return
 	}
 
@@ -139,7 +145,6 @@ func EtcDelete(key string) (err error) {
 func EtcWatcher() (err error) {
 
 	var (
-		config             clientv3.Config
 		client             *clientv3.Client
 		watchStartRevision int64
 		watcher            clientv3.Watcher
@@ -147,21 +152,8 @@ func EtcWatcher() (err error) {
 		watchResp          clientv3.WatchResponse
 		event              *clientv3.Event
 	)
-
-	// Unmarshal to struck
-	if err = viper.Unmarshal(&c); err != nil {
-		log.Printf("[Main] Unable To Decode Into Config Struct, %v", err)
-		return
-	}
-
-	//set config
-	config = clientv3.Config{
-		Endpoints:   []string{c.Etcd.Host},
-		DialTimeout: 5 * time.Second,
-	}
-
-	if client, err = clientv3.New(config); err != nil {
-		fmt.Println(err)
+	if err, client = etcConnect(); err != nil {
+		log.Printf("[EtcGet] Client Init failed, ERR: %v", err)
 		return
 	}
 

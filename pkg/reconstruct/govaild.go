@@ -57,7 +57,7 @@ func (self *IpPortValidator) Validate(params map[string]interface{}, val reflect
 	return true, nil
 }
 
-//Reserved field filtering
+//UpstreamName Reserved field filtering
 func (self *UpstreamNameValidator) Validate(params map[string]interface{}, val reflect.Value, args ...string) (bool, error) {
 
 	//regex

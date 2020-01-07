@@ -22,7 +22,15 @@ func strFirstToUpper(str string) string {
 }
 
 // Get upstream
-func GetUpstream(w http.ResponseWriter, gu datastruck.GetUpstream) (err error, val string) {
+func GetUpstream(w http.ResponseWriter, jsonObj interface{}) (err error, val string) {
+	var (
+		gu datastruck.GetUpstream
+	)
+
+	if err = gu.JudgeValidator(jsonObj); err != nil {
+		log.Printf("[Upstream] JudgeValidator ERR: %v", err)
+		return
+	}
 
 	if gu.UpstreamName == "ALL" {
 		EtcUpstreamName := "Upstream"
@@ -46,7 +54,7 @@ func GetUpstream(w http.ResponseWriter, gu datastruck.GetUpstream) (err error, v
 }
 
 // Full Update upstream, but in this
-func PutUpstream(w http.ResponseWriter, u datastruck.Upstream) (err error) {
+func PutUpstream(w http.ResponseWriter, jsonObj interface{}) (err error) {
 	//var b []byte
 	//if err, _ = GetUpstream(w, gu); err != nil {
 	//	log.Printf("[PutUpstream]: Get key {%v} Failed ! It Not Exist !", u.UpstreamName)
@@ -63,10 +71,17 @@ func PutUpstream(w http.ResponseWriter, u datastruck.Upstream) (err error) {
 }
 
 // Create Update upstream
-func PostUpstream(w http.ResponseWriter, u datastruck.Upstream) (err error) {
+func PostUpstream(w http.ResponseWriter, jsonObj interface{}) (err error) {
 	var (
+		u     datastruck.Upstream
 		jsonU []byte
 	)
+
+	//judge
+	if err = u.JudgeValidator(jsonObj); err != nil {
+		log.Printf("[Upstream] JudgeValidator ERR: %v", err)
+		return
+	}
 
 	// Characters joining together
 	EtcUpstreamName := "Upstream" + strFirstToUpper(u.UpstreamName)
@@ -87,12 +102,20 @@ func PostUpstream(w http.ResponseWriter, u datastruck.Upstream) (err error) {
 }
 
 // Partial upstream
-func PatchUpstream(w http.ResponseWriter, u datastruck.Upstream) (err error) {
+func PatchUpstream(w http.ResponseWriter, jsonObj interface{}) (err error) {
 	return
 }
 
 // Delete upstream
-func DeleteUpstream(w http.ResponseWriter, u datastruck.Upstream) (err error) {
+func DeleteUpstream(w http.ResponseWriter, jsonObj interface{}) (err error) {
+	var (
+		u datastruck.Upstream
+	)
+	//judge
+	if err = u.JudgeValidator(jsonObj); err != nil {
+		log.Printf("[Upstream] JudgeValidator ERR: %v", err)
+		return
+	}
 	EtcUpstreamName := "Upstream" + strFirstToUpper(u.UpstreamName)
 	_ = etcd.EtcDelete(EtcUpstreamName)
 	return

@@ -1,16 +1,10 @@
 package main
 
 import (
-	"datastruck"
-	"encoding/json"
-	"fmt"
-	"github.com/mitchellh/mapstructure"
-	"govalidators"
 	myInit "init"
 	"io"
 	"log"
 	"net/http"
-	"reconstruct"
 	"time"
 	myUpstream "upstream"
 )
@@ -66,15 +60,13 @@ func (*myHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 func upstream(w http.ResponseWriter, r *http.Request) {
 	var (
-		u       datastruck.Upstream
-		gu      datastruck.GetUpstream
-		b       []byte
+		//b       []byte
 		jsonObj interface{}
 	)
 
 	//loading request body
 	if err, jsonObj = myInit.InitializeBody(r.Body); err != nil {
-		log.Printf("[Upstream] Can Not Loading body %v", u)
+		log.Printf("[Upstream] Can Not Loading body %v", r.Body)
 		return
 	}
 
@@ -82,76 +74,34 @@ func upstream(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 	case "GET":
 
-		//turn map to struck
-		if err := mapstructure.Decode(jsonObj, &gu); err != nil {
-			fmt.Println(err)
-		}
-
-		//judge
-		if err := judgeValidator(gu, r.Method); err != nil {
-			return
-		}
-
-		_, val := myUpstream.GetUpstream(w, gu)
+		_, val := myUpstream.GetUpstream(w, jsonObj)
 		//return to user
 		_, _ = io.WriteString(w, val)
 		log.Println("MY GET")
 
 	case "PUT":
-		_ = myUpstream.PutUpstream(w, u)
-		if b, err = json.Marshal(u); err == nil {
-			_, _ = io.WriteString(w, string(b))
-		}
+		//_ = myUpstream.PutUpstream(w, u)
+		//if b, err = json.Marshal(u); err == nil {
+		//	_, _ = io.WriteString(w, string(b))
+		//}
 		log.Println("MY PUT")
 
 	case "POST":
-		if err := mapstructure.Decode(jsonObj, &u); err != nil {
-			fmt.Println(err)
-		}
 
-		if err := judgeValidator(u, r.Method); err != nil {
-			return
-		}
-
-		_ = myUpstream.PostUpstream(w, u)
+		_ = myUpstream.PostUpstream(w, jsonObj)
 
 		log.Println("MY POST")
 
 	case "PATCH":
-		_ = myUpstream.PatchUpstream(w, u)
+		//_ = myUpstream.PatchUpstream(w, u)
 		log.Println("MY PATCH")
 
 	case "DELETE":
-		_ = myUpstream.DeleteUpstream(w, u)
+		//_ = myUpstream.DeleteUpstream(w, u)
 		log.Println("MY DELETE")
 
 	default:
 		log.Printf("[ServeHTTP Upstream] Not Support %v", r.Method)
 	}
 
-}
-
-func judgeValidator(i interface{}, method string) (err error) {
-	//judge parameter
-	validator := govalidators.New()
-
-	//new filter
-	if method == "POST" {
-		validator.SetValidators(map[string]interface{}{
-			"ipPort":       &reconstruct.IpPortValidator{},
-			"upstreamName": &reconstruct.UpstreamNameValidator{},
-		})
-	}
-	//else if method == "GET" {
-	//
-	//}
-
-	//if not match
-	if err := validator.Validate(i); err != nil {
-		log.Println(err)
-		err := fmt.Errorf("ERR")
-		return err
-	}
-
-	return nil
 }

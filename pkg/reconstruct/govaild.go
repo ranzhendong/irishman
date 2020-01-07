@@ -1,7 +1,6 @@
 package reconstruct
 
 import (
-	"datastruck"
 	"fmt"
 	"github.com/spf13/viper"
 	"reflect"
@@ -9,6 +8,10 @@ import (
 	"strconv"
 	"strings"
 )
+
+type Config struct {
+	Reserved []string `yaml:"reserved"`
+}
 
 type IpPortValidator struct {
 	EMsg string
@@ -63,7 +66,7 @@ func (self *UpstreamNameValidator) Validate(params map[string]interface{}, val r
 	//regex
 	var (
 		err error
-		c   datastruck.Config
+		c   Config
 	)
 
 	if err = viper.Unmarshal(&c); err != nil {

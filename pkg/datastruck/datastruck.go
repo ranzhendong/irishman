@@ -15,8 +15,9 @@ type Config struct {
 }
 
 type etcd struct {
-	Host   string `yaml:"host"`
-	Format string `yaml:"format"`
+	Host    string `yaml:"host"`
+	Format  string `yaml:"format"`
+	Timeout int    `yaml:"timeout"`
 }
 
 //Upstream, for put post

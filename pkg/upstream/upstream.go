@@ -95,7 +95,9 @@ func PostUpstream(w http.ResponseWriter, jsonObj interface{}) *errorhandle.MyErr
 
 	//etcd put
 	if err = etcd.EtcPut(EtcUpstreamName, string(jsonU)); err != nil {
-		log.Println(myErr.ErrorLog(4003))
+		log.Printf(myErr.ErrorLog(4003, fmt.Sprintf("%v", err)))
+		//c := myErr.ErrorLog(4003)
+		//log.Println(c)
 		return &myErr.MyError{Error: err.Error(), Code: 4003}
 	}
 

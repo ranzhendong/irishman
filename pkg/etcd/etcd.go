@@ -15,24 +15,31 @@ import (
 //etcd connect function
 func etcConnect() (err error, client *clientv3.Client) {
 	var (
-		config clientv3.Config
-		c      datastruck.Config
+		c         datastruck.Config
+		config    clientv3.Config
+		statusRes *clientv3.StatusResponse
 	)
 
 	// Unmarshal to struck
 	if err = viper.Unmarshal(&c); err != nil {
-		log.Printf("[EtcGet] Unable To Decode Into Config Struct, %v", err)
+		log.Printf("Unable To Decode Into Config Struct, %v", err)
 		return
 	}
 
 	//set config
 	config = clientv3.Config{
 		Endpoints:   []string{c.Etcd.Host},
-		DialTimeout: 5 * time.Second,
+		DialTimeout: time.Duration(c.Etcd.Timeout) * time.Second,
 	}
 
 	if client, err = clientv3.New(config); err != nil {
-		log.Printf("[EtcGet] Client Init failed, ERR: %v", err)
+		return
+	}
+	//timeout control
+	timeoutCtx, cancel := context.WithTimeout(context.Background(), time.Duration(c.Etcd.Timeout)*time.Second)
+	defer cancel()
+	statusRes, err = client.Status(timeoutCtx, c.Etcd.Host)
+	if err != nil || statusRes == nil {
 		return
 	}
 	return
@@ -47,7 +54,7 @@ func EtcGet(key string) (err error, val string) {
 	)
 
 	if err, client = etcConnect(); err != nil {
-		//log.Printf("[EtcGet] Client Init failed, ERR: %v", err)
+		err = fmt.Errorf(" Etcd Client Initialize Failed")
 		return
 	}
 
@@ -58,15 +65,14 @@ func EtcGet(key string) (err error, val string) {
 
 	// 执行Op
 	if opResp, err = kv.Do(context.TODO(), getOp); err != nil {
-		//log.Printf("[EtcGet] KV.DO Get Key {%v} Failed, ERR: %v", key, err)
+		err = fmt.Errorf("KV.DO Failed")
 		return
 	}
 
 	defer func() {
 		_ = recover()
 		if val == "" {
-			//log.Printf("[EtcGet]: No Key { %v } in etcd", key)
-			err = fmt.Errorf("[EtcGet]: No Key { %v } in etcd", key)
+			err = fmt.Errorf(" No Key { %v } in etcd", key)
 		}
 	}()
 
@@ -83,14 +89,14 @@ func EtcGetAll(key string) (err error, val string) {
 	)
 
 	if err, client = etcConnect(); err != nil {
-		//log.Printf("[EtcGet] Client Init failed, ERR: %v", err)
+		err = fmt.Errorf(" Etcd Client Initialize Failed")
 		return
 	}
 
 	kv = clientv3.NewKV(client)
 
 	if getResp, err = kv.Get(context.TODO(), key, clientv3.WithPrefix()); err != nil {
-		//fmt.Println(err)
+		err = fmt.Errorf("KV.DO Failed")
 		return
 	}
 
@@ -106,17 +112,16 @@ func EtcPut(key, val string) (err error) {
 		client *clientv3.Client
 		kv     clientv3.KV
 	)
-	fmt.Println("ss")
 	if err, client = etcConnect(); err != nil {
-		log.Printf("[EtcGet] Client Init failed, ERR: %v", err)
+		err = fmt.Errorf(" Etcd Client Initialize Failed")
 		return
 	}
-	fmt.Println("ssss")
+
 	// 用于读写etcd的键值对
 	kv = clientv3.NewKV(client)
 	// 写入
 	if _, err = kv.Put(context.TODO(), key, val); err != nil {
-		//log.Printf("[EtcPut] KV.DO Failed, ERR: %v", err)
+		err = fmt.Errorf("KV.DO Failed")
 		return
 	}
 
@@ -129,14 +134,14 @@ func EtcDelete(key string) (err error) {
 		kv     clientv3.KV
 	)
 	if err, client = etcConnect(); err != nil {
-		//log.Printf("[EtcGet] Client Init failed, ERR: %v", err)
+		err = fmt.Errorf(" Etcd Client Initialize Failed")
 		return
 	}
 
 	kv = clientv3.NewKV(client)
 
 	if _, err = kv.Delete(context.TODO(), key); err != nil {
-		//log.Printf("[EtcDelete] KV.DO Failed, ERR: %v", err)
+		err = fmt.Errorf("KV.DO Failed")
 		return
 	}
 
@@ -154,7 +159,7 @@ func EtcWatcher() (err error) {
 		event              *clientv3.Event
 	)
 	if err, client = etcConnect(); err != nil {
-		//log.Printf("[EtcGet] Client Init failed, ERR: %v", err)
+		err = fmt.Errorf(" Etcd Client Initialize Failed")
 		return
 	}
 

@@ -3,15 +3,16 @@ module lrishman
 go 1.13
 
 require (
-	datastruck v1.1.2
-	govalidators v1.1.2
+	errorhandle v1.1.2
+	github.com/smokezl/govalidators v0.0.0-20181012065008-5fded539f530 // indirect
+	govalidators v1.1.2 // indirect
 	init v1.1.2
-	reconstruct v1.1.2
 	upstream v1.1.2
 )
 
 replace (
 	datastruck v1.1.2 => ./pkg/datastruck
+	errorhandle v1.1.2 => ./pkg/errorhandle
 	etcd v1.1.2 => ./pkg/etcd
 	govalidators v1.1.2 => ./src/govalidators
 	init v1.1.2 => ./pkg/init

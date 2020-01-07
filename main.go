@@ -1,12 +1,15 @@
 package main
 
 import (
+	"encoding/json"
+	"errorhandle"
+	"fmt"
 	myInit "init"
 	"io"
 	"log"
 	"net/http"
 	"time"
-	myUpstream "upstream"
+	"upstream"
 )
 
 //定义map来实现路由转发
@@ -31,9 +34,10 @@ func main() {
 
 	// server start
 	server := http.Server{
-		Addr:        ":8080",
-		Handler:     &myHandler{},
-		ReadTimeout: 5 * time.Second,
+		Addr:         ":8080",
+		Handler:      &myHandler{},
+		ReadTimeout:  3 * time.Second,
+		WriteTimeout: 3 * time.Second,
 	}
 	mux = make(map[string]func(http.ResponseWriter, *http.Request))
 	route(mux)
@@ -44,13 +48,12 @@ func main() {
 
 // route
 func route(mux map[string]func(http.ResponseWriter, *http.Request)) {
-
 	//upstream
-	mux["/upstream"] = upstream
+	mux["/upstream"] = myUpstream
 }
 
 //route handler
-func (*myHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+func (myHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if h, ok := mux[r.URL.String()]; ok {
 		h(w, r)
 		return
@@ -58,9 +61,8 @@ func (*myHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	_, _ = io.WriteString(w, "[ServeHTTP] URL:"+r.URL.String()+"IS NOT EXIST")
 }
 
-func upstream(w http.ResponseWriter, r *http.Request) {
+func myUpstream(w http.ResponseWriter, r *http.Request) {
 	var (
-		//b       []byte
 		jsonObj interface{}
 	)
 
@@ -74,7 +76,7 @@ func upstream(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 	case "GET":
 
-		_, val := myUpstream.GetUpstream(w, jsonObj)
+		_, val := upstream.GetUpstream(w, jsonObj)
 		//return to user
 		_, _ = io.WriteString(w, val)
 		log.Println("MY GET")
@@ -88,8 +90,9 @@ func upstream(w http.ResponseWriter, r *http.Request) {
 
 	case "POST":
 
-		_ = myUpstream.PostUpstream(w, jsonObj)
-
+		if res := upstream.PostUpstream(w, jsonObj); res != nil {
+			response(w, res)
+		}
 		log.Println("MY POST")
 
 	case "PATCH":
@@ -104,4 +107,16 @@ func upstream(w http.ResponseWriter, r *http.Request) {
 		log.Printf("[ServeHTTP Upstream] Not Support %v", r.Method)
 	}
 
+}
+
+func response(w http.ResponseWriter, res *errorhandle.MyError) {
+
+	res.Messages()
+
+	if b, err := json.Marshal(res); err != nil {
+		fmt.Println(err)
+
+	} else {
+		_, _ = io.WriteString(w, string(b))
+	}
 }

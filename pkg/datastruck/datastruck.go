@@ -3,7 +3,7 @@ package datastruck
 import (
 	"fmt"
 	"github.com/mitchellh/mapstructure"
-	"govalidators"
+	"github.com/smokezl/govalidators"
 	"log"
 	"reconstruct"
 )

@@ -3,6 +3,8 @@ package upstream
 import (
 	"datastruck"
 	"encoding/json"
+	"errorhandle"
+	myErr "errorhandle"
 	"etcd"
 	"fmt"
 	"log"
@@ -71,34 +73,34 @@ func PutUpstream(w http.ResponseWriter, jsonObj interface{}) (err error) {
 }
 
 // Create Update upstream
-func PostUpstream(w http.ResponseWriter, jsonObj interface{}) (err error) {
+func PostUpstream(w http.ResponseWriter, jsonObj interface{}) *errorhandle.MyError {
 	var (
 		u     datastruck.Upstream
 		jsonU []byte
+		err   error
 	)
 
 	//judge
 	if err = u.JudgeValidator(jsonObj); err != nil {
-		log.Printf("[Upstream] JudgeValidator ERR: %v", err)
-		return
+		log.Println(myErr.ErrorLog(4001))
+		return &myErr.MyError{Error: err.Error(), Code: 4001}
 	}
 
 	// Characters joining together
 	EtcUpstreamName := "Upstream" + strFirstToUpper(u.UpstreamName)
 	if jsonU, err = json.Marshal(u); err != nil {
-		log.Printf("[PostUpstream] Json datastruck.Upstream ERR: %v\n", err)
-		err = fmt.Errorf("[PostUpstream] Json datastruck.Upstream ERR: %v\n", err)
-		return
+		log.Println(myErr.ErrorLog(4002))
+		return &myErr.MyError{Error: err.Error(), Code: 4002}
 	}
 
 	//etcd put
 	if err = etcd.EtcPut(EtcUpstreamName, string(jsonU)); err != nil {
-		return
+		log.Println(myErr.ErrorLog(4003))
+		return &myErr.MyError{Error: err.Error(), Code: 4003}
 	}
 
-	log.Printf("[PostUpstream]: Set to etcd Successful!  Key [ %v ], Values [%v] ", EtcUpstreamName, string(jsonU))
-
-	return
+	log.Println(myErr.ErrorLog(0000, fmt.Sprintf(" Set Key [%v], Values [%v]", EtcUpstreamName, string(jsonU))))
+	return &myErr.MyError{Code: 0000}
 }
 
 // Partial upstream

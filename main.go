@@ -79,7 +79,9 @@ func myUpstream(w http.ResponseWriter, r *http.Request) {
 		}
 
 	case "PUT":
-		log.Println("MY PUT")
+		if res := upstream.PutUpstream(jsonObj); res != nil {
+			response(w, res)
+		}
 
 	case "POST":
 		if res := upstream.PostUpstream(jsonObj); res != nil {

@@ -3,6 +3,7 @@ package reconstruct
 import (
 	"fmt"
 	"github.com/spf13/viper"
+	"github.com/thinkeridea/go-extend/exnet"
 	"reflect"
 	"regexp"
 	"strconv"
@@ -36,8 +37,7 @@ func (self *IpPortValidator) Validate(params map[string]interface{}, val reflect
 	defer func() {
 		_ = recover()
 		if err != nil {
-			//log.Printf("[Validate]: IP, Port or : Is Valid, exp: { 192.168.101.59:1080 }")
-			err = fmt.Errorf("[Validate]: IP, Port or : Is Valid, exp: { 192.168.101.59:1080 }")
+			err = fmt.Errorf("Validate: IPPort Is Valid, EXP: { 192.168.101.59:1080 } ")
 		}
 	}()
 
@@ -45,15 +45,18 @@ func (self *IpPortValidator) Validate(params map[string]interface{}, val reflect
 	arr := strings.Split(val.String(), sep)
 
 	if !regexp.MustCompile(IP).MatchString(arr[0]) {
-		err = fmt.Errorf("[Validate]: IP Invalid , IP: %v", arr[0])
-		//log.Printf("[Validate]: IP Invalid , IP: %v", arr[0])
+		err = fmt.Errorf("Validate: Invalid IP %v ", arr[0])
+		return false, err
+	}
+
+	if !exnet.HasLocalIPddr(arr[0]) {
+		err = fmt.Errorf("Validate: Not Private IP %v ", arr[0])
 		return false, err
 	}
 
 	a, err := strconv.Atoi(arr[1])
 	if int(1024) >= a || int(65535) <= a {
-		err = fmt.Errorf("[Validate]: Port Invalid , Port: %v", arr[1])
-		//log.Printf("[Validate]: Port Invalid , Port: %v", arr[1])
+		err = fmt.Errorf("Validate: Invalid Port %v ", arr[1])
 		return false, err
 	}
 
@@ -70,20 +73,20 @@ func (self *UpstreamNameValidator) Validate(params map[string]interface{}, val r
 	)
 
 	if err = viper.Unmarshal(&c); err != nil {
-		err = fmt.Errorf("[Validate] Unable To Decode Into Config Struct, %v", err)
+		err = fmt.Errorf("Validate: Unable To Decode Into Config Struct %v ", err)
 		return false, err
 	}
 
 	defer func() {
 		_ = recover()
 		if err != nil {
-			err = fmt.Errorf("[Validate]: Reserved Name is: %v, Your UpstreamName is: %v", c.Reserved, val.String())
+			err = fmt.Errorf("Validate: Reserved Name is: %v, Your UpstreamName is: %v ", c.Reserved, val.String())
 		}
 	}()
 
 	for _, v := range c.Reserved {
 		if v == val.String() {
-			err = fmt.Errorf("[Validate] Reserved Name, %v", v)
+			err = fmt.Errorf("Validate: Reserved Name %v ", v)
 			return false, err
 		}
 	}

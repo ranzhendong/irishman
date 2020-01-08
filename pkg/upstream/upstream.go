@@ -33,7 +33,7 @@ func GetUpstream(jsonObj interface{}) (*errorhandle.MyError, string) {
 
 	//judge
 	if err = gu.JudgeValidator(jsonObj); err != nil {
-		log.Println(ErrH.ErrorLog(2001))
+		log.Println(ErrH.ErrorLog(2001), fmt.Sprintf("%v", err))
 		return &ErrH.MyError{Error: err.Error(), Code: 2001}, ""
 	}
 
@@ -41,7 +41,7 @@ func GetUpstream(jsonObj interface{}) (*errorhandle.MyError, string) {
 		EtcUpstreamName := "Upstream"
 		//get key from etcd
 		if err, val = etcd.EtcGetAll(EtcUpstreamName); err != nil {
-			log.Println(ErrH.ErrorLog(2006), fmt.Sprintf("%v", err))
+			log.Println(ErrH.ErrorLog(2005), fmt.Sprintf("%v", err))
 			return &ErrH.MyError{Error: err.Error(), Code: 2005}, ""
 		}
 		log.Println(ErrH.ErrorLog(000, fmt.Sprintf(" Get ALL Key [%v], Values [%v]", EtcUpstreamName, val)))
@@ -60,21 +60,43 @@ func GetUpstream(jsonObj interface{}) (*errorhandle.MyError, string) {
 	return &ErrH.MyError{Code: 000}, val
 }
 
-// Full Update upstream, but in this
-func PutUpstream(w http.ResponseWriter, jsonObj interface{}) (err error) {
-	//var b []byte
-	//if err, _ = GetUpstream(w, gu); err != nil {
-	//	log.Printf("[PutUpstream]: Get key {%v} Failed ! It Not Exist !", u.UpstreamName)
-	//	return
-	//}
-	//_ = PostUpstream(w, u)
-	////return to user
-	//
-	//if b, err = json.Marshal(u); err == nil {
-	//}
-	//
-	//_, _ = io.WriteString(w, string(b))
-	return
+// Full Update upstream
+func PutUpstream(jsonObj interface{}) *errorhandle.MyError {
+	var (
+		u     datastruck.Upstream
+		jsonU []byte
+		err   error
+	)
+
+	//judge
+	if err = u.JudgeValidator(jsonObj); err != nil {
+		log.Println(ErrH.ErrorLog(3001), fmt.Sprintf("%v", err))
+		return &ErrH.MyError{Error: err.Error(), Code: 3001}
+	}
+
+	//turn to json
+	if jsonU, err = json.Marshal(u); err != nil {
+		log.Println(ErrH.ErrorLog(3002))
+		return &ErrH.MyError{Error: err.Error(), Code: 3002}
+	}
+
+	// Characters joining together
+	EtcUpstreamName := "Upstream" + strFirstToUpper(u.UpstreamName)
+
+	//if repeat
+	if err, _ = etcd.EtcGet(EtcUpstreamName); err != nil {
+		log.Printf(ErrH.ErrorLog(3006), fmt.Sprintf("%v", err))
+		return &ErrH.MyError{Error: err.Error(), Code: 3006}
+	}
+
+	//etcd put
+	if err = etcd.EtcPut(EtcUpstreamName, string(jsonU)); err != nil {
+		log.Printf(ErrH.ErrorLog(3003, fmt.Sprintf("%v", err)))
+		return &ErrH.MyError{Error: err.Error(), Code: 3003}
+	}
+
+	log.Println(ErrH.ErrorLog(000, fmt.Sprintf(" Put Key [%v], Values [%v]", EtcUpstreamName, string(jsonU))))
+	return &ErrH.MyError{Code: 000}
 }
 
 // Create Update upstream
@@ -87,7 +109,7 @@ func PostUpstream(jsonObj interface{}) *errorhandle.MyError {
 
 	//judge
 	if err = u.JudgeValidator(jsonObj); err != nil {
-		log.Println(ErrH.ErrorLog(4001))
+		log.Println(ErrH.ErrorLog(4001), fmt.Sprintf("%v", err))
 		return &ErrH.MyError{Error: err.Error(), Code: 4001}
 	}
 
@@ -96,7 +118,7 @@ func PostUpstream(jsonObj interface{}) *errorhandle.MyError {
 
 	//if repeat
 	if err, _ = etcd.EtcGet(EtcUpstreamName); err == nil {
-		log.Printf(ErrH.ErrorLog(4004))
+		log.Printf(ErrH.ErrorLog(4004), fmt.Sprintf("%v", err))
 		return &ErrH.MyError{Code: 4004}
 	}
 

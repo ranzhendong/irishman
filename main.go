@@ -2,7 +2,8 @@ package main
 
 import (
 	"encoding/json"
-	"errorhandle"
+	ErrH "errorhandle"
+	"fmt"
 	myInit "init"
 	"io"
 	"log"
@@ -67,7 +68,8 @@ func myUpstream(w http.ResponseWriter, r *http.Request) {
 
 	//loading request body
 	if err, jsonObj = myInit.InitializeBody(r.Body); err != nil {
-		log.Printf("[Upstream] Can Not Loading body %v", r.Body)
+		log.Printf(ErrH.ErrorLog(1007, fmt.Sprintf("%v", err)))
+		response(w, &ErrH.MyError{Error: err.Error(), Code: 1007})
 		return
 	}
 
@@ -89,8 +91,9 @@ func myUpstream(w http.ResponseWriter, r *http.Request) {
 		}
 
 	case "PATCH":
-		//_ = myUpstream.PatchUpstream(w, u)
-		log.Println("MY PATCH")
+		if res := upstream.PatchUpstream(jsonObj); res != nil {
+			response(w, res)
+		}
 
 	case "DELETE":
 		//_ = myUpstream.DeleteUpstream(w, u)
@@ -102,7 +105,7 @@ func myUpstream(w http.ResponseWriter, r *http.Request) {
 
 }
 
-func response(w http.ResponseWriter, res *errorhandle.MyError, val ...string) {
+func response(w http.ResponseWriter, res *ErrH.MyError, val ...string) {
 	var set int
 	defer func() {
 		_ = recover()

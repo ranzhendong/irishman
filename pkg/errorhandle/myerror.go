@@ -19,9 +19,11 @@ var (
 
 //registered
 func init() {
+	muxS[1] = "Upstream: "
 	muxS[2] = "Upstream GET: "
 	muxS[3] = "Upstream PUT: "
 	muxS[4] = "Upstream POST: "
+	muxS[5] = "Upstream PATCH: "
 	mux[000] = "Successful"
 	mux[001] = "JudgeValidator Error"
 	mux[002] = "Json: Marshal Error"
@@ -29,6 +31,7 @@ func init() {
 	mux[004] = "Etcd Get: Repeat Key Error"
 	mux[005] = "Etcd GetALL: No Key Error"
 	mux[006] = "Etcd Get: Key Not Exist Error"
+	mux[007] = "INIT: Loading Body Failed"
 }
 
 //register error to message

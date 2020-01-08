@@ -27,21 +27,35 @@ type Upstream struct {
 	Pool         []Server `json:"pool" validate:"required"`
 }
 
-//Upstream, for get
-type GetUpstream struct {
-	UpstreamName string `json:"upstreamName" validate:"required"`
-}
-
-//upstream server
+//upstream server, for put post
 type Server struct {
 	IpPort string `json:"ipPort" validate:"required||unique||ipPort"`
 	Status string `json:"status" validate:"required||in=up,down,nohc"`
 	Weight int    `json:"weight" validate:"required||integer"`
 }
 
-func (u *Upstream) JudgeValidator(jsonObj interface{}) (err error) {
+//Upstream, for get
+type GetUpstream struct {
+	UpstreamName string `json:"upstreamName" validate:"required"`
+}
+
+//Upstream, for patch
+type PatchUpstream struct {
+	UpstreamName string        `json:"upstreamName" validate:"required||upstreamName"`
+	Algorithms   string        `json:"algorithms" validate:"in=ip-hex,round-robin"`
+	Pool         []PatchServer `json:"pool"`
+}
+
+//upstream server, for patch
+type PatchServer struct {
+	IpPort string `json:"ipPort" validate:"required||unique||ipPort"`
+	Status string `json:"status" validate:"in=up,down,nohc"`
+	Weight int    `json:"weight" validate:"integer"`
+}
+
+func (self *Upstream) JudgeValidator(jsonObj interface{}) (err error) {
 	//turn map to struck
-	if err := mapstructure.Decode(jsonObj, &u); err != nil {
+	if err := mapstructure.Decode(jsonObj, &self); err != nil {
 		fmt.Println(err)
 	}
 
@@ -53,7 +67,7 @@ func (u *Upstream) JudgeValidator(jsonObj interface{}) (err error) {
 	})
 
 	//if not match
-	if err := validator.Validate(u); err != nil {
+	if err := validator.Validate(self); err != nil {
 		err := fmt.Errorf("%v", err[0])
 		return err
 	}
@@ -61,9 +75,9 @@ func (u *Upstream) JudgeValidator(jsonObj interface{}) (err error) {
 	return nil
 }
 
-func (gu *GetUpstream) JudgeValidator(jsonObj interface{}) (err error) {
+func (self *GetUpstream) JudgeValidator(jsonObj interface{}) (err error) {
 	//turn map to struck
-	if err := mapstructure.Decode(jsonObj, &gu); err != nil {
+	if err := mapstructure.Decode(jsonObj, &self); err != nil {
 		fmt.Println(err)
 	}
 
@@ -72,9 +86,32 @@ func (gu *GetUpstream) JudgeValidator(jsonObj interface{}) (err error) {
 	validator.SetValidators(map[string]interface{}{})
 
 	//if not match
-	if err := validator.Validate(gu); err != nil {
+	if err := validator.Validate(self); err != nil {
+		err := fmt.Errorf("%v", err[0])
+		return err
+	}
+
+	return nil
+}
+
+func (self *PatchUpstream) JudgeValidator(jsonObj interface{}) (err error) {
+	//turn map to struck
+	if err := mapstructure.Decode(jsonObj, &self); err != nil {
+		fmt.Println(err)
+	}
+
+	//judge parameter
+	validator := govalidators.New()
+	validator.SetValidators(map[string]interface{}{
+		"ipPort":       &reconstruct.IpPortValidator{},
+		"upstreamName": &reconstruct.UpstreamNameValidator{},
+		"poolNil":      &reconstruct.PoolNilValidator{},
+	})
+
+	//if not match
+	if err := validator.Validate(self); err != nil {
 		log.Println(err)
-		err := fmt.Errorf("ERR: %v", err)
+		err := fmt.Errorf("%v", err[0])
 		return err
 	}
 

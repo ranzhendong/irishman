@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/spf13/viper"
 	"github.com/thinkeridea/go-extend/exnet"
+	"log"
 	"reflect"
 	"regexp"
 	"strconv"
@@ -19,6 +20,10 @@ type IpPortValidator struct {
 }
 
 type UpstreamNameValidator struct {
+	EMsg string
+}
+
+type PoolNilValidator struct {
 	EMsg string
 }
 
@@ -91,5 +96,18 @@ func (self *UpstreamNameValidator) Validate(params map[string]interface{}, val r
 		}
 	}
 
-	return true, err
+	return true, nil
+}
+
+//UpstreamName Reserved field filtering
+func (self *PoolNilValidator) Validate(params map[string]interface{}, val reflect.Value, args ...string) (bool, error) {
+	var err error
+
+	log.Println(val.Slice(0, 0))
+	if val.IsNil() {
+		err = fmt.Errorf("Validate: Pool Is None ")
+		return false, err
+	}
+
+	return true, nil
 }

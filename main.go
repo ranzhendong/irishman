@@ -3,7 +3,6 @@ package main
 import (
 	"encoding/json"
 	"errorhandle"
-	"fmt"
 	myInit "init"
 	"io"
 	"log"
@@ -36,8 +35,8 @@ func main() {
 	server := http.Server{
 		Addr:         ":8080",
 		Handler:      &myHandler{},
-		ReadTimeout:  3 * time.Second,
-		WriteTimeout: 3 * time.Second,
+		ReadTimeout:  15 * time.Second,
+		WriteTimeout: 15 * time.Second,
 	}
 	mux = make(map[string]func(http.ResponseWriter, *http.Request))
 	route(mux)
@@ -75,25 +74,17 @@ func myUpstream(w http.ResponseWriter, r *http.Request) {
 	//restful switch
 	switch r.Method {
 	case "GET":
-
-		_, val := upstream.GetUpstream(w, jsonObj)
-		//return to user
-		_, _ = io.WriteString(w, val)
-		log.Println("MY GET")
+		if res, val := upstream.GetUpstream(jsonObj); res != nil {
+			response(w, res, val)
+		}
 
 	case "PUT":
-		//_ = myUpstream.PutUpstream(w, u)
-		//if b, err = json.Marshal(u); err == nil {
-		//	_, _ = io.WriteString(w, string(b))
-		//}
 		log.Println("MY PUT")
 
 	case "POST":
-
-		if res := upstream.PostUpstream(w, jsonObj); res != nil {
+		if res := upstream.PostUpstream(jsonObj); res != nil {
 			response(w, res)
 		}
-		log.Println("MY POST")
 
 	case "PATCH":
 		//_ = myUpstream.PatchUpstream(w, u)
@@ -109,14 +100,23 @@ func myUpstream(w http.ResponseWriter, r *http.Request) {
 
 }
 
-func response(w http.ResponseWriter, res *errorhandle.MyError) {
-
-	res.Messages()
-
-	if b, err := json.Marshal(res); err != nil {
-		fmt.Println(err)
-
-	} else {
-		_, _ = io.WriteString(w, string(b))
+func response(w http.ResponseWriter, res *errorhandle.MyError, val ...string) {
+	var set int
+	defer func() {
+		_ = recover()
+		if set == 1 {
+			return
+		}
+		res.Messages()
+		if b, err := json.Marshal(res); err != nil {
+			log.Println("Response Json Marshal Error:", err)
+		} else {
+			_, _ = io.WriteString(w, string(b))
+		}
+	}()
+	if len(val[0]) != 0 {
+		set = 1
+		_, _ = io.WriteString(w, val[0])
+		return
 	}
 }

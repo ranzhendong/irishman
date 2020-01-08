@@ -72,12 +72,11 @@ func EtcGet(key string) (err error, val string) {
 	defer func() {
 		_ = recover()
 		if val == "" {
-			err = fmt.Errorf(" No Key { %v } in etcd", key)
+			err = fmt.Errorf("No Key [%v]", key)
 		}
 	}()
 
 	val = string(opResp.Get().Kvs[0].Value)
-
 	return
 }
 

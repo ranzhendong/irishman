@@ -4,7 +4,7 @@ import (
 	"datastruck"
 	"encoding/json"
 	"errorhandle"
-	myErr "errorhandle"
+	ErrH "errorhandle"
 	"etcd"
 	"fmt"
 	"log"
@@ -24,35 +24,40 @@ func strFirstToUpper(str string) string {
 }
 
 // Get upstream
-func GetUpstream(w http.ResponseWriter, jsonObj interface{}) (err error, val string) {
+func GetUpstream(jsonObj interface{}) (*errorhandle.MyError, string) {
 	var (
-		gu datastruck.GetUpstream
+		gu  datastruck.GetUpstream
+		err error
+		val string
 	)
 
+	//judge
 	if err = gu.JudgeValidator(jsonObj); err != nil {
-		log.Printf("[Upstream] JudgeValidator ERR: %v", err)
-		return
+		log.Println(ErrH.ErrorLog(2001))
+		return &ErrH.MyError{Error: err.Error(), Code: 2001}, ""
 	}
 
 	if gu.UpstreamName == "ALL" {
 		EtcUpstreamName := "Upstream"
 		//get key from etcd
 		if err, val = etcd.EtcGetAll(EtcUpstreamName); err != nil {
-			return
+			log.Println(ErrH.ErrorLog(2006), fmt.Sprintf("%v", err))
+			return &ErrH.MyError{Error: err.Error(), Code: 2005}, ""
 		}
-		return
+		log.Println(ErrH.ErrorLog(000, fmt.Sprintf(" Get ALL Key [%v], Values [%v]", EtcUpstreamName, val)))
+		return &ErrH.MyError{Code: 000}, val
 	}
-	// Characters joining together
-	EtcUpstreamName := "Upstream" + strFirstToUpper(gu.UpstreamName)
 
+	EtcUpstreamName := "Upstream" + strFirstToUpper(gu.UpstreamName)
 	//get key from etcd
 	if err, val = etcd.EtcGet(EtcUpstreamName); err != nil {
-		return
+		log.Println(err)
+		log.Println(ErrH.ErrorLog(2006), fmt.Sprintf("; %v", err))
+		return &ErrH.MyError{Error: err.Error(), Code: 2006}, ""
 	}
 
-	log.Printf("[GetUpstream]: Get key {%v} Successful! Values %v ", gu.UpstreamName, val)
-
-	return
+	log.Println(ErrH.ErrorLog(000, fmt.Sprintf(" Get Key [%v], Values [%v]", EtcUpstreamName, val)))
+	return &ErrH.MyError{Code: 000}, val
 }
 
 // Full Update upstream, but in this
@@ -73,7 +78,7 @@ func PutUpstream(w http.ResponseWriter, jsonObj interface{}) (err error) {
 }
 
 // Create Update upstream
-func PostUpstream(w http.ResponseWriter, jsonObj interface{}) *errorhandle.MyError {
+func PostUpstream(jsonObj interface{}) *errorhandle.MyError {
 	var (
 		u     datastruck.Upstream
 		jsonU []byte
@@ -82,27 +87,33 @@ func PostUpstream(w http.ResponseWriter, jsonObj interface{}) *errorhandle.MyErr
 
 	//judge
 	if err = u.JudgeValidator(jsonObj); err != nil {
-		log.Println(myErr.ErrorLog(4001))
-		return &myErr.MyError{Error: err.Error(), Code: 4001}
+		log.Println(ErrH.ErrorLog(4001))
+		return &ErrH.MyError{Error: err.Error(), Code: 4001}
 	}
 
 	// Characters joining together
 	EtcUpstreamName := "Upstream" + strFirstToUpper(u.UpstreamName)
+
+	//if repeat
+	if err, _ = etcd.EtcGet(EtcUpstreamName); err == nil {
+		log.Printf(ErrH.ErrorLog(4004))
+		return &ErrH.MyError{Code: 4004}
+	}
+
+	//turn to json
 	if jsonU, err = json.Marshal(u); err != nil {
-		log.Println(myErr.ErrorLog(4002))
-		return &myErr.MyError{Error: err.Error(), Code: 4002}
+		log.Println(ErrH.ErrorLog(4002))
+		return &ErrH.MyError{Error: err.Error(), Code: 4002}
 	}
 
 	//etcd put
 	if err = etcd.EtcPut(EtcUpstreamName, string(jsonU)); err != nil {
-		log.Printf(myErr.ErrorLog(4003, fmt.Sprintf("%v", err)))
-		//c := myErr.ErrorLog(4003)
-		//log.Println(c)
-		return &myErr.MyError{Error: err.Error(), Code: 4003}
+		log.Printf(ErrH.ErrorLog(4003, fmt.Sprintf("%v", err)))
+		return &ErrH.MyError{Error: err.Error(), Code: 4003}
 	}
 
-	log.Println(myErr.ErrorLog(0000, fmt.Sprintf(" Set Key [%v], Values [%v]", EtcUpstreamName, string(jsonU))))
-	return &myErr.MyError{Code: 0000}
+	log.Println(ErrH.ErrorLog(000, fmt.Sprintf(" Set Key [%v], Values [%v]", EtcUpstreamName, string(jsonU))))
+	return &ErrH.MyError{Code: 000}
 }
 
 // Partial upstream

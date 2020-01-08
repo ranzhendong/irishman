@@ -69,10 +69,7 @@ func (gu *GetUpstream) JudgeValidator(jsonObj interface{}) (err error) {
 
 	//judge parameter
 	validator := govalidators.New()
-	validator.SetValidators(map[string]interface{}{
-		"ipPort":       &reconstruct.IpPortValidator{},
-		"upstreamName": &reconstruct.UpstreamNameValidator{},
-	})
+	validator.SetValidators(map[string]interface{}{})
 
 	//if not match
 	if err := validator.Validate(gu); err != nil {

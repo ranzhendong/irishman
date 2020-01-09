@@ -68,8 +68,8 @@ func myUpstream(w http.ResponseWriter, r *http.Request) {
 
 	//loading request body
 	if err, jsonObj = myInit.InitializeBody(r.Body); err != nil {
-		log.Printf(ErrH.ErrorLog(1007, fmt.Sprintf("%v", err)))
-		response(w, &ErrH.MyError{Error: err.Error(), Code: 1007})
+		log.Printf(ErrH.ErrorLog(1002, fmt.Sprintf("%v", err)))
+		response(w, &ErrH.MyError{Error: err.Error(), Code: 1002})
 		return
 	}
 

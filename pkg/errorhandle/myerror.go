@@ -18,20 +18,34 @@ var (
 )
 
 //registered
+/*
+000 successful
+
+1-9 method
+
+001-030 system
+
+101 - 200 etcd
+
+*/
 func init() {
-	muxS[1] = "Upstream: "
-	muxS[2] = "Upstream GET: "
-	muxS[3] = "Upstream PUT: "
-	muxS[4] = "Upstream POST: "
-	muxS[5] = "Upstream PATCH: "
+	muxS[1] = "Upstream GET: "
+	muxS[2] = "Upstream PUT: "
+	muxS[3] = "Upstream POST: "
+	muxS[4] = "Upstream PATCH: "
+	muxS[5] = "Upstream DELETE: "
+
 	mux[000] = "Successful"
-	mux[001] = "JudgeValidator Error"
-	mux[002] = "Json: Marshal Error"
-	mux[003] = "Etcd Put: Put Key Error"
-	mux[004] = "Etcd Get: Repeat Key Error"
-	mux[005] = "Etcd GetALL: No Key Error"
-	mux[006] = "Etcd Get: Key Not Exist Error"
-	mux[007] = "INIT: Loading Body Failed"
+	muxS[001] = "Upstream: "
+	mux[002] = "INIT: Loading Body Failed"
+	mux[003] = "JudgeValidator Error"
+	mux[004] = "Json: Marshal Error"
+	mux[005] = "Json: UNMarshal Error"
+
+	mux[101] = "Etcd Put: Put Key Error"
+	mux[102] = "Etcd Get: Key Not Exist Error"
+	mux[103] = "Etcd Get: Repeat Key Error"
+	mux[104] = "Etcd GetALL: No Key Error"
 }
 
 //register error to message

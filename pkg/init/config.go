@@ -1,6 +1,7 @@
 package init
 
 import (
+	ErrH "errorhandle"
 	"fmt"
 	"github.com/fsnotify/fsnotify"
 	"github.com/spf13/viper"
@@ -23,19 +24,17 @@ func Config() (err error) {
 	//watch the config change
 	viper.WatchConfig()
 	viper.OnConfigChange(func(e fsnotify.Event) {
-		log.Println("[LoadConfig] Config file changed:", e.Name)
+		log.Printf(ErrH.ErrorLog(6140), fmt.Sprintf("%v", e.Name))
 	})
 
 	if pwd, err = os.Getwd(); err != nil {
 		os.Exit(1)
 		return
 	}
-	log.Println("[LoadConfig] lrishMan Is Running, Execute Path", pwd)
+	log.Printf(ErrH.ErrorLog(6141), fmt.Sprintf("%v", pwd))
 
 	//Find and read the config and token file
 	if err = viper.ReadInConfig(); err != nil {
-		log.Printf("[LoadConfig] Fatal Error Config File: %s \n", err)
-		err = fmt.Errorf("[LoadConfig] Fatal Error Config File: %s \n", err)
 		return
 	}
 	return

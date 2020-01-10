@@ -53,6 +53,20 @@ type PatchServer struct {
 	Weight int    `json:"weight" validate:"integer"`
 }
 
+//Upstream, for delete
+type DeleteUpstream struct {
+	UpstreamName string         `json:"upstreamName" validate:"required||upstreamName"`
+	Algorithms   string         `json:"algorithms"`
+	Pool         []DeleteServer `json:"pool"`
+}
+
+//upstream server, for delete
+type DeleteServer struct {
+	IpPort string `json:"ipPort" validate:"required||unique||ipPort"`
+	Status string `json:"status"`
+	Weight int    `json:"weight"`
+}
+
 func (self *Upstream) JudgeValidator(jsonObj interface{}) (err error) {
 	//turn map to struck
 	if err := mapstructure.Decode(jsonObj, &self); err != nil {
@@ -106,6 +120,29 @@ func (self *PatchUpstream) JudgeValidator(jsonObj interface{}) (err error) {
 		"ipPort":       &reconstruct.IpPortValidator{},
 		"upstreamName": &reconstruct.UpstreamNameValidator{},
 		"poolNil":      &reconstruct.PoolNilValidator{},
+	})
+
+	//if not match
+	if err := validator.Validate(self); err != nil {
+		log.Println(err)
+		err := fmt.Errorf("%v", err[0])
+		return err
+	}
+
+	return nil
+}
+
+func (self *DeleteUpstream) JudgeValidator(jsonObj interface{}) (err error) {
+	//turn map to struck
+	if err := mapstructure.Decode(jsonObj, &self); err != nil {
+		fmt.Println(err)
+	}
+
+	//judge parameter
+	validator := govalidators.New()
+	validator.SetValidators(map[string]interface{}{
+		"ipPort":       &reconstruct.IpPortValidator{},
+		"upstreamName": &reconstruct.UpstreamNameValidator{},
 	})
 
 	//if not match

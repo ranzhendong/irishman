@@ -62,6 +62,9 @@ func init() {
 	mux[102] = "Etcd Get: Key Not Exist Error"
 	mux[103] = "Etcd Get: Repeat Key Error"
 	mux[104] = "Etcd GetALL: No Key Error"
+	mux[105] = "Etcd Delete: Error"
+	mux[106] = "Etcd Delete: Etcd Key's Pool Has One ServerList At Least, Delete Canceled !"
+	mux[107] = "Etcd Delete: Etcd Key's Pool Has One ServerList At Least, Can Not Delete Them ALL !"
 }
 
 //register error to message

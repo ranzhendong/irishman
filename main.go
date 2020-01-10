@@ -12,7 +12,6 @@ import (
 	"upstream"
 )
 
-//定义map来实现路由转发
 var (
 	mux = make(map[string]func(http.ResponseWriter, *http.Request))
 	err error
@@ -21,7 +20,6 @@ var (
 
 type myHandler struct{}
 
-//初始化log函数
 func init() {
 	log.SetFlags(log.Ldate | log.Ltime | log.Lshortfile)
 	mux["/upstream"] = myUpstream

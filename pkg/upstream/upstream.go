@@ -154,16 +154,13 @@ func PostUpstream(jsonObj interface{}, timeNow time.Time) *errorhandle.MyError {
 // Partial upstream
 func PatchUpstream(jsonObj interface{}, timeNow time.Time) *errorhandle.MyError {
 	var (
-		pu           datastruck.PatchUpstream
-		etcdpu       datastruck.PatchUpstream
-		puData       map[string]interface{}
-		etcdData     map[string]interface{}
-		UpstreamPool []map[string]interface{}
-		middleware   interface{}
-		jsonU        []byte
-		puByte       []byte
-		err          error
-		val          string
+		pu, etcdpu       datastruck.PatchUpstream
+		puData, etcdData map[string]interface{}
+		UpstreamPool     []map[string]interface{}
+		middleware       interface{}
+		jsonU, puByte    []byte
+		err              error
+		val              string
 	)
 
 	//judge
@@ -221,13 +218,11 @@ func PatchUpstream(jsonObj interface{}, timeNow time.Time) *errorhandle.MyError 
 			etcdData[k] = puData[k]
 		}
 		if k == "pool" && v != nil {
-			for ek, ev := range etcdData["pool"].([]interface{}) {
+			for _, ev := range etcdData["pool"].([]interface{}) {
 				for _, fv := range v.([]interface{}) {
 					for k, sv := range fv.(map[string]interface{}) {
-
-						etcdIpPort := etcdData["pool"].([]interface{})[ek].(map[string]interface{})["ipPort"]
-						//etcdStatus := etcdData["pool"].([]interface{})[ek].(map[string]interface{})["status"]
-						etcdWeight := etcdData["pool"].([]interface{})[ek].(map[string]interface{})["weight"]
+						etcdIpPort := ev.(map[string]interface{})["ipPort"]
+						etcdWeight := ev.(map[string]interface{})["weight"]
 						RequestIpPort := fv.(map[string]interface{})["ipPort"]
 						RequestStatus := fv.(map[string]interface{})["status"]
 						RequestWeight := fv.(map[string]interface{})["weight"]
@@ -235,19 +230,14 @@ func PatchUpstream(jsonObj interface{}, timeNow time.Time) *errorhandle.MyError 
 						if k == "ipPort" && ev.(map[string]interface{})["ipPort"] == sv {
 							if fv.(map[string]interface{})["weight"].(float64) == 0 {
 								UpstreamPool = append(UpstreamPool, map[string]interface{}{"ipPort": etcdIpPort, "status": RequestStatus, "weight": etcdWeight})
-								//UpstreamPool = append(UpstreamPool, map[string]interface{}{"ipPort": etcdData["pool"].([]interface{})[ek].(map[string]interface{})["ipPort"], "status": fv.(map[string]interface{})["status"], "weight": etcdData["pool"].([]interface{})[ek].(map[string]interface{})["weight"]})
 								continue
 							} else {
-								//etcdData["pool"].([]interface{})[ek].(map[string]interface{})["status"] = fv.(map[string]interface{})["status"]
-								//etcdData["pool"].([]interface{})[ek].(map[string]interface{})["weight"] = fv.(map[string]interface{})["weight"]
-								//UpstreamPool = append(UpstreamPool, map[string]interface{}{"ipPort": etcdData["pool"].([]interface{})[ek].(map[string]interface{})["ipPort"], "status": fv.(map[string]interface{})["status"], "weight": fv.(map[string]interface{})["weight"]})
 								UpstreamPool = append(UpstreamPool, map[string]interface{}{"ipPort": etcdIpPort, "status": RequestStatus, "weight": RequestWeight})
 							}
 						} else if k == "ipPort" && ev.(map[string]interface{})["ipPort"] != sv {
 							if fv.(map[string]interface{})["weight"].(float64) == 0 {
 								continue
 							} else {
-								//UpstreamPool = append(UpstreamPool, map[string]interface{}{"ipPort": fv.(map[string]interface{})["ipPort"], "status": fv.(map[string]interface{})["status"], "weight": fv.(map[string]interface{})["weight"]})
 								UpstreamPool = append(UpstreamPool, map[string]interface{}{"ipPort": RequestIpPort, "status": RequestStatus, "weight": RequestWeight})
 							}
 						}
@@ -281,16 +271,13 @@ JUST:
 // Delete upstream or pool's server
 func DeleteUpstream(jsonObj interface{}, timeNow time.Time) *ErrH.MyError {
 	var (
-		du     datastruck.DeleteUpstream
-		etcddu datastruck.PatchUpstream
-		//duData       map[string]interface{}
-		//etcdData     map[string]interface{}
-		//UpstreamPool []map[string]interface{}
-		//middleware   interface{}
-		//jsonU        []byte
-		//puByte       []bytes
-		err error
-		val string
+		du, etcddu       datastruck.DeleteUpstream
+		duData, etcdData map[string]interface{}
+		UpstreamPool     []map[string]interface{}
+		middleware       int
+		duByte, jsonU    []byte
+		err              error
+		val              string
 	)
 
 	//judge
@@ -307,53 +294,98 @@ func DeleteUpstream(jsonObj interface{}, timeNow time.Time) *ErrH.MyError {
 		return &ErrH.MyError{Error: err.Error(), Code: 5102, TimeStamp: timeNow}
 	}
 
-	//if no server, mean to delete server
-	if len(val) != 0 {
-		goto DELETE
+	//if no server, mean to delete upstream
+	if len(du.Pool) == 0 {
+		log.Println("goto DELETE")
+		goto DELETEUPSTREAM
 	}
 
-	log.Println()
 	//turn etcd data to struck, for compare and judge
 	if err := json.Unmarshal([]byte(val), &etcddu); err != nil {
 		log.Printf(ErrH.ErrorLog(5005), fmt.Sprintf("Etcd DeleteUpstream String: %v", err))
 		return &ErrH.MyError{Code: 5005, TimeStamp: timeNow}
 	}
 
-	//if pu.Pool == nil {
-	//	etcdpu.Algorithms = pu.Algorithms
-	//	middleware = etcdpu
-	//	//goto JUST
-	//}
+	//need to least one
+	if len(etcddu.Pool) <= 1 {
+		log.Println("goto DELETENOTHING")
+		middleware = 5106
+		goto DELETENOTHING
+	}
 
-DELETE:
-	//_ = etcd.EtcDelete(EtcUpstreamName)
+	if err := json.Unmarshal([]byte(val), &etcdData); err != nil {
+		log.Printf(ErrH.ErrorLog(5005), fmt.Sprintf("Etcd DeleteUpstream struck: %v", err))
+		return &ErrH.MyError{Code: 5005, TimeStamp: timeNow}
+	}
+
+	//turn struct to json string，then turn json string to map
+	if duByte, err = json.Marshal(du); err != nil {
+		log.Printf(ErrH.ErrorLog(5004), fmt.Sprintf("Request DeleteUpstream Struck: %v", err))
+		return &ErrH.MyError{Code: 5004, TimeStamp: timeNow}
+	}
+	if err := json.Unmarshal(duByte, &duData); err != nil {
+		log.Printf(ErrH.ErrorLog(5005), fmt.Sprintf("Request DeleteUpstream Map: %v", err))
+		return &ErrH.MyError{Code: 5005, TimeStamp: timeNow}
+	}
+
+	//replace data, but need to last one
+	log.Println("old", etcdData)
+	for k, duv := range duData {
+		if k == "pool" {
+			for ek, ev := range etcdData["pool"].([]interface{}) {
+				log.Println("ek,ev", ek, ev)
+				for k, v := range duv.([]interface{}) {
+					log.Println("range duv.([]interface{}", k, v)
+					if v.(map[string]interface{})["ipPort"] == ev.(map[string]interface{})["ipPort"] {
+						delete(ev.(map[string]interface{}), "ipPort")
+						delete(ev.(map[string]interface{}), "status")
+						delete(ev.(map[string]interface{}), "weight")
+					}
+				}
+			}
+		}
+	}
+
+	//filter pool map, not nil
+	for _, ev := range etcdData["pool"].([]interface{}) {
+		if len(ev.(map[string]interface{})) != 0 {
+			UpstreamPool = append(UpstreamPool, map[string]interface{}{"ipPort": ev.(map[string]interface{})["ipPort"], "status": ev.(map[string]interface{})["status"], "weight": ev.(map[string]interface{})["weight"]})
+		}
+	}
+
+	//can not be delete all,at least one
+	if len(UpstreamPool) < 1 {
+		middleware = 5107
+		log.Println("goto DELETENOTHING")
+		goto DELETENOTHING
+	}
+
+	//new pool which after delete
+	etcdData["pool"] = UpstreamPool
+
+	goto DELETESERVER
+
+DELETESERVER:
+	if jsonU, err = json.Marshal(etcdData); err != nil {
+		log.Println(ErrH.ErrorLog(5004))
+		return &ErrH.MyError{Error: err.Error(), Code: 5004, TimeStamp: timeNow}
+	}
+
+	if err = etcd.EtcPut(EtcUpstreamName, string(jsonU)); err != nil {
+		log.Printf(ErrH.ErrorLog(5101, fmt.Sprintf("%v", err)))
+		return &ErrH.MyError{Error: err.Error(), Code: 5101, TimeStamp: timeNow}
+	}
+	log.Println(ErrH.ErrorLog(000, fmt.Sprintf(" Delete Server Key [%v], Values %v", EtcUpstreamName, string(jsonU))))
 	return &ErrH.MyError{Code: 000, TimeStamp: timeNow}
-}
 
-func toChanTimed(t *time.Timer, ch chan int) {
-	t.Reset(1 * time.Second) // No defer, as we don't know which//
-	//case will be selected
-	select {
-	case ch <- 42:
-	case <-t.C:
+DELETEUPSTREAM:
+	if err = etcd.EtcDelete(EtcUpstreamName); err != nil {
+		log.Printf(ErrH.ErrorLog(5105, fmt.Sprintf("%v", err)))
+		return &ErrH.MyError{Error: err.Error(), Code: 5105, TimeStamp: timeNow}
 	}
-	{
-		<-t.C
-	}
-}
+	return &ErrH.MyError{Code: 000, TimeStamp: timeNow}
 
-func myTime() {
-	// 声明一个退出用的通道
-	exit := make(chan int)
-	// 打印开始
-	fmt.Println("start")
-	// 过1秒后, 调用匿名函数
-	time.AfterFunc(time.Second, func() {
-		// 1秒后, 打印结果
-		fmt.Println("one second after")
-		// 通知main()的goroutine已经结束
-		exit <- 0
-	})
-	// 等待结束
-	<-exit
+DELETENOTHING:
+	return &ErrH.MyError{Code: middleware, TimeStamp: timeNow}
+
 }

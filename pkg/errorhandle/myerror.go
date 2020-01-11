@@ -58,10 +58,6 @@ func init() {
 	mux[011] = "HTTP Server Init Error"
 	mux[012] = "Config Json: UNMarshal Error"
 
-	mux[140] = "Config Change Reloading"
-	mux[141] = "IrishMan Is Running With Execute Path"
-	mux[142] = "Config Read Error"
-
 	mux[101] = "Etcd Put: Put Key Error"
 	mux[102] = "Etcd Get: Key Not Exist Error"
 	mux[103] = "Etcd Get: Repeat Key Error"
@@ -69,6 +65,14 @@ func init() {
 	mux[105] = "Etcd Delete: Error"
 	mux[106] = "Etcd Delete: Etcd Key's Pool Has One ServerList At Least, Delete Canceled !"
 	mux[107] = "Etcd Delete: Etcd Key's Pool Has One ServerList At Least, Can Not Delete Them ALL !"
+
+	mux[140] = "Config Change Reloading"
+	mux[141] = "IrishMan Is Running With Execute Path"
+	mux[142] = "Config Read Error"
+
+	mux[151] = "HealthCheck Config Initialize"
+	mux[152] = "Config Read Error"
+	mux[153] = "Config Read Error"
 }
 
 //register error to message

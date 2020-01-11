@@ -63,7 +63,7 @@ func GetUpstream(jsonObj interface{}, timeNow time.Time) (*ErrH.MyError, string)
 		//EtcUpstreamName := "Upstream"
 		EtcUpstreamName := c.Upstream.EtcdPrefix
 		//get key from etcd
-		if err, val = etcd.EtcGetAll(EtcUpstreamName); err != nil {
+		if err, val, _ = etcd.EtcGetAll(EtcUpstreamName); err != nil {
 			log.Println(ErrH.ErrorLog(1104), fmt.Sprintf("%v", err))
 			return &ErrH.MyError{Error: err.Error(), Code: 1104, TimeStamp: timeNow}, ""
 		}

@@ -24,3 +24,25 @@ upstream:
 # health check config
 healthcheck:
   etcdprefix: HealthCheck
+  template:
+    status: running
+    checkProtocol: http
+    checkPath: /
+    health:
+      interval: 3000
+      successTime: 3
+      successStatus:
+        - 200
+        - 302
+    unhealth:
+      interval: 4500
+      failuresTime: 3
+      FailuresTimeout: 2000
+      failuresStatus:
+        - 429
+        - 404
+        - 500
+        - 501
+        - 502
+        - 503
+        - 504

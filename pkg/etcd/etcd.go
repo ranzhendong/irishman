@@ -77,7 +77,7 @@ func EtcGet(key string) (err error, val string) {
 	return
 }
 
-func EtcGetAll(key string) (err error, val string) {
+func EtcGetAll(key string) (err error, val string, rVal []*mvccpb.KeyValue) {
 	var (
 		client  *clientv3.Client
 		kv      clientv3.KV
@@ -99,7 +99,7 @@ func EtcGetAll(key string) (err error, val string) {
 	for _, v := range getResp.Kvs {
 		val = val + string(v.Value) + "\n\n"
 	}
-
+	rVal = getResp.Kvs
 	return
 }
 

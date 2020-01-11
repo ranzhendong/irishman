@@ -30,7 +30,8 @@ type upstream struct {
 }
 
 type healthcheck struct {
-	EtcdPrefix string `yaml:"etcdprefix"`
+	EtcdPrefix string      `yaml:"etcdprefix"`
+	Template   HealthCheck `yaml:"template"`
 }
 
 func (self *Config) Config() (err error) {

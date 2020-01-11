@@ -42,8 +42,8 @@ func main() {
 		return
 	}
 
-	// initialize health check
-	//healthcheck.InitHealthCheck()
+	//initialize health check
+	healthcheck.InitHealthCheck(time.Now())
 
 	// server start
 	server := http.Server{

@@ -1,8 +1,14 @@
 # configure
+server:
+  bind: 0.0.0.0:8080
+  readtimeout: 15
+  writetimeout: 15
+
 etcd:
   host: 172.16.0.51:2379
   format: json
   timeout: 2
+
 reserved:
   - all
   - healthcheck

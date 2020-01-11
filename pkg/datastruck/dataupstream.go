@@ -8,18 +8,6 @@ import (
 	"reconstruct"
 )
 
-//config.yaml
-type Config struct {
-	Etcd     etcd     `yaml:"etcd"`
-	Reserved []string `yaml:"reserved"`
-}
-
-type etcd struct {
-	Host    string `yaml:"host"`
-	Format  string `yaml:"format"`
-	Timeout int    `yaml:"timeout"`
-}
-
 //Upstream, for put post
 type Upstream struct {
 	UpstreamName string   `json:"upstreamName" validate:"required||upstreamName"`

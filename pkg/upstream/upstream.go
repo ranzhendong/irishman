@@ -296,7 +296,6 @@ func DeleteUpstream(jsonObj interface{}, timeNow time.Time) *ErrH.MyError {
 
 	//if no server, mean to delete upstream
 	if len(du.Pool) == 0 {
-		log.Println("goto DELETE")
 		goto DELETEUPSTREAM
 	}
 
@@ -308,7 +307,6 @@ func DeleteUpstream(jsonObj interface{}, timeNow time.Time) *ErrH.MyError {
 
 	//need to least one
 	if len(etcddu.Pool) <= 1 {
-		log.Println("goto DELETENOTHING")
 		middleware = 5106
 		goto DELETENOTHING
 	}
@@ -329,13 +327,10 @@ func DeleteUpstream(jsonObj interface{}, timeNow time.Time) *ErrH.MyError {
 	}
 
 	//replace data, but need to last one
-	log.Println("old", etcdData)
 	for k, duv := range duData {
 		if k == "pool" {
-			for ek, ev := range etcdData["pool"].([]interface{}) {
-				log.Println("ek,ev", ek, ev)
-				for k, v := range duv.([]interface{}) {
-					log.Println("range duv.([]interface{}", k, v)
+			for _, ev := range etcdData["pool"].([]interface{}) {
+				for _, v := range duv.([]interface{}) {
 					if v.(map[string]interface{})["ipPort"] == ev.(map[string]interface{})["ipPort"] {
 						delete(ev.(map[string]interface{}), "ipPort")
 						delete(ev.(map[string]interface{}), "status")
@@ -356,7 +351,6 @@ func DeleteUpstream(jsonObj interface{}, timeNow time.Time) *ErrH.MyError {
 	//can not be delete all,at least one
 	if len(UpstreamPool) < 1 {
 		middleware = 5107
-		log.Println("goto DELETENOTHING")
 		goto DELETENOTHING
 	}
 
@@ -375,7 +369,7 @@ DELETESERVER:
 		log.Printf(ErrH.ErrorLog(5101, fmt.Sprintf("%v", err)))
 		return &ErrH.MyError{Error: err.Error(), Code: 5101, TimeStamp: timeNow}
 	}
-	log.Println(ErrH.ErrorLog(000, fmt.Sprintf(" Delete Server Key [%v], Values %v", EtcUpstreamName, string(jsonU))))
+	log.Println(ErrH.ErrorLog(000, fmt.Sprintf(" Delete Upstream Key [%v], New Values %v", EtcUpstreamName, string(jsonU))))
 	return &ErrH.MyError{Code: 000, TimeStamp: timeNow}
 
 DELETEUPSTREAM:

@@ -1,9 +1,11 @@
 package main
 
 import (
+	"datastruck"
 	"encoding/json"
 	ErrH "errorhandle"
 	"fmt"
+	"github.com/spf13/viper"
 	myInit "init"
 	"io"
 	"log"
@@ -14,6 +16,7 @@ import (
 
 var (
 	mux = make(map[string]func(http.ResponseWriter, *http.Request))
+	c   datastruck.Config
 	err error
 	n   int
 )
@@ -23,6 +26,7 @@ type myHandler struct{}
 func init() {
 	log.SetFlags(log.Ldate | log.Ltime | log.Lshortfile)
 	mux["/upstream"] = myUpstream
+	mux["/healthcheck"] = healthCheck
 }
 
 func main() {
@@ -32,12 +36,18 @@ func main() {
 		return
 	}
 
+	// Unmarshal to struck
+	if err = viper.Unmarshal(&c); err != nil {
+		log.Printf("Unable To Decode Into Config Struct, %v", err)
+		return
+	}
+
 	// server start
 	server := http.Server{
-		Addr:         ":8080",
+		Addr:         c.Server.Bind,
 		Handler:      &myHandler{},
-		ReadTimeout:  15 * time.Second,
-		WriteTimeout: 15 * time.Second,
+		ReadTimeout:  time.Duration(c.Server.ReadTimeout) * time.Second,
+		WriteTimeout: time.Duration(c.Server.WriteTimeout) * time.Second,
 	}
 	if err = server.ListenAndServe(); err != nil {
 		log.Printf(ErrH.ErrorLog(0011, fmt.Sprintf("%v", err)))
@@ -98,6 +108,10 @@ func myUpstream(w http.ResponseWriter, r *http.Request) {
 	default:
 		log.Printf(ErrH.ErrorLog(0007), fmt.Sprintf("%v", r.Method))
 	}
+}
+
+func healthCheck(w http.ResponseWriter, r *http.Request) {
+
 }
 
 func response(w http.ResponseWriter, res *ErrH.MyError, val ...string) {

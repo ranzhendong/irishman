@@ -6,9 +6,7 @@ import (
 	"fmt"
 	"github.com/coreos/etcd/mvcc/mvccpb"
 	"github.com/etcd-io/etcd/clientv3"
-	"github.com/spf13/viper"
 	_ "github.com/spf13/viper/remote"
-	"log"
 	"time"
 )
 
@@ -20,9 +18,8 @@ func etcConnect() (err error, client *clientv3.Client) {
 		statusRes *clientv3.StatusResponse
 	)
 
-	// Unmarshal to struck
-	if err = viper.Unmarshal(&c); err != nil {
-		log.Printf("Unable To Decode Into Config Struct, %v", err)
+	//config loading
+	if err = c.Config(); err != nil {
 		return
 	}
 

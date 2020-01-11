@@ -7,7 +7,7 @@ type HealthCheck struct {
 	CheckProtocol   string   `json:"checkProtocol" validate:"required||in=http,tcp"`
 	CheckPath       string   `json:"checkPath" validate:"required"`
 	Health          Health   `json:"health" validate:"required"`
-	UnHealth        UnHealth `json:"unHealth" validate:"required"`
+	UnHealth        UnHealth `json:"unhealth" validate:"required"`
 }
 
 //Health

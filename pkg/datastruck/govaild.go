@@ -1,4 +1,4 @@
-package reconstruct
+package datastruck
 
 import (
 	"fmt"
@@ -10,10 +10,6 @@ import (
 	"strconv"
 	"strings"
 )
-
-type Config struct {
-	Reserved []string `yaml:"reserved"`
-}
 
 type IpPortValidator struct {
 	EMsg string
@@ -85,11 +81,11 @@ func (self *UpstreamNameValidator) Validate(params map[string]interface{}, val r
 	defer func() {
 		_ = recover()
 		if err != nil {
-			err = fmt.Errorf("Validate: Reserved Name is: %v, Your UpstreamName is: %v ", c.Reserved, val.String())
+			err = fmt.Errorf("Validate: Reserved Name is: %v, Your UpstreamName is: %v ", c.Upstream.Reserved, val.String())
 		}
 	}()
 
-	for _, v := range c.Reserved {
+	for _, v := range c.Upstream.Reserved {
 		if v == val.String() {
 			err = fmt.Errorf("Validate: Reserved Name %v ", v)
 			return false, err

@@ -3,12 +3,15 @@ package upstream
 import (
 	"datastruck"
 	"encoding/json"
-	"errorhandle"
 	ErrH "errorhandle"
 	"etcd"
 	"fmt"
 	"log"
 	"time"
+)
+
+var (
+	c datastruck.Config
 )
 
 //upper the first letter
@@ -37,12 +40,18 @@ func removeRepByMap(slc []map[string]interface{}) (result []map[string]interface
 }
 
 // Get upstream
-func GetUpstream(jsonObj interface{}, timeNow time.Time) (*errorhandle.MyError, string) {
+func GetUpstream(jsonObj interface{}, timeNow time.Time) (*ErrH.MyError, string) {
 	var (
 		gu  datastruck.GetUpstream
 		err error
 		val string
 	)
+
+	//config loading
+	if err = c.Config(); err != nil {
+		log.Println(ErrH.ErrorLog(1012), fmt.Sprintf("%v", err))
+		return &ErrH.MyError{Error: err.Error(), Code: 1012, TimeStamp: timeNow}, ""
+	}
 
 	//judge
 	if err = gu.JudgeValidator(jsonObj); err != nil {
@@ -51,7 +60,8 @@ func GetUpstream(jsonObj interface{}, timeNow time.Time) (*errorhandle.MyError, 
 	}
 
 	if gu.UpstreamName == "ALL" {
-		EtcUpstreamName := "Upstream"
+		//EtcUpstreamName := "Upstream"
+		EtcUpstreamName := c.Upstream.EtcdPrefix
 		//get key from etcd
 		if err, val = etcd.EtcGetAll(EtcUpstreamName); err != nil {
 			log.Println(ErrH.ErrorLog(1104), fmt.Sprintf("%v", err))
@@ -61,7 +71,7 @@ func GetUpstream(jsonObj interface{}, timeNow time.Time) (*errorhandle.MyError, 
 		return &ErrH.MyError{Code: 000, TimeStamp: timeNow}, val
 	}
 
-	EtcUpstreamName := "Upstream" + strFirstToUpper(gu.UpstreamName)
+	EtcUpstreamName := c.Upstream.EtcdPrefix + strFirstToUpper(gu.UpstreamName)
 	//get key from etcd
 	if err, val = etcd.EtcGet(EtcUpstreamName); err != nil {
 		log.Println(err)
@@ -74,12 +84,18 @@ func GetUpstream(jsonObj interface{}, timeNow time.Time) (*errorhandle.MyError, 
 }
 
 // Full Update upstream
-func PutUpstream(jsonObj interface{}, timeNow time.Time) *errorhandle.MyError {
+func PutUpstream(jsonObj interface{}, timeNow time.Time) *ErrH.MyError {
 	var (
 		u     datastruck.Upstream
 		jsonU []byte
 		err   error
 	)
+
+	//config loading
+	if err = c.Config(); err != nil {
+		log.Println(ErrH.ErrorLog(2012), fmt.Sprintf("%v", err))
+		return &ErrH.MyError{Error: err.Error(), Code: 2012, TimeStamp: timeNow}
+	}
 
 	//judge
 	if err = u.JudgeValidator(jsonObj); err != nil {
@@ -94,7 +110,7 @@ func PutUpstream(jsonObj interface{}, timeNow time.Time) *errorhandle.MyError {
 	}
 
 	// Characters joining together
-	EtcUpstreamName := "Upstream" + strFirstToUpper(u.UpstreamName)
+	EtcUpstreamName := c.Upstream.EtcdPrefix + strFirstToUpper(u.UpstreamName)
 
 	//if exist
 	if err, _ = etcd.EtcGet(EtcUpstreamName); err != nil {
@@ -113,12 +129,18 @@ func PutUpstream(jsonObj interface{}, timeNow time.Time) *errorhandle.MyError {
 }
 
 // Create Update upstream
-func PostUpstream(jsonObj interface{}, timeNow time.Time) *errorhandle.MyError {
+func PostUpstream(jsonObj interface{}, timeNow time.Time) *ErrH.MyError {
 	var (
 		u     datastruck.Upstream
 		jsonU []byte
 		err   error
 	)
+
+	//config loading
+	if err = c.Config(); err != nil {
+		log.Println(ErrH.ErrorLog(3012), fmt.Sprintf("%v", err))
+		return &ErrH.MyError{Error: err.Error(), Code: 3012, TimeStamp: timeNow}
+	}
 
 	//judge
 	if err = u.JudgeValidator(jsonObj); err != nil {
@@ -127,7 +149,7 @@ func PostUpstream(jsonObj interface{}, timeNow time.Time) *errorhandle.MyError {
 	}
 
 	// Characters joining together
-	EtcUpstreamName := "Upstream" + strFirstToUpper(u.UpstreamName)
+	EtcUpstreamName := c.Upstream.EtcdPrefix + strFirstToUpper(u.UpstreamName)
 
 	//if repeat
 	if err, _ = etcd.EtcGet(EtcUpstreamName); err == nil {
@@ -152,7 +174,7 @@ func PostUpstream(jsonObj interface{}, timeNow time.Time) *errorhandle.MyError {
 }
 
 // Partial upstream
-func PatchUpstream(jsonObj interface{}, timeNow time.Time) *errorhandle.MyError {
+func PatchUpstream(jsonObj interface{}, timeNow time.Time) *ErrH.MyError {
 	var (
 		pu, etcdpu       datastruck.PatchUpstream
 		puData, etcdData map[string]interface{}
@@ -163,6 +185,12 @@ func PatchUpstream(jsonObj interface{}, timeNow time.Time) *errorhandle.MyError 
 		val              string
 	)
 
+	//config loading
+	if err = c.Config(); err != nil {
+		log.Println(ErrH.ErrorLog(4012), fmt.Sprintf("%v", err))
+		return &ErrH.MyError{Error: err.Error(), Code: 4012, TimeStamp: timeNow}
+	}
+
 	//judge
 	if err = pu.JudgeValidator(jsonObj); err != nil {
 		log.Println(ErrH.ErrorLog(4003), fmt.Sprintf("%v", err))
@@ -170,7 +198,7 @@ func PatchUpstream(jsonObj interface{}, timeNow time.Time) *errorhandle.MyError 
 	}
 
 	// Characters joining together
-	EtcUpstreamName := "Upstream" + strFirstToUpper(pu.UpstreamName)
+	EtcUpstreamName := c.Upstream.EtcdPrefix + strFirstToUpper(pu.UpstreamName)
 	//if exist
 	if err, val = etcd.EtcGet(EtcUpstreamName); err != nil {
 		log.Printf(ErrH.ErrorLog(4102), fmt.Sprintf("%v", err))
@@ -280,6 +308,12 @@ func DeleteUpstream(jsonObj interface{}, timeNow time.Time) *ErrH.MyError {
 		val              string
 	)
 
+	//config loading
+	if err = c.Config(); err != nil {
+		log.Println(ErrH.ErrorLog(5012), fmt.Sprintf("%v", err))
+		return &ErrH.MyError{Error: err.Error(), Code: 5012, TimeStamp: timeNow}
+	}
+
 	//judge
 	if err = du.JudgeValidator(jsonObj); err != nil {
 		log.Println(ErrH.ErrorLog(5003), fmt.Sprintf("%v", err))
@@ -287,7 +321,7 @@ func DeleteUpstream(jsonObj interface{}, timeNow time.Time) *ErrH.MyError {
 	}
 
 	// Characters joining together
-	EtcUpstreamName := "Upstream" + strFirstToUpper(du.UpstreamName)
+	EtcUpstreamName := c.Upstream.EtcdPrefix + strFirstToUpper(du.UpstreamName)
 	//if exist
 	if err, val = etcd.EtcGet(EtcUpstreamName); err != nil {
 		log.Printf(ErrH.ErrorLog(5102), fmt.Sprintf("%v", err))

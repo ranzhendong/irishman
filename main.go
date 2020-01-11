@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	ErrH "errorhandle"
 	"fmt"
-	"github.com/spf13/viper"
+	"healthcheck"
 	myInit "init"
 	"io"
 	"log"
@@ -36,11 +36,14 @@ func main() {
 		return
 	}
 
-	// Unmarshal to struck
-	if err = viper.Unmarshal(&c); err != nil {
-		log.Printf("Unable To Decode Into Config Struct, %v", err)
+	//config loading
+	if err = c.Config(); err != nil {
+		log.Println(ErrH.ErrorLog(0012), fmt.Sprintf("%v", err))
 		return
 	}
+
+	// initialize health check
+	//healthcheck.InitHealthCheck()
 
 	// server start
 	server := http.Server{
@@ -111,6 +114,38 @@ func myUpstream(w http.ResponseWriter, r *http.Request) {
 }
 
 func healthCheck(w http.ResponseWriter, r *http.Request) {
+	var (
+		jsonObj interface{}
+		timeNow = time.Now()
+	)
+
+	//loading request body
+	if err, jsonObj = myInit.InitializeBody(r.Body); err != nil {
+		log.Printf(ErrH.ErrorLog(0002, fmt.Sprintf("%v", err)))
+		response(w, &ErrH.MyError{Error: err.Error(), Code: 0002})
+		return
+	}
+
+	//restful switch
+	switch r.Method {
+	case "GET":
+		if res, val := healthcheck.GetHealthCheck(jsonObj, timeNow); res != nil {
+			response(w, res, val)
+		}
+
+	//case "PUT":
+	//	if res := healthcheck.PutHealthCheck(jsonObj, timeNow); res != nil {
+	//		response(w, res)
+	//	}
+	//
+	//case "PATCH":
+	//	if res := healthcheck.PatchHealthCheck(jsonObj, timeNow); res != nil {
+	//		response(w, res)
+	//	}
+
+	default:
+		log.Printf(ErrH.ErrorLog(0007), fmt.Sprintf("%v", r.Method))
+	}
 
 }
 

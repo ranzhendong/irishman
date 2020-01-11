@@ -42,6 +42,9 @@ func init() {
 	muxS[4] = "Upstream PATCH: "
 	muxS[5] = "Upstream DELETE: "
 	muxS[6] = "Viper Watcher: "
+	muxS[7] = "HealthCheck GET: "
+	muxS[8] = "HealthCheck PUT: "
+	muxS[9] = "HealthCheck PATCH: "
 
 	mux[000] = "Successful"
 	mux[001] = "Upstream: "
@@ -53,6 +56,7 @@ func init() {
 	mux[007] = "Not Support Method Error"
 	mux[010] = "Url Not Exist"
 	mux[011] = "HTTP Server Init Error"
+	mux[012] = "Config Json: UNMarshal Error"
 
 	mux[140] = "Config Change Reloading"
 	mux[141] = "IrishMan Is Running With Execute Path"

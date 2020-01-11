@@ -5,7 +5,6 @@ import (
 	"github.com/mitchellh/mapstructure"
 	"github.com/smokezl/govalidators"
 	"log"
-	"reconstruct"
 )
 
 //Upstream, for put post
@@ -57,15 +56,15 @@ type DeleteServer struct {
 
 func (self *Upstream) JudgeValidator(jsonObj interface{}) (err error) {
 	//turn map to struck
-	if err := mapstructure.Decode(jsonObj, &self); err != nil {
-		fmt.Println(err)
+	if err = mapstructure.Decode(jsonObj, &self); err != nil {
+		return
 	}
 
 	//new filter
 	validator := govalidators.New()
 	validator.SetValidators(map[string]interface{}{
-		"ipPort":       &reconstruct.IpPortValidator{},
-		"upstreamName": &reconstruct.UpstreamNameValidator{},
+		"ipPort":       &IpPortValidator{},
+		"upstreamName": &UpstreamNameValidator{},
 	})
 
 	//if not match
@@ -79,8 +78,8 @@ func (self *Upstream) JudgeValidator(jsonObj interface{}) (err error) {
 
 func (self *GetUpstream) JudgeValidator(jsonObj interface{}) (err error) {
 	//turn map to struck
-	if err := mapstructure.Decode(jsonObj, &self); err != nil {
-		fmt.Println(err)
+	if err = mapstructure.Decode(jsonObj, &self); err != nil {
+		return
 	}
 
 	//judge parameter
@@ -98,16 +97,16 @@ func (self *GetUpstream) JudgeValidator(jsonObj interface{}) (err error) {
 
 func (self *PatchUpstream) JudgeValidator(jsonObj interface{}) (err error) {
 	//turn map to struck
-	if err := mapstructure.Decode(jsonObj, &self); err != nil {
-		fmt.Println(err)
+	if err = mapstructure.Decode(jsonObj, &self); err != nil {
+		return
 	}
 
 	//judge parameter
 	validator := govalidators.New()
 	validator.SetValidators(map[string]interface{}{
-		"ipPort":       &reconstruct.IpPortValidator{},
-		"upstreamName": &reconstruct.UpstreamNameValidator{},
-		"poolNil":      &reconstruct.PoolNilValidator{},
+		"ipPort":       &IpPortValidator{},
+		"upstreamName": &UpstreamNameValidator{},
+		"poolNil":      &PoolNilValidator{},
 	})
 
 	//if not match
@@ -122,15 +121,15 @@ func (self *PatchUpstream) JudgeValidator(jsonObj interface{}) (err error) {
 
 func (self *DeleteUpstream) JudgeValidator(jsonObj interface{}) (err error) {
 	//turn map to struck
-	if err := mapstructure.Decode(jsonObj, &self); err != nil {
-		fmt.Println(err)
+	if err = mapstructure.Decode(jsonObj, &self); err != nil {
+		return
 	}
 
 	//judge parameter
 	validator := govalidators.New()
 	validator.SetValidators(map[string]interface{}{
-		"ipPort":       &reconstruct.IpPortValidator{},
-		"upstreamName": &reconstruct.UpstreamNameValidator{},
+		"ipPort":       &IpPortValidator{},
+		"upstreamName": &UpstreamNameValidator{},
 	})
 
 	//if not match

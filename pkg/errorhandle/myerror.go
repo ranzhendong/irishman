@@ -15,9 +15,10 @@ type MyError struct {
 }
 
 var (
-	mux       = make(map[int]string)
-	muxS      = make(map[int]string)
-	randSlice = make([]int, 3)
+	mux        = make(map[int]string)
+	muxS       = make(map[int]string)
+	randSlice  = make([]int, 3)
+	sRandSlice = make([]int, 2)
 )
 
 //registered
@@ -45,10 +46,11 @@ func init() {
 	muxS[7] = "HealthCheck GET: "
 	muxS[8] = "HealthCheck PUT: "
 	muxS[9] = "HealthCheck PATCH: "
+	muxS[10] = "HealthCheck DELETE: "
 
 	mux[000] = "Successful"
 	mux[001] = "Upstream: "
-	mux[002] = "INIT: Loading Body Failed"
+	mux[002] = "INIT: Loading Request Body Failed"
 	mux[003] = "JudgeValidator Error"
 	mux[004] = "Json: Marshal Error"
 	mux[005] = "Json: UNMarshal Error"
@@ -73,6 +75,8 @@ func init() {
 	mux[151] = "HealthCheck Config Initialize"
 	mux[152] = "Config Read Error"
 	mux[153] = "Config Read Error"
+	mux[154] = "SuccessStatus Has One Code At Least "
+	mux[155] = "FailuresStatus Has One Code At Least "
 }
 
 //register error to message
@@ -88,15 +92,15 @@ func (self *MyError) Messages() {
 			self.Message = "No Error Match"
 		}
 	}()
-	self.Message = muxS[self.Code/1000%10] + mux[Code(self.Code)]
+	self.Message = muxS[SCode(self.Code)] + mux[Code(self.Code)]
 }
 
 //error log handler
 func ErrorLog(code int, content ...string) string {
 	if content == nil {
-		return muxS[code/1000%10] + mux[Code(code)]
+		return muxS[SCode(code)] + mux[Code(code)]
 	}
-	return muxS[code/1000%10] + mux[Code(code)] + content[0]
+	return muxS[SCode(code)] + mux[Code(code)] + content[0]
 }
 
 //timer clock
@@ -115,5 +119,16 @@ func Code(e int) (a int) {
 	randSlice[1] = e / 10 % 10
 	randSlice[2] = e / 1 % 10
 	a, _ = strconv.Atoi(exstrings.JoinInts(randSlice, ""))
+	return
+}
+
+func SCode(e int) (a int) {
+	if len(strconv.Itoa(e)) == 4 {
+		return e / 1000 % 10
+	} else {
+		sRandSlice[0] = e / 10000 % 10
+		sRandSlice[1] = e / 1000 % 10
+	}
+	a, _ = strconv.Atoi(exstrings.JoinInts(sRandSlice, ""))
 	return
 }

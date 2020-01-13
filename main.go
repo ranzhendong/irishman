@@ -133,15 +133,20 @@ func healthCheck(w http.ResponseWriter, r *http.Request) {
 			response(w, res, val)
 		}
 
-	//case "PUT":
-	//	if res := healthcheck.PutHealthCheck(jsonObj, timeNow); res != nil {
-	//		response(w, res)
-	//	}
-	//
-	//case "PATCH":
-	//	if res := healthcheck.PatchHealthCheck(jsonObj, timeNow); res != nil {
-	//		response(w, res)
-	//	}
+	case "PUT":
+		if res := healthcheck.PutHealthCheck(jsonObj, timeNow); res != nil {
+			response(w, res)
+		}
+
+	case "PATCH":
+		if res := healthcheck.PatchHealthCheck(jsonObj, timeNow); res != nil {
+			response(w, res)
+		}
+
+	case "DELETE":
+		if res := healthcheck.DeleteHealthCheck(jsonObj, timeNow); res != nil {
+			response(w, res)
+		}
 
 	default:
 		log.Printf(ErrH.ErrorLog(0007), fmt.Sprintf("%v", r.Method))

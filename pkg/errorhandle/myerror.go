@@ -47,6 +47,7 @@ func init() {
 	muxS[8] = "HealthCheck PUT: "
 	muxS[9] = "HealthCheck PATCH: "
 	muxS[10] = "HealthCheck DELETE: "
+	muxS[11] = "HealthCheck Goroutines: "
 
 	mux[000] = "Successful"
 	mux[001] = "Upstream: "
@@ -70,13 +71,10 @@ func init() {
 
 	mux[140] = "Config Change Reloading"
 	mux[141] = "IrishMan Is Running With Execute Path"
-	mux[142] = "Config Read Error"
 
 	mux[151] = "HealthCheck Config Initialize"
-	mux[152] = "Config Read Error"
-	mux[153] = "Config Read Error"
-	mux[154] = "SuccessStatus Has One Code At Least "
-	mux[155] = "FailuresStatus Has One Code At Least "
+	mux[152] = "SuccessStatus Has One Code At Least "
+	mux[153] = "FailuresStatus Has One Code At Least "
 }
 
 //register error to message

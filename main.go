@@ -25,17 +25,16 @@ type myHandler struct{}
 
 func init() {
 	log.SetFlags(log.Ldate | log.Ltime | log.Lshortfile)
-	mux["/upstream"] = myUpstream
-	mux["/healthcheck"] = healthCheck
-}
-
-func main() {
 	//configure read
 	if err = myInit.Config(); err != nil {
 		log.Printf(ErrH.ErrorLog(6142, fmt.Sprintf("%v", err)))
 		return
 	}
+	mux["/upstream"] = myUpstream
+	mux["/healthcheck"] = healthCheck
+}
 
+func main() {
 	//config loading
 	if err = c.Config(); err != nil {
 		log.Println(ErrH.ErrorLog(0012), fmt.Sprintf("%v", err))
@@ -44,6 +43,8 @@ func main() {
 
 	//initialize health check
 	healthcheck.InitHealthCheck(time.Now())
+
+	healthcheck.SplitUpstreamIpPort()
 
 	// server start
 	server := http.Server{

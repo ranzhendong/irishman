@@ -11,6 +11,7 @@ import (
 type Config struct {
 	Server      server      `yaml:"server"`
 	Etcd        etcd        `yaml:"etcd"`
+	Resource    resource    `yaml:"resource"`
 	Upstream    upstream    `yaml:"upstream"`
 	HealthCheck healthcheck `yaml:"healthcheck"`
 }
@@ -25,6 +26,12 @@ type etcd struct {
 	Host    string `yaml:"host"`
 	Format  string `yaml:"format"`
 	Timeout int    `yaml:"timeout"`
+}
+
+type resource struct {
+	UpstreamList string `yaml:"upstreamlist"`
+	UpList       string `yaml:"uplist"`
+	DownList     string `yaml:"downlist"`
 }
 
 type upstream struct {

@@ -14,7 +14,14 @@ import (
 var c datastruck.Config
 
 type upstream struct {
-	UpstreamName string `json:"upstreamName"`
+	UpstreamName string   `json:"upstreamName"`
+	Pool         []server `json:"pool"`
+}
+
+type server struct {
+	IpPort string `json:"ipPort"`
+	Status string `json:"status"`
+	Weight int    `json:"weight"`
 }
 
 func InitHealthCheck(timeNow time.Time) *ErrH.MyError {
@@ -55,7 +62,7 @@ func InitHealthCheck(timeNow time.Time) *ErrH.MyError {
 	}
 
 	// etcd put
-	if err = etcd.EtcPut("UpstreamList", string(upstreamListByte)); err != nil {
+	if err = etcd.EtcPut(c.Resource.UpstreamList, string(upstreamListByte)); err != nil {
 		log.Printf(ErrH.ErrorLog(0101, fmt.Sprintf("%v", err)))
 		return &ErrH.MyError{Error: err.Error(), Code: 0101, TimeStamp: timeNow}
 	}

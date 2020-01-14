@@ -12,6 +12,12 @@ etcd:
   format: json
   timeout: 2
 
+# resource named
+resource:
+  upstreamlist: UpstreamList
+  uplist: UpList
+  downlist: DownList
+
 # upstream config
 upstream:
   etcdprefix: Upstream
@@ -31,6 +37,7 @@ healthcheck:
     health:
       interval: 3000
       successTime: 3
+      successTimeout: 3000
       successStatus:
         - 200
         - 302

@@ -19,9 +19,10 @@ type HealthCheck struct {
 
 //template and put Health
 type Health struct {
-	Interval      int   `json:"interval" yaml:"interval" validate:"required||integer"`
-	SuccessTime   int   `json:"successTime" yaml:"successTime" validate:"required||integer"`
-	SuccessStatus []int `json:"successStatus" yaml:"successStatus" validate:"required||unique||array"`
+	Interval       int   `json:"interval" yaml:"interval" validate:"required||integer"`
+	SuccessTime    int   `json:"successTime" yaml:"successTime" validate:"required||integer"`
+	SuccessTimeout int   `json:"successTimeout" yaml:"successTimeout" validate:"required||integer"`
+	SuccessStatus  []int `json:"successStatus" yaml:"successStatus" validate:"required||unique||array"`
 }
 
 //template and put UnHealth
@@ -49,9 +50,10 @@ type PatchHealthCheck struct {
 
 //patch Health
 type PatchHealth struct {
-	Interval      int   `json:"interval" validate:"integer"`
-	SuccessTime   int   `json:"successTime" validate:"integer"`
-	SuccessStatus []int `json:"successStatus" validate:"unique||array"`
+	Interval       int   `json:"interval" validate:"integer"`
+	SuccessTime    int   `json:"successTime" validate:"integer"`
+	SuccessTimeout int   `json:"successTimeout" validate:"integer"`
+	SuccessStatus  []int `json:"successStatus" validate:"unique||array"`
 }
 
 //patch UnHealth

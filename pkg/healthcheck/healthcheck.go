@@ -149,6 +149,9 @@ func PatchHealthCheck(jsonObj interface{}, timeNow time.Time) (a *ErrH.MyError) 
 	if ph.Health.Interval != 0 {
 		etcdph.Health.Interval = ph.Health.Interval
 	}
+	if ph.Health.SuccessTimeout != 0 {
+		etcdph.Health.SuccessTimeout = ph.Health.SuccessTimeout
+	}
 	if ph.Health.SuccessTime != 0 {
 		etcdph.Health.SuccessTime = ph.Health.SuccessTime
 	}

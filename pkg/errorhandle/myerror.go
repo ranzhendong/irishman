@@ -48,6 +48,7 @@ func init() {
 	muxS[9] = "HealthCheck PATCH: "
 	muxS[10] = "HealthCheck DELETE: "
 	muxS[11] = "HealthCheck Goroutines: "
+	muxS[12] = "NutsDB: "
 
 	mux[000] = "Successful"
 	mux[001] = "Upstream: "
@@ -75,6 +76,10 @@ func init() {
 	mux[151] = "HealthCheck Config Initialize"
 	mux[152] = "SuccessStatus Has One Code At Least "
 	mux[153] = "FailuresStatus Has One Code At Least "
+
+	mux[161] = "Connect Error"
+	mux[162] = "Put Error"
+	mux[163] = "Get Error"
 }
 
 //register error to message

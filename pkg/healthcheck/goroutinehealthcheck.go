@@ -7,6 +7,7 @@ import (
 	"etcd"
 	"fmt"
 	"log"
+	"lrishman/pkg/kvnuts"
 )
 
 type healthCheck struct {
@@ -29,7 +30,7 @@ func SplitUpstreamIpPort() {
 	}
 
 	//get key from etcd
-	if err, val = etcd.EtcGet("UpstreamList"); err != nil {
+	if err, val = etcd.EtcGet(c.Resource.UpstreamList); err != nil {
 		log.Println(ErrH.ErrorLog(11102), fmt.Sprintf("; %v", err))
 	}
 
@@ -100,8 +101,12 @@ func UpHC(a []string, h datastruck.HealthCheck) {
 	for _, v := range a {
 		log.Println(v)
 		log.Println(TCP(v, h.Health.SuccessTimeout))
-		//_ = HTTP("vmims.eguagua.cn", h.Health.SuccessTimeout)
+
+		//_ = HTTP("vmims.eguagua.cn", h.Health.SuccessTimeout)go get github.com/boltdb/bolt/...
 		log.Println(HTTP(v+h.CheckPath, h.Health.SuccessTimeout))
+
+		log.Println(kvnuts.Put(v, v, h.Health.SuccessTime))
+		log.Println(kvnuts.Get(v, v, "i"))
 	}
 
 }

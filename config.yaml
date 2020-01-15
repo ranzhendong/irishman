@@ -18,6 +18,13 @@ resource:
   uplist: UpList
   downlist: DownList
 
+# kv bolt DB
+nutsdb:
+  path: ./src/NutsDBStorage
+  mode: 0600
+  timeout: 5
+  initsize: 5
+
 # upstream config
 upstream:
   etcdprefix: Upstream

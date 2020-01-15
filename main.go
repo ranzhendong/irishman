@@ -11,14 +11,12 @@ import (
 	"log"
 	"net/http"
 	"time"
-	"upstream"
 )
 
 var (
 	mux = make(map[string]func(http.ResponseWriter, *http.Request))
 	c   datastruck.Config
 	err error
-	n   int
 )
 
 type myHandler struct{}
@@ -167,7 +165,7 @@ func response(w http.ResponseWriter, res *ErrH.MyError, val ...string) {
 		if b, err := json.Marshal(res); err != nil {
 			log.Println("Response Json Marshal Error:", err)
 		} else {
-			n, err = io.WriteString(w, string(b))
+			_, err = io.WriteString(w, string(b))
 			if err != nil {
 				log.Printf(ErrH.ErrorLog(0006), fmt.Sprintf("%v", err))
 			}
@@ -175,7 +173,7 @@ func response(w http.ResponseWriter, res *ErrH.MyError, val ...string) {
 	}()
 	if len(val[0]) != 0 {
 		set = 1
-		n, err = io.WriteString(w, val[0])
+		_, err = io.WriteString(w, val[0])
 		if err != nil {
 			log.Printf(ErrH.ErrorLog(0006), fmt.Sprintf("%v", err))
 		}

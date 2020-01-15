@@ -36,7 +36,6 @@ func HTTP(request string, t int) (error, int) {
 	}
 
 	//request
-	//log.Println(request)
 	request = "http://" + request
 	myRequest, _ = http.NewRequest("PUT", request, nil)
 

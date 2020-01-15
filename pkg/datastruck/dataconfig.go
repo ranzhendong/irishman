@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/spf13/viper"
 	"log"
+	"os"
 )
 
 //config.yaml
@@ -12,6 +13,7 @@ type Config struct {
 	Server      server      `yaml:"server"`
 	Etcd        etcd        `yaml:"etcd"`
 	Resource    resource    `yaml:"resource"`
+	NutsDB      nutsDB      `yaml:"nutsdb"`
 	Upstream    upstream    `yaml:"upstream"`
 	HealthCheck healthcheck `yaml:"healthcheck"`
 }
@@ -32,6 +34,13 @@ type resource struct {
 	UpstreamList string `yaml:"upstreamlist"`
 	UpList       string `yaml:"uplist"`
 	DownList     string `yaml:"downlist"`
+}
+
+type nutsDB struct {
+	Path     string      `yaml:"path"`
+	Mode     os.FileMode `yaml:"mode"`
+	Timeout  int         `yaml:"timeout"`
+	Initsize int         `yaml:"initsize"`
 }
 
 type upstream struct {

@@ -21,9 +21,11 @@ resource:
 # kv bolt DB
 nutsdb:
   path: ./src/NutsDBStorage
-  mode: 0600
-  timeout: 5
-  initsize: 5
+  tag:
+    up: Up
+    down: Down
+    healthcheck: HC
+    upstreamlist: UpstreamList
 
 # upstream config
 upstream:

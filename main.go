@@ -10,7 +10,9 @@ import (
 	"io"
 	"log"
 	"net/http"
+	"os"
 	"time"
+	"upstream"
 )
 
 var (
@@ -39,10 +41,13 @@ func main() {
 		return
 	}
 
-	//initialize health check
-	healthcheck.InitHealthCheck(time.Now())
+	//remove nutsDB
+	if err = os.RemoveAll(c.NutsDB.Path); err != nil {
+		log.Println(ErrH.ErrorLog(11103), fmt.Sprintf("; %v", err))
+	}
 
-	healthcheck.SplitUpstreamIpPort()
+	//initialize health check
+	go healthcheck.InitHealthCheck(time.Now())
 
 	// server start
 	server := http.Server{

@@ -11,7 +11,7 @@ import (
 )
 
 //connect to nutsDB
-func Connect() (db *nutsdb.DB) {
+func connect() (db *nutsdb.DB) {
 	var (
 		err error
 		c   datastruck.Config
@@ -38,7 +38,10 @@ func Put(bct string, key, val interface{}) error {
 		err              error
 	)
 
-	db := Connect()
+	db := connect()
+	defer func() {
+		_ = db.Close()
+	}()
 	err = db.Update(
 		func(tx *nutsdb.Tx) error {
 			//judge key type
@@ -47,6 +50,8 @@ func Put(bct string, key, val interface{}) error {
 				keyByte = []byte(key.(string))
 			case int:
 				keyByte, _ = IntToBytes(val.(int), 3)
+			case byte:
+				keyByte = key.([]byte)
 			}
 
 			switch val.(type) {
@@ -54,6 +59,8 @@ func Put(bct string, key, val interface{}) error {
 				valByte = []byte(val.(string))
 			case int:
 				valByte, _ = IntToBytes(val.(int), 3)
+			case byte:
+				keyByte = key.([]byte)
 			}
 			if err = tx.Put(bct, keyByte, valByte, 0); err != nil {
 				return err
@@ -73,7 +80,10 @@ func Get(bct string, key interface{}, valType string) (err error, myReturn strin
 		keyByte []byte
 		e       *nutsdb.Entry
 	)
-	db := Connect()
+	db := connect()
+	defer func() {
+		_ = db.Close()
+	}()
 	err = db.View(
 		func(tx *nutsdb.Tx) error {
 			switch key.(type) {
@@ -81,6 +91,8 @@ func Get(bct string, key interface{}, valType string) (err error, myReturn strin
 				keyByte = []byte(key.(string))
 			case int:
 				keyByte, _ = IntToBytes(key.(int), 3)
+			case byte:
+				keyByte = key.([]byte)
 			}
 
 			if e, err = tx.Get(bct, keyByte); err != nil {
@@ -105,6 +117,187 @@ func Get(bct string, key interface{}, valType string) (err error, myReturn strin
 	return
 }
 
+func SAdd(bct string, key, val interface{}) error {
+	var (
+		keyByte, valByte []byte
+		err              error
+	)
+	db := connect()
+	defer func() {
+		_ = db.Close()
+	}()
+
+	err = db.Update(
+		func(tx *nutsdb.Tx) error {
+			switch key.(type) {
+			case string:
+				keyByte = []byte(key.(string))
+			case int:
+				keyByte, _ = IntToBytes(key.(int), 3)
+			case byte:
+				keyByte = key.([]byte)
+			}
+
+			switch val.(type) {
+			case string:
+				valByte = []byte(val.(string))
+			case int:
+				valByte, _ = IntToBytes(val.(int), 3)
+			case byte:
+				keyByte = key.([]byte)
+			}
+			return tx.SAdd(bct, keyByte, valByte)
+		})
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func SMem(bct string, key interface{}) (error, [][]byte) {
+	var (
+		keyByte []byte
+		err     error
+		items   [][]byte
+	)
+	db := connect()
+	defer func() {
+		_ = db.Close()
+	}()
+
+	err = db.View(
+		func(tx *nutsdb.Tx) error {
+			switch key.(type) {
+			case string:
+				keyByte = []byte(key.(string))
+			case int:
+				keyByte, _ = IntToBytes(key.(int), 3)
+			case byte:
+				keyByte = key.([]byte)
+			}
+
+			if items, err = tx.SMembers(bct, keyByte); err != nil {
+				return err
+			}
+			return nil
+		})
+	if err != nil {
+		return err, nil
+	}
+	return nil, items
+}
+
+func SRem(bct string, key, val interface{}) error {
+	var (
+		keyByte, valByte []byte
+		err              error
+	)
+	db := connect()
+	defer func() {
+		_ = db.Close()
+	}()
+	err = db.Update(
+		func(tx *nutsdb.Tx) error {
+			switch key.(type) {
+			case string:
+				keyByte = []byte(key.(string))
+			case int:
+				keyByte, _ = IntToBytes(key.(int), 3)
+			case byte:
+				keyByte = key.([]byte)
+			}
+
+			switch val.(type) {
+			case string:
+				valByte = []byte(val.(string))
+			case int:
+				valByte, _ = IntToBytes(val.(int), 3)
+			case byte:
+				keyByte = key.([]byte)
+			}
+			if err := tx.SRem(bct, keyByte, valByte); err != nil {
+				return err
+			}
+			return nil
+		})
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func LAdd(bct string, key, val interface{}) error {
+	var (
+		keyByte, valByte []byte
+		err              error
+	)
+	db := connect()
+	defer func() {
+		_ = db.Close()
+	}()
+	err = db.Update(
+		func(tx *nutsdb.Tx) error {
+			switch key.(type) {
+			case string:
+				keyByte = []byte(key.(string))
+			case int:
+				keyByte, _ = IntToBytes(key.(int), 3)
+			case byte:
+				keyByte = key.([]byte)
+			}
+
+			switch val.(type) {
+			case string:
+				valByte = []byte(val.(string))
+			case int:
+				valByte, _ = IntToBytes(val.(int), 3)
+			case byte:
+				keyByte = key.([]byte)
+			}
+			if err := tx.RPush(bct, keyByte, valByte); err != nil {
+				return err
+			}
+			return nil
+		})
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func LIndex(bct string, key interface{}, s, e int) (error, [][]byte) {
+	var (
+		keyByte []byte
+		item    [][]byte
+		err     error
+	)
+	db := connect()
+	defer func() {
+		_ = db.Close()
+	}()
+	err = db.Update(
+		func(tx *nutsdb.Tx) error {
+			switch key.(type) {
+			case string:
+				keyByte = []byte(key.(string))
+			case int:
+				keyByte, _ = IntToBytes(key.(int), 3)
+			case byte:
+				keyByte = key.([]byte)
+			}
+
+			if item, err = tx.LRange(bct, keyByte, s, e); err != nil {
+				return err
+			}
+			return nil
+		})
+	if err != nil {
+		return err, nil
+	}
+	return nil, item
+}
+
+//turn byte to int
 func BytesToInt(b []byte, isSymbol bool) (int, error) {
 	if isSymbol {
 		return bytesToIntS(b)

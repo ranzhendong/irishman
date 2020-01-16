@@ -61,6 +61,7 @@ func init() {
 	mux[010] = "Url Not Exist"
 	mux[011] = "HTTP Server Init Error"
 	mux[012] = "Config Json: UNMarshal Error"
+	mux[013] = "Remove: No NutsDB File Error"
 
 	mux[101] = "Etcd Put: Put Key Error"
 	mux[102] = "Etcd Get: Key Not Exist Error"

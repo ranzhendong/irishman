@@ -10,6 +10,7 @@ require (
 	gopkg.in/fatih/set.v0 v0.2.1 // indirect
 	healthcheck v1.1.2
 	init v1.1.2
+	upstream v1.1.2
 )
 
 replace (
@@ -21,5 +22,5 @@ replace (
 	init v1.1.2 => ./pkg/init
 	kvnuts v1.1.2 => ./pkg/upstream
 	reconstruct v1.1.2 => ./pkg/reconstruct
-	upstream v1.1.2 => ./pkg/kvnuts
+	upstream v1.1.2 => ./pkg/upstream
 )

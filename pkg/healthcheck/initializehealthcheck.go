@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"github.com/coreos/etcd/mvcc/mvccpb"
 	"log"
+	"lrishman/pkg/kvnuts"
 	"time"
 )
 
@@ -28,11 +29,11 @@ func InitHealthCheck(timeNow time.Time) *ErrH.MyError {
 	log.Println("InitHealthCheck")
 
 	var (
-		err                                  error
-		val                                  []*mvccpb.KeyValue
-		upstreamList, downUpstreamList       []string
-		healthCheckByte, upstreamListByte, b []byte
-		u                                    upstream
+		err                            error
+		val                            []*mvccpb.KeyValue
+		upstreamList, downUpstreamList []string
+		healthCheckByte, b             []byte
+		u                              upstream
 	)
 
 	//config loading
@@ -48,23 +49,15 @@ func InitHealthCheck(timeNow time.Time) *ErrH.MyError {
 		return &ErrH.MyError{Error: err.Error(), Code: 0104, TimeStamp: timeNow}
 	}
 
+	//upstream list storage to nutsDB
 	for _, v := range val {
 		if err := json.Unmarshal(v.Value, &u); err != nil {
 			downUpstreamList = append(downUpstreamList, u.UpstreamName)
 			continue
 		}
 		upstreamList = append(upstreamList, u.UpstreamName)
-	}
-
-	if upstreamListByte, err = json.Marshal(upstreamList); err != nil {
-		log.Println(ErrH.ErrorLog(0004))
-		return &ErrH.MyError{Error: err.Error(), Code: 0004, TimeStamp: timeNow}
-	}
-
-	// etcd put
-	if err = etcd.EtcPut(c.Resource.UpstreamList, string(upstreamListByte)); err != nil {
-		log.Printf(ErrH.ErrorLog(0101, fmt.Sprintf("%v", err)))
-		return &ErrH.MyError{Error: err.Error(), Code: 0101, TimeStamp: timeNow}
+		//as a number to upstream list
+		_ = kvnuts.SAdd(c.NutsDB.Tag.UpstreamList, c.NutsDB.Tag.UpstreamList, u.UpstreamName)
 	}
 
 	for _, v := range upstreamList {
@@ -90,6 +83,9 @@ func InitHealthCheck(timeNow time.Time) *ErrH.MyError {
 		log.Println(ErrH.ErrorLog(0004))
 		return &ErrH.MyError{Error: err.Error(), Code: 0004, TimeStamp: timeNow}
 	}
+
+	//split Up, Down from upstream list
+	UpDownToNuts()
 
 	log.Println(ErrH.ErrorLog(000, fmt.Sprintf(" HealthCheck %v", string(b))))
 	return &ErrH.MyError{Code: 000, TimeStamp: timeNow}

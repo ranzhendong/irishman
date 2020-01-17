@@ -1,9 +1,7 @@
 package kvnuts
 
 import (
-	"bytes"
 	"datastruck"
-	"encoding/binary"
 	ErrH "errorhandle"
 	"fmt"
 	"github.com/xujiajun/nutsdb"
@@ -31,7 +29,7 @@ func connect() (db *nutsdb.DB) {
 	return
 }
 
-//put key values to nutsDB
+//put key values
 func Put(bct string, key, val interface{}) error {
 	var (
 		keyByte, valByte []byte
@@ -50,7 +48,7 @@ func Put(bct string, key, val interface{}) error {
 				keyByte = []byte(key.(string))
 			case int:
 				keyByte, _ = IntToBytes(val.(int), 3)
-			case byte:
+			case []uint8:
 				keyByte = key.([]byte)
 			}
 
@@ -59,8 +57,8 @@ func Put(bct string, key, val interface{}) error {
 				valByte = []byte(val.(string))
 			case int:
 				valByte, _ = IntToBytes(val.(int), 3)
-			case byte:
-				keyByte = key.([]byte)
+			case []uint8:
+				valByte = val.([]byte)
 			}
 			if err = tx.Put(bct, keyByte, valByte, 0); err != nil {
 				return err
@@ -74,7 +72,7 @@ func Put(bct string, key, val interface{}) error {
 	return nil
 }
 
-//get key to nutsDB
+//get key
 func Get(bct string, key interface{}, valType string) (err error, myReturn string, myReturnInt int) {
 	var (
 		keyByte []byte
@@ -91,7 +89,7 @@ func Get(bct string, key interface{}, valType string) (err error, myReturn strin
 				keyByte = []byte(key.(string))
 			case int:
 				keyByte, _ = IntToBytes(key.(int), 3)
-			case byte:
+			case []uint8:
 				keyByte = key.([]byte)
 			}
 
@@ -117,6 +115,7 @@ func Get(bct string, key interface{}, valType string) (err error, myReturn strin
 	return
 }
 
+//put key, value as set
 func SAdd(bct string, key, val interface{}) error {
 	var (
 		keyByte, valByte []byte
@@ -134,7 +133,7 @@ func SAdd(bct string, key, val interface{}) error {
 				keyByte = []byte(key.(string))
 			case int:
 				keyByte, _ = IntToBytes(key.(int), 3)
-			case byte:
+			case []uint8:
 				keyByte = key.([]byte)
 			}
 
@@ -143,8 +142,8 @@ func SAdd(bct string, key, val interface{}) error {
 				valByte = []byte(val.(string))
 			case int:
 				valByte, _ = IntToBytes(val.(int), 3)
-			case byte:
-				keyByte = key.([]byte)
+			case []uint8:
+				valByte = val.([]byte)
 			}
 			return tx.SAdd(bct, keyByte, valByte)
 		})
@@ -154,6 +153,7 @@ func SAdd(bct string, key, val interface{}) error {
 	return nil
 }
 
+//get all key from set
 func SMem(bct string, key interface{}) (error, [][]byte) {
 	var (
 		keyByte []byte
@@ -172,7 +172,7 @@ func SMem(bct string, key interface{}) (error, [][]byte) {
 				keyByte = []byte(key.(string))
 			case int:
 				keyByte, _ = IntToBytes(key.(int), 3)
-			case byte:
+			case []uint8:
 				keyByte = key.([]byte)
 			}
 
@@ -187,6 +187,7 @@ func SMem(bct string, key interface{}) (error, [][]byte) {
 	return nil, items
 }
 
+//remove key, value from set
 func SRem(bct string, key, val interface{}) error {
 	var (
 		keyByte, valByte []byte
@@ -196,6 +197,7 @@ func SRem(bct string, key, val interface{}) error {
 	defer func() {
 		_ = db.Close()
 	}()
+
 	err = db.Update(
 		func(tx *nutsdb.Tx) error {
 			switch key.(type) {
@@ -203,7 +205,7 @@ func SRem(bct string, key, val interface{}) error {
 				keyByte = []byte(key.(string))
 			case int:
 				keyByte, _ = IntToBytes(key.(int), 3)
-			case byte:
+			case []uint8:
 				keyByte = key.([]byte)
 			}
 
@@ -212,8 +214,8 @@ func SRem(bct string, key, val interface{}) error {
 				valByte = []byte(val.(string))
 			case int:
 				valByte, _ = IntToBytes(val.(int), 3)
-			case byte:
-				keyByte = key.([]byte)
+			case []uint8:
+				valByte = val.([]byte)
 			}
 			if err := tx.SRem(bct, keyByte, valByte); err != nil {
 				return err
@@ -226,6 +228,48 @@ func SRem(bct string, key, val interface{}) error {
 	return nil
 }
 
+//judge member if exist
+func SIsMem(bct string, key, val interface{}) bool {
+	var (
+		keyByte, valByte []byte
+		err              error
+	)
+	db := connect()
+	defer func() {
+		_ = db.Close()
+	}()
+
+	err = db.Update(
+		func(tx *nutsdb.Tx) error {
+			switch key.(type) {
+			case string:
+				keyByte = []byte(key.(string))
+			case int:
+				keyByte, _ = IntToBytes(key.(int), 3)
+			case []uint8:
+				keyByte = key.([]byte)
+			}
+
+			switch val.(type) {
+			case string:
+				valByte = []byte(val.(string))
+			case int:
+				valByte, _ = IntToBytes(val.(int), 3)
+			case []uint8:
+				valByte = val.([]byte)
+			}
+			if _, err := tx.SIsMember(bct, keyByte, valByte); err != nil {
+				return err
+			}
+			return nil
+		})
+	if err != nil {
+		return false
+	}
+	return true
+}
+
+//put key, value as list
 func LAdd(bct string, key, val interface{}) error {
 	var (
 		keyByte, valByte []byte
@@ -235,6 +279,7 @@ func LAdd(bct string, key, val interface{}) error {
 	defer func() {
 		_ = db.Close()
 	}()
+
 	err = db.Update(
 		func(tx *nutsdb.Tx) error {
 			switch key.(type) {
@@ -242,7 +287,7 @@ func LAdd(bct string, key, val interface{}) error {
 				keyByte = []byte(key.(string))
 			case int:
 				keyByte, _ = IntToBytes(key.(int), 3)
-			case byte:
+			case []uint8:
 				keyByte = key.([]byte)
 			}
 
@@ -250,14 +295,11 @@ func LAdd(bct string, key, val interface{}) error {
 			case string:
 				valByte = []byte(val.(string))
 			case int:
-				valByte, _ = IntToBytes(val.(int), 3)
-			case byte:
-				keyByte = key.([]byte)
+				valByte, _ = IntToBytes(val.(int), 4)
+			case []uint8:
+				valByte = val.([]byte)
 			}
-			if err := tx.RPush(bct, keyByte, valByte); err != nil {
-				return err
-			}
-			return nil
+			return tx.LPush(bct, keyByte, valByte)
 		})
 	if err != nil {
 		return err
@@ -265,6 +307,7 @@ func LAdd(bct string, key, val interface{}) error {
 	return nil
 }
 
+//get key from list
 func LIndex(bct string, key interface{}, s, e int) (error, [][]byte) {
 	var (
 		keyByte []byte
@@ -275,6 +318,7 @@ func LIndex(bct string, key interface{}, s, e int) (error, [][]byte) {
 	defer func() {
 		_ = db.Close()
 	}()
+
 	err = db.Update(
 		func(tx *nutsdb.Tx) error {
 			switch key.(type) {
@@ -282,7 +326,7 @@ func LIndex(bct string, key interface{}, s, e int) (error, [][]byte) {
 				keyByte = []byte(key.(string))
 			case int:
 				keyByte, _ = IntToBytes(key.(int), 3)
-			case byte:
+			case []uint8:
 				keyByte = key.([]byte)
 			}
 
@@ -295,82 +339,4 @@ func LIndex(bct string, key interface{}, s, e int) (error, [][]byte) {
 		return err, nil
 	}
 	return nil, item
-}
-
-//turn byte to int
-func BytesToInt(b []byte, isSymbol bool) (int, error) {
-	if isSymbol {
-		return bytesToIntS(b)
-	}
-	return bytesToIntU(b)
-}
-
-//字节数(大端)组转成int(无符号的)
-func bytesToIntU(b []byte) (int, error) {
-	if len(b) == 3 {
-		b = append([]byte{0}, b...)
-	}
-	bytesBuffer := bytes.NewBuffer(b)
-	switch len(b) {
-	case 1:
-		var tmp uint8
-		err := binary.Read(bytesBuffer, binary.BigEndian, &tmp)
-		return int(tmp), err
-	case 2:
-		var tmp uint16
-		err := binary.Read(bytesBuffer, binary.BigEndian, &tmp)
-		return int(tmp), err
-	case 4:
-		var tmp uint32
-		err := binary.Read(bytesBuffer, binary.BigEndian, &tmp)
-		return int(tmp), err
-	default:
-		return 0, fmt.Errorf("%s", "BytesToInt bytes lenth is invaild!")
-	}
-}
-
-//字节数(大端)组转成int(有符号)
-func bytesToIntS(b []byte) (int, error) {
-	if len(b) == 3 {
-		b = append([]byte{0}, b...)
-	}
-	bytesBuffer := bytes.NewBuffer(b)
-	switch len(b) {
-	case 1:
-		var tmp int8
-		err := binary.Read(bytesBuffer, binary.BigEndian, &tmp)
-		return int(tmp), err
-	case 2:
-		var tmp int16
-		err := binary.Read(bytesBuffer, binary.BigEndian, &tmp)
-		return int(tmp), err
-	case 4:
-		var tmp int32
-		err := binary.Read(bytesBuffer, binary.BigEndian, &tmp)
-		return int(tmp), err
-	default:
-		return 0, fmt.Errorf("%s", "BytesToInt bytes lenth is invaild!")
-	}
-}
-
-//整形转换成字节
-func IntToBytes(n int, b byte) ([]byte, error) {
-	switch b {
-	case 1:
-		tmp := int8(n)
-		bytesBuffer := bytes.NewBuffer([]byte{})
-		_ = binary.Write(bytesBuffer, binary.BigEndian, &tmp)
-		return bytesBuffer.Bytes(), nil
-	case 2:
-		tmp := int16(n)
-		bytesBuffer := bytes.NewBuffer([]byte{})
-		_ = binary.Write(bytesBuffer, binary.BigEndian, &tmp)
-		return bytesBuffer.Bytes(), nil
-	case 3, 4:
-		tmp := int32(n)
-		bytesBuffer := bytes.NewBuffer([]byte{})
-		_ = binary.Write(bytesBuffer, binary.BigEndian, &tmp)
-		return bytesBuffer.Bytes(), nil
-	}
-	return nil, fmt.Errorf("IntToBytes b param is invaild")
 }

@@ -40,6 +40,8 @@ type nutsDB struct {
 	Tag  struct {
 		Up           string `yaml:"up"`
 		Down         string `yaml:"down"`
+		SuccessCode  string `yaml:"successcode"`
+		FailureCode  string `yaml:"failurecode"`
 		UpstreamList string `yaml:"upstreamlist"`
 	} `yaml:"tag"`
 }

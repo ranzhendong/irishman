@@ -24,6 +24,8 @@ nutsdb:
   tag:
     up: Up
     down: Down
+    successcode: SCode
+    failurecode: FCode
     healthcheck: HC
     upstreamlist: UpstreamList
 

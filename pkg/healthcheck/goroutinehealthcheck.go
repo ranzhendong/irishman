@@ -1,33 +1,53 @@
 package healthcheck
 
 import (
-	"datastruck"
 	"encoding/json"
 	ErrH "errorhandle"
 	"etcd"
 	"fmt"
 	"log"
 	"lrishman/pkg/kvnuts"
+	"time"
 )
 
 type healthCheck struct {
-	Health   health   `json:"health"`
-	UnHealth unHealth `json:"unhealth"`
+	CheckProtocol string   `json:"checkProtocol"`
+	CheckPath     string   `json:"checkPath"`
+	Health        health   `json:"health"`
+	UnHealth      unHealth `json:"unhealth"`
 }
 
 type health struct {
-	Interval       int `json:"interval"`
-	SuccessTime    int `json:"successTime"`
-	SuccessTimeout int `json:"successTimeout"`
+	Interval       int   `json:"interval"`
+	SuccessTime    int   `json:"successTime"`
+	SuccessTimeout int   `json:"successTimeout"`
+	SuccessStatus  []int `json:"successStatus"`
 }
 
 //template and put UnHealth
 type unHealth struct {
-	Interval        int `json:"interval"`
-	FailuresTime    int `json:"failuresTime"`
-	FailuresTimeout int `json:"failuresTimeout"`
+	Interval        int   `json:"interval"`
+	FailuresTime    int   `json:"failuresTime"`
+	FailuresTimeout int   `json:"failuresTimeout"`
+	FailuresStatus  []int `json:"failuresStatus"`
 }
 
+/*
+All NutsDB bucket, key, and val
+
+|           f              |   set or list   |      bucket    |      key     |   val
+|  upstream list recode    |       set       |  UpstreamList  | UpstreamList |  ["vmims", "ew20", ...]
+|   up list recode         |       set       |        Up      |     vmims    |  ["192.168.101.59:8080", "192.168.101.61:8080", ...]
+|   down list recode       |       set       |      Down      |     vmims    |  ["192.168.101.59:9000", "192.168.101.61:9000", ...]
+| health check info recode |      list       |      vmims     |     vmims    |  ["http", "/", 3000, 3, 3000, 4500, 3, 2000]
+| health check info
+success status code recode |       set       |    Scodevmims  |     vmims    |  [200, 301, 302]
+| health check info
+Failure status code recode |       set       |    Fcodevmims  |     vmims    |  [400, 404, 500, 501, 502, 503, 504, 505]
+|health check status recode|      k/v        |  vmims+ipPort  |       s      |  times: 1
+|health check status recode|      k/v        |  vmims+ipPort  |       f      |  times: 1
+
+*/
 func UpDownToNuts() {
 	var (
 		err          error
@@ -67,6 +87,11 @@ func UpDownToNuts() {
 	TempToNuts()
 }
 
+/*
+[CheckProtocol, CheckPath, Health.Interval, Health.SuccessTime, Health.SuccessTimeout, UnHealth.Interval, UnHealth.FailuresTime, UnHealth.FailuresTimeout]
+[		0, 			  1, 			2, 				3, 						4, 					5, 						6, 						7	     ]
+storage health check info as list, but success code and failures code as set.
+*/
 func TempToNuts() {
 	var (
 		err          error
@@ -74,6 +99,7 @@ func TempToNuts() {
 		upstreamList [][]byte
 		h            healthCheck
 	)
+
 	//get upstream list from nutsDB
 	_, upstreamList = kvnuts.SMem(c.NutsDB.Tag.UpstreamList, c.NutsDB.Tag.UpstreamList)
 
@@ -93,32 +119,122 @@ func TempToNuts() {
 		_ = kvnuts.LAdd(string(v), v, h.Health.SuccessTimeout)
 		_ = kvnuts.LAdd(string(v), v, h.Health.SuccessTime)
 		_ = kvnuts.LAdd(string(v), v, h.Health.Interval)
+		_ = kvnuts.LAdd(string(v), v, h.CheckPath)
+		_ = kvnuts.LAdd(string(v), v, h.CheckProtocol)
 
+		//write status code
+		for _, t := range h.Health.SuccessStatus {
+			log.Println(t)
+			_ = kvnuts.SAdd(c.NutsDB.Tag.SuccessCode+string(v), v, t)
+		}
+		for _, t := range h.UnHealth.FailuresStatus {
+			log.Println(t)
+			_ = kvnuts.SAdd(c.NutsDB.Tag.FailureCode+string(v), v, t)
+		}
 	}
 
-	for _, v := range upstreamList {
-		log.Println("my string", string(v))
-		_, itmes := kvnuts.LIndex(string(v), v, 0, 1)
-		for _, v := range itmes {
-			log.Println(string(v))
+	HC()
+}
+
+func HC() {
+	var (
+		upstreamList [][]byte
+	)
+
+	_, upstreamList = kvnuts.SMem(c.NutsDB.Tag.UpstreamList, c.NutsDB.Tag.UpstreamList)
+
+	for _, k := range upstreamList {
+		log.Println("my string", string(k))
+		if _, item := kvnuts.LIndex(string(k), k, 0, 4); len(item) != 0 {
+			hp := string(item[0])
+			hps := string(item[1])
+			hi, _ := kvnuts.BytesToInt(item[2], true)
+			ht, _ := kvnuts.BytesToInt(item[3], true)
+			hto, _ := kvnuts.BytesToInt(item[4], true)
+			hfi, _ := kvnuts.BytesToInt(item[5], true)
+			hft, _ := kvnuts.BytesToInt(item[6], true)
+			hfto, _ := kvnuts.BytesToInt(item[7], true)
+			log.Println(string(k), hp, hps, hi, ht, hto, hfi, hft, hfto)
+			UpOneStart(string(k), hp, hps, hi, ht, hto, hfi, hft, hfto)
+			DownOneStart(string(k), hp, hps, hi, ht, hto, hfi, hft, hfto)
 		}
 	}
 }
 
-func UpHC(a []string, h datastruck.HealthCheck) {
-	log.Println(a)
-	log.Println(h)
-	for _, v := range a {
-		log.Println(v)
-		log.Println(TCP(v, h.Health.SuccessTimeout))
-		//_ = HTTP("vmims.eguagua.cn", h.Health.SuccessTimeout)go get github.com/boltdb/bolt/...
-		log.Println(HTTP(v+h.CheckPath, h.Health.SuccessTimeout))
-		log.Println(kvnuts.Put(v, v, h.Health.SuccessTime))
-		log.Println(kvnuts.Get(v, v, "i"))
+func UpOneStart(upstreamName, protocal, path string, sInterval, sTimes, sTimeout, fInterval, fTimes, fTimeout int) {
+	for {
+		time.Sleep(time.Duration(sInterval))
+		UpHC(upstreamName, protocal, path, fTimes, fTimeout)
 	}
-
 }
 
-func DownHC() {
+func DownOneStart(upstreamName, protocal, path string, sInterval, sTimes, sTimeout, fInterval, fTimes, fTimeout int) {
+	for {
+		time.Sleep(time.Duration(fInterval))
+		DownHC(upstreamName, protocal, path, sTimes, sTimeout)
+	}
+}
 
+func UpHC(upstreamName, protocal, path string, times, timeout int) {
+	// get the upstream up list
+	_, ipPort := kvnuts.SMem(c.NutsDB.Tag.Up, upstreamName)
+	if len(ipPort) == 0 {
+		return
+	}
+	for _, v := range ipPort {
+		log.Println(string(v))
+		if protocal == "http" {
+			_, statusCode := HTTP(string(v)+path, timeout)
+			log.Println(statusCode)
+			if !kvnuts.SIsMem(c.NutsDB.Tag.FailureCode+upstreamName, upstreamName, statusCode) {
+				return
+			}
+		} else {
+			if TCP(string(v), timeout) {
+				return
+			}
+		}
+		if CodeCount(upstreamName+string(v), "f", times) {
+			_ = kvnuts.SRem(c.NutsDB.Tag.Up, upstreamName, v)
+		}
+	}
+}
+
+func DownHC(upstreamName, protocal, path string, times, timeout int) {
+	// get the upstream up list
+	_, ipPort := kvnuts.SMem(c.NutsDB.Tag.Down, upstreamName)
+	if len(ipPort) == 0 {
+		return
+	}
+	for _, v := range ipPort {
+		log.Println(string(v))
+		if protocal == "http" {
+			_, statusCode := HTTP(string(v)+path, timeout)
+			log.Println(statusCode)
+			if kvnuts.SIsMem(c.NutsDB.Tag.SuccessCode+upstreamName, upstreamName, statusCode) {
+				return
+			}
+		} else {
+			if !TCP(string(v), timeout) {
+				return
+			}
+		}
+		if CodeCount(upstreamName+string(v), "s", times) {
+			_ = kvnuts.SRem(c.NutsDB.Tag.Down, upstreamName, v)
+		}
+	}
+}
+
+func CodeCount(n, key string, times int) bool {
+	log.Println(kvnuts.Get(n, key, "i"))
+	err, _, nTime := kvnuts.Get(n, key, "i")
+	if err != nil {
+		_ = kvnuts.Put(n, key, 1)
+		return false
+	}
+	if nTime < times {
+		_ = kvnuts.Put(n, key, nTime+1)
+		return false
+	}
+	return true
 }

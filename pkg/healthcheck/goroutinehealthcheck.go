@@ -35,17 +35,16 @@ type unHealth struct {
 /*
 All NutsDB bucket, key, and val
 
-|           f              |   set or list   |      bucket    |      key     |   val
-|  upstream list recode    |       set       |  UpstreamList  | UpstreamList |  ["vmims", "ew20", ...]
-|   up list recode         |       set       |        Up      |     vmims    |  ["192.168.101.59:8080", "192.168.101.61:8080", ...]
-|   down list recode       |       set       |      Down      |     vmims    |  ["192.168.101.59:9000", "192.168.101.61:9000", ...]
-| health check info recode |      list       |      vmims     |     vmims    |  ["http", "/", 3000, 3, 3000, 4500, 3, 2000]
-| health check info
-success status code recode |       set       |    Scodevmims  |     vmims    |  [200, 301, 302]
-| health check info
-Failure status code recode |       set       |    Fcodevmims  |     vmims    |  [400, 404, 500, 501, 502, 503, 504, 505]
-|health check status recode|      k/v        |  vmims+ipPort  |       s      |  times: 1
-|health check status recode|      k/v        |  vmims+ipPort  |       f      |  times: 1
+for example TheUpstream=vmims
+|                       f                      |   set or list   |         bucket        |         key        |   val
+|             upstream list recode             |       set       |      UpstreamList     |     UpstreamList   |  ["TheUpstream", "TheUpstream-01", ...]
+|                up list recode                |       set       |           Up          |     TheUpstream    |  ["192.168.101.59:8080", "192.168.101.61:8080", ...]
+|               down list recode               |       set       |          Down         |     TheUpstream    |  ["192.168.101.59:9000", "192.168.101.61:9000", ...]
+|           health check info recode           |      list       |      TheUpstream      |     TheUpstream    |  ["http", "/", 3000, 3, 3000, 4500, 3, 2000]
+| health check info success status code recode |       set       |    ScodeTheUpstream   |     TheUpstream    |  [200, 301, 302]
+| health check info Failure status code recode |       set       |    FcodeTheUpstream   |     TheUpstream    |  [400, 404, 500, 501, 502, 503, 504, 505]
+|          health check status recode          |       k/v       |  TheUpstream+ipPort   |          s         |  times: 1
+|          health check status recode          |       k/v       |  TheUpstream+ipPort   |          f         |  times: 1
 
 */
 func UpDownToNuts() {
@@ -112,7 +111,6 @@ func TempToNuts() {
 		if err := json.Unmarshal([]byte(val), &h); err != nil {
 			log.Println(ErrH.ErrorLog(11005))
 		}
-
 		_ = kvnuts.LAdd(string(v), v, h.UnHealth.FailuresTimeout)
 		_ = kvnuts.LAdd(string(v), v, h.UnHealth.FailuresTime)
 		_ = kvnuts.LAdd(string(v), v, h.UnHealth.Interval)
@@ -121,14 +119,16 @@ func TempToNuts() {
 		_ = kvnuts.LAdd(string(v), v, h.Health.Interval)
 		_ = kvnuts.LAdd(string(v), v, h.CheckPath)
 		_ = kvnuts.LAdd(string(v), v, h.CheckProtocol)
-
+		//if _, item := kvnuts.LIndex(string(v), v, 0, 4); len(item) != 0 {
+		//	log.Println(item)
+		//}
 		//write status code
 		for _, t := range h.Health.SuccessStatus {
-			log.Println(t)
+			//log.Println(t)
 			_ = kvnuts.SAdd(c.NutsDB.Tag.SuccessCode+string(v), v, t)
 		}
 		for _, t := range h.UnHealth.FailuresStatus {
-			log.Println(t)
+			//log.Println(t)
 			_ = kvnuts.SAdd(c.NutsDB.Tag.FailureCode+string(v), v, t)
 		}
 	}
@@ -145,7 +145,10 @@ func HC() {
 
 	for _, k := range upstreamList {
 		log.Println("my string", string(k))
-		if _, item := kvnuts.LIndex(string(k), k, 0, 4); len(item) != 0 {
+
+		//list has eight data, so index[0-7]
+		log.Println(kvnuts.LIndex(string(k), k, 0, 7))
+		if _, item := kvnuts.LIndex(string(k), k, 0, 7); len(item) != 0 {
 			hp := string(item[0])
 			hps := string(item[1])
 			hi, _ := kvnuts.BytesToInt(item[2], true)
@@ -155,8 +158,9 @@ func HC() {
 			hft, _ := kvnuts.BytesToInt(item[6], true)
 			hfto, _ := kvnuts.BytesToInt(item[7], true)
 			log.Println(string(k), hp, hps, hi, ht, hto, hfi, hft, hfto)
-			UpOneStart(string(k), hp, hps, hi, ht, hto, hfi, hft, hfto)
-			DownOneStart(string(k), hp, hps, hi, ht, hto, hfi, hft, hfto)
+			go UpOneStart(string(k), hp, hps, hi, ht, hto, hfi, hft, hfto)
+			go DownOneStart(string(k), hp, hps, hi, ht, hto, hfi, hft, hfto)
+			//log.Println(kvnuts.Get(c.NutsDB.Tag.Up, string(k), "s"))
 		}
 	}
 }
@@ -196,12 +200,13 @@ func UpHC(upstreamName, protocal, path string, times, timeout int) {
 		}
 		if CodeCount(upstreamName+string(v), "f", times) {
 			_ = kvnuts.SRem(c.NutsDB.Tag.Up, upstreamName, v)
+			_ = kvnuts.SAdd(c.NutsDB.Tag.Down, upstreamName, v)
 		}
 	}
 }
 
 func DownHC(upstreamName, protocal, path string, times, timeout int) {
-	// get the upstream up list
+	// get the upstream down list
 	_, ipPort := kvnuts.SMem(c.NutsDB.Tag.Down, upstreamName)
 	if len(ipPort) == 0 {
 		return
@@ -221,6 +226,7 @@ func DownHC(upstreamName, protocal, path string, times, timeout int) {
 		}
 		if CodeCount(upstreamName+string(v), "s", times) {
 			_ = kvnuts.SRem(c.NutsDB.Tag.Down, upstreamName, v)
+			_ = kvnuts.SAdd(c.NutsDB.Tag.Up, upstreamName, v)
 		}
 	}
 }
@@ -228,13 +234,17 @@ func DownHC(upstreamName, protocal, path string, times, timeout int) {
 func CodeCount(n, key string, times int) bool {
 	log.Println(kvnuts.Get(n, key, "i"))
 	err, _, nTime := kvnuts.Get(n, key, "i")
+
 	if err != nil {
 		_ = kvnuts.Put(n, key, 1)
 		return false
 	}
+
 	if nTime < times {
 		_ = kvnuts.Put(n, key, nTime+1)
 		return false
 	}
+
+	_ = kvnuts.Del(n, key)
 	return true
 }

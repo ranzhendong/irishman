@@ -115,6 +115,38 @@ func Get(bct string, key interface{}, valType string) (err error, myReturn strin
 	return
 }
 
+//del key
+func Del(bct string, key interface{}) error {
+	var (
+		keyByte []byte
+		err     error
+	)
+	db := connect()
+	defer func() {
+		_ = db.Close()
+	}()
+
+	err = db.Update(
+		func(tx *nutsdb.Tx) error {
+			switch key.(type) {
+			case string:
+				keyByte = []byte(key.(string))
+			case int:
+				keyByte, _ = IntToBytes(key.(int), 3)
+			case []uint8:
+				keyByte = key.([]byte)
+			}
+			if err = tx.Delete(bct, keyByte); err != nil {
+				return err
+			}
+			return nil
+		})
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
 //put key, value as set
 func SAdd(bct string, key, val interface{}) error {
 	var (
@@ -308,6 +340,7 @@ func LAdd(bct string, key, val interface{}) error {
 }
 
 //get key from list
+// s and e as index of list,
 func LIndex(bct string, key interface{}, s, e int) (error, [][]byte) {
 	var (
 		keyByte []byte

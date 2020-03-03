@@ -31,7 +31,7 @@ func Config() (err error) {
 		os.Exit(1)
 		return
 	}
-	log.Printf(ErrH.ErrorLog(6141), fmt.Sprintf("%v", pwd))
+	log.Print(ErrH.ErrorLog(6141), " ", pwd)
 
 	//Find and read the config and token file
 	if err = viper.ReadInConfig(); err != nil {

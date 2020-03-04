@@ -7,8 +7,8 @@ import (
 	"etcd"
 	"fmt"
 	"github.com/coreos/etcd/mvcc/mvccpb"
+	"kvnuts"
 	"log"
-	"lrishman/pkg/kvnuts"
 	"time"
 )
 

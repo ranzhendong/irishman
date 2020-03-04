@@ -61,7 +61,6 @@ func init() {
 	mux[010] = "Url Not Exist"
 	mux[011] = "HTTP Server Init Error"
 	mux[012] = "Config Json: UNMarshal Error"
-	mux[013] = "Remove: No NutsDB File Error"
 
 	mux[101] = "Etcd Put: Put Key Error"
 	mux[102] = "Etcd Get: Key Not Exist Error"
@@ -70,6 +69,9 @@ func init() {
 	mux[105] = "Etcd Delete: Error"
 	mux[106] = "Etcd Delete: Etcd Key's Pool Has One ServerList At Least, Delete Canceled !"
 	mux[107] = "Etcd Delete: Etcd Key's Pool Has One ServerList At Least, Can Not Delete Them ALL !"
+
+	mux[123] = "Remove: NutsDB File Remove Failed Error"
+	mux[124] = "Judge Remove: NutsDB File Still Exist Error"
 
 	mux[140] = "Config Change Reloading"
 	mux[141] = "IrishMan Is Running With Execute Path"

@@ -8,6 +8,7 @@ import (
 	"healthcheck"
 	myInit "init"
 	"io"
+	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
@@ -43,7 +44,16 @@ func main() {
 
 	//remove nutsDB
 	if err = os.RemoveAll(c.NutsDB.Path); err != nil {
-		log.Println(ErrH.ErrorLog(11103), fmt.Sprintf("; %v", err))
+		log.Println(ErrH.ErrorLog(12123), fmt.Sprintf("; %v", err))
+	}
+
+	//judge if remove nutsDB successful
+	if files, err := ioutil.ReadDir(c.NutsDB.Path); err == nil {
+		var f os.FileInfo
+		for _, f = range files {
+			log.Println(ErrH.ErrorLog(12124), fmt.Sprintf(";The file:%v", f.Name()))
+		}
+		return
 	}
 
 	//initialize health check

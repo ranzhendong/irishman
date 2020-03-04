@@ -5,8 +5,8 @@ import (
 	ErrH "errorhandle"
 	"etcd"
 	"fmt"
+	"kvnuts"
 	"log"
-	"lrishman/pkg/kvnuts"
 	"time"
 )
 
@@ -145,7 +145,6 @@ func HC() {
 
 	for _, k := range upstreamList {
 		log.Println("my string", string(k))
-
 		//list has eight data, so index[0-7]
 		log.Println(kvnuts.LIndex(string(k), k, 0, 7))
 		if _, item := kvnuts.LIndex(string(k), k, 0, 7); len(item) != 0 {
@@ -161,6 +160,24 @@ func HC() {
 			go UpOneStart(string(k), hp, hps, hi, ht, hto, hfi, hft, hfto)
 			go DownOneStart(string(k), hp, hps, hi, ht, hto, hfi, hft, hfto)
 			//log.Println(kvnuts.Get(c.NutsDB.Tag.Up, string(k), "s"))
+			go test(k)
+		}
+	}
+}
+
+func test(v []byte) {
+	var l [][]byte
+	for {
+		time.Sleep(2 * time.Second)
+		_, l = kvnuts.SMem(c.NutsDB.Tag.Up, v)
+		log.Println("TEST Success: ", string(v))
+		for _, s := range l {
+			log.Println("Success:", string(s))
+		}
+		_, l = kvnuts.SMem(c.NutsDB.Tag.Down, v)
+		log.Println("TEST Failure: ", string(v))
+		for _, s := range l {
+			log.Println("Failure:", string(s))
 		}
 	}
 }
@@ -189,7 +206,7 @@ func UpHC(upstreamName, protocal, path string, times, timeout int) {
 		log.Println(string(v))
 		if protocal == "http" {
 			_, statusCode := HTTP(string(v)+path, timeout)
-			log.Println(statusCode)
+			log.Println(upstreamName, string(v), statusCode)
 			if !kvnuts.SIsMem(c.NutsDB.Tag.FailureCode+upstreamName, upstreamName, statusCode) {
 				return
 			}
@@ -215,10 +232,11 @@ func DownHC(upstreamName, protocal, path string, times, timeout int) {
 		log.Println(string(v))
 		if protocal == "http" {
 			_, statusCode := HTTP(string(v)+path, timeout)
-			log.Println(statusCode)
-			if kvnuts.SIsMem(c.NutsDB.Tag.SuccessCode+upstreamName, upstreamName, statusCode) {
+			log.Println(upstreamName, string(v), statusCode)
+			if !kvnuts.SIsMem(c.NutsDB.Tag.SuccessCode+upstreamName, upstreamName, statusCode) {
 				return
 			}
+			break
 		} else {
 			if !TCP(string(v), timeout) {
 				return

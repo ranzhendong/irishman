@@ -271,7 +271,7 @@ func SIsMem(bct string, key, val interface{}) bool {
 		_ = db.Close()
 	}()
 
-	err = db.Update(
+	err = db.View(
 		func(tx *nutsdb.Tx) error {
 			switch key.(type) {
 			case string:
@@ -352,7 +352,7 @@ func LIndex(bct string, key interface{}, s, e int) (error, [][]byte) {
 		_ = db.Close()
 	}()
 
-	err = db.Update(
+	err = db.View(
 		func(tx *nutsdb.Tx) error {
 			switch key.(type) {
 			case string:

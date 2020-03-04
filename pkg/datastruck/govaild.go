@@ -56,7 +56,7 @@ func (self *IpPortValidator) Validate(params map[string]interface{}, val reflect
 	}
 
 	a, err := strconv.Atoi(arr[1])
-	if int(1024) >= a || int(65535) <= a {
+	if int(0) >= a || int(65535) <= a {
 		err = fmt.Errorf("Validate: Invalid Port %v ", arr[1])
 		return false, err
 	}

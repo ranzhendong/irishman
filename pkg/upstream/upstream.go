@@ -253,7 +253,6 @@ func PatchUpstream(jsonObj interface{}, timeNow time.Time) *ErrH.MyError {
 						RequestIpPort := fv.(map[string]interface{})["ipPort"]
 						RequestStatus := fv.(map[string]interface{})["status"]
 						RequestWeight := fv.(map[string]interface{})["weight"]
-
 						if k == "ipPort" && ev.(map[string]interface{})["ipPort"] == sv {
 							if fv.(map[string]interface{})["weight"].(float64) == 0 {
 								UpstreamPool = append(UpstreamPool, map[string]interface{}{"ipPort": etcdIpPort, "status": RequestStatus, "weight": etcdWeight})

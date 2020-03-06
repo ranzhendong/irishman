@@ -2,7 +2,6 @@ package init
 
 import (
 	ErrH "errorhandle"
-	"fmt"
 	"github.com/fsnotify/fsnotify"
 	"github.com/spf13/viper"
 	"log"
@@ -24,7 +23,7 @@ func Config() (err error) {
 	//watch the config change
 	viper.WatchConfig()
 	viper.OnConfigChange(func(e fsnotify.Event) {
-		log.Printf(ErrH.ErrorLog(6140), fmt.Sprintf("%v", e.Name))
+		log.Printf(ErrH.ErrorLog(6140), " ", e.Name)
 	})
 
 	if pwd, err = os.Getwd(); err != nil {

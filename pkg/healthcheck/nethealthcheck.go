@@ -2,7 +2,6 @@ package healthcheck
 
 import (
 	"crypto/tls"
-	"log"
 	"net"
 	"net/http"
 	"time"
@@ -28,7 +27,7 @@ func HTTP(request string, t int) (err error, code int) {
 
 	defer func() {
 		_ = recover()
-		log.Println("defer err", err)
+		//log.Println("defer err", err)
 		if err == nil {
 			_ = myResponse.Body.Close()
 		}
@@ -46,12 +45,10 @@ func HTTP(request string, t int) (err error, code int) {
 
 	//request
 	request = "http://" + request
-	//log.Println(request, t)
 	myRequest, err = http.NewRequest("PUT", request, nil)
-	log.Println("NewRequest: ", err)
 	//set my request
 	if myResponse, err = client.Do(myRequest); err != nil {
-		log.Println("myResponse err: ", err)
+		//log.Println("myResponse err: ", err)
 		code = 504
 		return
 	}

@@ -57,15 +57,18 @@ func main() {
 	}
 
 	//initialize health check
-	go healthcheck.InitHealthCheck(time.Now())
+	//go healthcheck.InitHealthCheck(time.Now())
 
-	// server start
+	//config about server
 	server := http.Server{
 		Addr:         c.Server.Bind,
 		Handler:      &myHandler{},
 		ReadTimeout:  time.Duration(c.Server.ReadTimeout) * time.Second,
 		WriteTimeout: time.Duration(c.Server.WriteTimeout) * time.Second,
 	}
+
+	// server start
+	log.Println(ErrH.ErrorLog(142))
 	if err = server.ListenAndServe(); err != nil {
 		log.Printf(ErrH.ErrorLog(0011, fmt.Sprintf("%v", err)))
 	}

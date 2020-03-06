@@ -75,6 +75,7 @@ func init() {
 
 	mux[140] = "Config Change Reloading"
 	mux[141] = "IrishMan Is Running With Execute Path"
+	mux[142] = "IrishMan Start Successful"
 
 	mux[151] = "HealthCheck Config Initialize"
 	mux[152] = "SuccessStatus Has One Code At Least "

@@ -239,64 +239,46 @@ func PatchUpstream(jsonObj interface{}, timeNow time.Time) *ErrH.MyError {
 		   1.1 weight存在 （列表增加，更新三条内容）
 		   1.2 weight不存在 （放弃）
 	*/
-	if len(puData["pool"].([]interface{})) == 1 {
-		log.Println(puData["pool"].([]interface{})[0].(map[string]interface{})["ipPort"].(string))
-		for _, k := range etcdData["pool"].([]interface{}) {
-			log.Println(k)
-			log.Println(puData["pool"].([]interface{})[0].(map[string]interface{})["ipPort"].(string))
-			//if k.(map[string]interface{})["ipPort"] == puData["pool"].([]interface{})[0].(map[string]interface{})["ipPort"] {
-			//	log.Println("sssss")
-			//}
+	//replace algorithms data
+	if etcdData["algorithms"].(string) != puData["algorithms"].(string) {
+		etcdData["algorithms"] = puData["algorithms"].(string)
+	}
+
+	//replace upstream list
+	if puData["pool"] != nil {
+		for i := 0; i < len(puData["pool"].([]interface{})); i++ {
+			RequestIpPort := puData["pool"].([]interface{})[i].(map[string]interface{})["ipPort"]
+			RequestStatus := puData["pool"].([]interface{})[i].(map[string]interface{})["status"]
+			RequestWeight := puData["pool"].([]interface{})[i].(map[string]interface{})["weight"]
+
+			for e := 0; e < len(etcdData["pool"].([]interface{})); e++ {
+				etcdIpPort := etcdData["pool"].([]interface{})[e].(map[string]interface{})["ipPort"]
+				etcdStatus := etcdData["pool"].([]interface{})[e].(map[string]interface{})["status"]
+				etcdWeight := etcdData["pool"].([]interface{})[e].(map[string]interface{})["weight"]
+
+				if etcdIpPort == RequestIpPort {
+					if RequestWeight.(float64) == 0 {
+						etcdData["pool"].([]interface{})[e].(map[string]interface{})["status"] = RequestStatus.(string)
+						UpstreamPool = append(UpstreamPool, map[string]interface{}{"ipPort": etcdIpPort, "status": RequestStatus, "weight": etcdWeight.(float64)})
+					} else {
+						etcdData["pool"].([]interface{})[e].(map[string]interface{})["status"] = RequestStatus.(string)
+						etcdData["pool"].([]interface{})[e].(map[string]interface{})["weight"] = RequestWeight.(float64)
+						UpstreamPool = append(UpstreamPool, map[string]interface{}{"ipPort": etcdIpPort, "status": RequestStatus, "weight": RequestWeight})
+					}
+					goto breakFor
+				} else {
+					if RequestWeight.(float64) != 0 {
+						UpstreamPool = append(UpstreamPool, map[string]interface{}{"ipPort": RequestIpPort, "status": RequestStatus, "weight": RequestWeight})
+					}
+				}
+
+				// just for sure if not one server match
+				//append the etcd data
+				UpstreamPool = append(UpstreamPool, map[string]interface{}{"ipPort": etcdIpPort, "status": etcdStatus, "weight": etcdWeight})
+			}
+		breakFor:
 		}
 	}
-	//for k, v := range puData {
-	//	if k == "pool" {
-	//		//log.Println()
-	//		if len(v.([]interface{})) == 1 {
-	//			for _, k := range etcdData["pool"].([]interface{}) {
-	//				if k.(map[string]interface{})["ipPort"] == v {
-	//
-	//				}
-	//			}
-	//		} else {
-	//			goto JUST
-	//		}
-	//	}
-	//}
-
-	//replace data
-	//for k, v := range puData {
-	//	if k != "pool" {
-	//		etcdData[k] = puData[k]
-	//	}
-	//	if k == "pool" && v != nil {
-	//		for _, ev := range etcdData["pool"].([]interface{}) {
-	//			for _, fv := range v.([]interface{}) {
-	//				for k, sv := range fv.(map[string]interface{}) {
-	//					etcdIpPort := ev.(map[string]interface{})["ipPort"]
-	//					etcdWeight := ev.(map[string]interface{})["weight"]
-	//					RequestIpPort := fv.(map[string]interface{})["ipPort"]
-	//					RequestStatus := fv.(map[string]interface{})["status"]
-	//					RequestWeight := fv.(map[string]interface{})["weight"]
-	//					if k == "ipPort" && ev.(map[string]interface{})["ipPort"] == sv {
-	//						if fv.(map[string]interface{})["weight"].(float64) == 0 {
-	//							UpstreamPool = append(UpstreamPool, map[string]interface{}{"ipPort": etcdIpPort, "status": RequestStatus, "weight": etcdWeight})
-	//							continue
-	//						} else {
-	//							UpstreamPool = append(UpstreamPool, map[string]interface{}{"ipPort": etcdIpPort, "status": RequestStatus, "weight": RequestWeight})
-	//						}
-	//					} else if k == "ipPort" && ev.(map[string]interface{})["ipPort"] != sv {
-	//						if fv.(map[string]interface{})["weight"].(float64) == 0 {
-	//							continue
-	//						} else {
-	//							UpstreamPool = append(UpstreamPool, map[string]interface{}{"ipPort": RequestIpPort, "status": RequestStatus, "weight": RequestWeight})
-	//						}
-	//					}
-	//				}
-	//			}
-	//		}
-	//	}
-	//}
 
 	//de-weight
 	etcdData["pool"] = removeRepByMap(UpstreamPool)

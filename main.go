@@ -57,7 +57,7 @@ func main() {
 	}
 
 	//initialize health check
-	//go healthcheck.InitHealthCheck(time.Now())
+	go healthcheck.InitHealthCheck(time.Now())
 
 	//config about server
 	server := http.Server{

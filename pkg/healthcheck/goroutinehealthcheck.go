@@ -119,9 +119,7 @@ func TempToNuts() {
 		_ = kvnuts.LAdd(string(v), v, h.Health.Interval)
 		_ = kvnuts.LAdd(string(v), v, h.CheckPath)
 		_ = kvnuts.LAdd(string(v), v, h.CheckProtocol)
-		//if _, item := kvnuts.LIndex(string(v), v, 0, 4); len(item) != 0 {
-		//	log.Println(item)
-		//}
+
 		//write status code
 		for _, t := range h.Health.SuccessStatus {
 			//log.Println(t)
@@ -156,10 +154,9 @@ func HC() {
 			hfi, _ := kvnuts.BytesToInt(item[5], true)
 			hft, _ := kvnuts.BytesToInt(item[6], true)
 			hfto, _ := kvnuts.BytesToInt(item[7], true)
-			log.Println(string(k), hp, hps, hi, ht, hto, hfi, hft, hfto)
+			//log.Println(string(k), hp, hps, hi, ht, hto, hfi, hft, hfto)
 			go UpOneStart(string(k), hp, hps, hi, ht, hto, hfi, hft, hfto)
 			go DownOneStart(string(k), hp, hps, hi, ht, hto, hfi, hft, hfto)
-			//log.Println(kvnuts.Get(c.NutsDB.Tag.Up, string(k), "s"))
 			go test(k)
 		}
 	}
@@ -170,28 +167,26 @@ func test(v []byte) {
 	for {
 		time.Sleep(2 * time.Second)
 		_, l = kvnuts.SMem(c.NutsDB.Tag.Up, v)
-		log.Println("TEST Success: ", string(v))
 		for _, s := range l {
-			log.Println("Success:", string(s))
+			log.Println(string(v), "Success:", string(s))
 		}
 		_, l = kvnuts.SMem(c.NutsDB.Tag.Down, v)
-		log.Println("TEST Failure: ", string(v))
 		for _, s := range l {
-			log.Println("Failure:", string(s))
+			log.Println(string(v), "Failure:", string(s))
 		}
 	}
 }
 
 func UpOneStart(upstreamName, protocal, path string, sInterval, sTimes, sTimeout, fInterval, fTimes, fTimeout int) {
 	for {
-		time.Sleep(time.Duration(sInterval))
+		time.Sleep(time.Duration(sInterval) * time.Millisecond)
 		UpHC(upstreamName, protocal, path, fTimes, fTimeout)
 	}
 }
 
 func DownOneStart(upstreamName, protocal, path string, sInterval, sTimes, sTimeout, fInterval, fTimes, fTimeout int) {
 	for {
-		time.Sleep(time.Duration(fInterval))
+		time.Sleep(time.Duration(fInterval) * time.Millisecond)
 		DownHC(upstreamName, protocal, path, sTimes, sTimeout)
 	}
 }
@@ -202,22 +197,28 @@ func UpHC(upstreamName, protocal, path string, times, timeout int) {
 	if len(ipPort) == 0 {
 		return
 	}
-	for _, v := range ipPort {
-		log.Println(string(v))
+
+	//check every ip port
+	for i := 0; i < len(ipPort); i++ {
+		ip := ipPort[i]
 		if protocal == "http" {
-			_, statusCode := HTTP(string(v)+path, timeout)
-			log.Println(upstreamName, string(v), statusCode)
-			if !kvnuts.SIsMem(c.NutsDB.Tag.FailureCode+upstreamName, upstreamName, statusCode) {
-				return
+			_, statusCode := HTTP(string(ip)+path, timeout)
+			log.Println(upstreamName, string(ip), statusCode)
+
+			//the status code can not be in failure, and must be in success code.
+			if !kvnuts.SIsMem(c.NutsDB.Tag.FailureCode+upstreamName, upstreamName, statusCode) &&
+				kvnuts.SIsMem(c.NutsDB.Tag.SuccessCode+upstreamName, upstreamName, statusCode) {
+				continue
 			}
 		} else {
-			if TCP(string(v), timeout) {
-				return
+			if TCP(string(ip), timeout) {
+				continue
 			}
 		}
-		if CodeCount(upstreamName+string(v), "f", times) {
-			_ = kvnuts.SRem(c.NutsDB.Tag.Up, upstreamName, v)
-			_ = kvnuts.SAdd(c.NutsDB.Tag.Down, upstreamName, v)
+
+		if CodeCount(upstreamName+string(ip), "f", times) {
+			_ = kvnuts.SRem(c.NutsDB.Tag.Up, upstreamName, ip)
+			_ = kvnuts.SAdd(c.NutsDB.Tag.Down, upstreamName, ip)
 		}
 	}
 }
@@ -228,36 +229,44 @@ func DownHC(upstreamName, protocal, path string, times, timeout int) {
 	if len(ipPort) == 0 {
 		return
 	}
-	for _, v := range ipPort {
-		log.Println(string(v))
+
+	//check every ip port
+	for i := 0; i < len(ipPort); i++ {
+		ip := ipPort[i]
+		log.Println(string(ip))
 		if protocal == "http" {
-			_, statusCode := HTTP(string(v)+path, timeout)
-			log.Println(upstreamName, string(v), statusCode)
+			_, statusCode := HTTP(string(ip)+path, timeout)
+			log.Println(upstreamName, string(ip), statusCode)
+
+			//the status code must be in success
 			if !kvnuts.SIsMem(c.NutsDB.Tag.SuccessCode+upstreamName, upstreamName, statusCode) {
-				return
+				continue
 			}
-			break
 		} else {
-			if !TCP(string(v), timeout) {
-				return
+			if !TCP(string(ip), timeout) {
+				continue
 			}
 		}
-		if CodeCount(upstreamName+string(v), "s", times) {
-			_ = kvnuts.SRem(c.NutsDB.Tag.Down, upstreamName, v)
-			_ = kvnuts.SAdd(c.NutsDB.Tag.Up, upstreamName, v)
+
+		if CodeCount(upstreamName+string(ip), "s", times) {
+			_ = kvnuts.SRem(c.NutsDB.Tag.Down, upstreamName, ip)
+			_ = kvnuts.SAdd(c.NutsDB.Tag.Up, upstreamName, ip)
 		}
 	}
 }
 
+// success && failed counter
 func CodeCount(n, key string, times int) bool {
 	log.Println(kvnuts.Get(n, key, "i"))
 	err, _, nTime := kvnuts.Get(n, key, "i")
 
+	//first be counted
 	if err != nil {
 		_ = kvnuts.Put(n, key, 1)
 		return false
 	}
 
+	//counted times less than healthCheck items
 	if nTime < times {
 		_ = kvnuts.Put(n, key, nTime+1)
 		return false

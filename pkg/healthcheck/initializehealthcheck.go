@@ -33,7 +33,9 @@ func InitHealthCheck(timeNow time.Time) *ErrH.MyError {
 		val                            []*mvccpb.KeyValue
 		upstreamList, downUpstreamList []string
 		healthCheckByte, b             []byte
+		upstreamListByte               [][]byte
 		u                              upstream
+		h                              healthCheck
 	)
 
 	//config loading
@@ -85,8 +87,91 @@ func InitHealthCheck(timeNow time.Time) *ErrH.MyError {
 	}
 
 	//split Up, Down from upstream list
-	UpDownToNuts()
+	//config loading
+	if err = c.Config(); err != nil {
+		log.Println(ErrH.ErrorLog(11012), fmt.Sprintf("%v", err))
+	}
+
+	//get upstream list from nutsDB
+	_, upstreamListByte = kvnuts.SMem(c.NutsDB.Tag.UpstreamList, c.NutsDB.Tag.UpstreamList)
+
+	for _, v := range upstreamListByte {
+		var val string
+		if err, val = etcd.EtcGet(c.Upstream.EtcdPrefix + strFirstToUpper(string(v))); err != nil {
+			log.Println(ErrH.ErrorLog(11102), fmt.Sprintf("; %v", err))
+		}
+		if err := json.Unmarshal([]byte(val), &u); err != nil {
+			log.Println(ErrH.ErrorLog(11005))
+		}
+
+		UpDownToNuts(&u)
+
+		//health check to nuts
+		if err, val = etcd.EtcGet(c.HealthCheck.EtcdPrefix + strFirstToUpper(string(v))); err != nil {
+			log.Println(ErrH.ErrorLog(11102), fmt.Sprintf("; %v", err))
+		}
+		if err := json.Unmarshal([]byte(val), &h); err != nil {
+			log.Println(ErrH.ErrorLog(11005))
+		}
+
+		TempToNuts(v, &h)
+
+	}
+
+	//ready to hc
+	//HC()
 
 	log.Println(ErrH.ErrorLog(000, fmt.Sprintf(" HealthCheck %v", string(b))))
 	return &ErrH.MyError{Code: 000, TimeStamp: timeNow}
+}
+
+/*
+All NutsDB bucket, key, and val
+
+for example TheUpstream=vmims
+|                       f                      |   set or list   |         bucket        |         key        |   val
+|             upstream list recode             |       set       |      UpstreamList     |     UpstreamList   |  ["TheUpstream", "TheUpstream-01", ...]
+|                up list recode                |       set       |           Up          |     TheUpstream    |  ["192.168.101.59:8080", "192.168.101.61:8080", ...]
+|               down list recode               |       set       |          Down         |     TheUpstream    |  ["192.168.101.59:9000", "192.168.101.61:9000", ...]
+|           health check info recode           |      list       |      TheUpstream      |     TheUpstream    |  ["http", "/", 3000, 3, 3000, 4500, 3, 2000]
+| health check info success status code recode |       set       |    ScodeTheUpstream   |     TheUpstream    |  [200, 301, 302]
+| health check info Failure status code recode |       set       |    FcodeTheUpstream   |     TheUpstream    |  [400, 404, 500, 501, 502, 503, 504, 505]
+|          health check status recode          |       k/v       |  TheUpstream+ipPort   |          s         |  times: 1
+|          health check status recode          |       k/v       |  TheUpstream+ipPort   |          f         |  times: 1
+
+*/
+func UpDownToNuts(u *upstream) {
+	for _, v := range u.Pool {
+		if v.Status == "up" {
+			_ = kvnuts.SAdd(c.NutsDB.Tag.Up, u.UpstreamName, v.IpPort)
+		} else {
+			_ = kvnuts.SAdd(c.NutsDB.Tag.Down, u.UpstreamName, v.IpPort)
+		}
+	}
+}
+
+/*
+[CheckProtocol, CheckPath, Health.Interval, Health.SuccessTime, Health.SuccessTimeout, UnHealth.Interval, UnHealth.FailuresTime, UnHealth.FailuresTimeout]
+[		0, 			  1, 			2, 				3, 						4, 					5, 						6, 						7	     ]
+storage health check info as list, but success code and failures code as set.
+*/
+func TempToNuts(v []byte, h *healthCheck) {
+	_ = kvnuts.LAdd(string(v), v, h.UnHealth.FailuresTimeout)
+	_ = kvnuts.LAdd(string(v), v, h.UnHealth.FailuresTime)
+	_ = kvnuts.LAdd(string(v), v, h.UnHealth.Interval)
+	_ = kvnuts.LAdd(string(v), v, h.Health.SuccessTimeout)
+	_ = kvnuts.LAdd(string(v), v, h.Health.SuccessTime)
+	_ = kvnuts.LAdd(string(v), v, h.Health.Interval)
+	_ = kvnuts.LAdd(string(v), v, h.CheckPath)
+	_ = kvnuts.LAdd(string(v), v, h.CheckProtocol)
+
+	//write status code
+	for _, t := range h.Health.SuccessStatus {
+		//log.Println(t)
+		_ = kvnuts.SAdd(c.NutsDB.Tag.SuccessCode+string(v), v, t)
+	}
+	for _, t := range h.UnHealth.FailuresStatus {
+		//log.Println(t)
+		_ = kvnuts.SAdd(c.NutsDB.Tag.FailureCode+string(v), v, t)
+	}
 }

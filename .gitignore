@@ -2,4 +2,6 @@
 .idea/$CACHE_FILE$
 .idea/.gitignore
 .idea/watcherTasks.xml
+
 src/NutsDBStorage
+.DS_Store

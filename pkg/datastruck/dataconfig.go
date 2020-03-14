@@ -2,7 +2,7 @@ package datastruck
 
 import (
 	"fmt"
-	ErrH "github.com/ranzhendong/irishman/src/errorhandle"
+	MyERR "github.com/ranzhendong/irishman/pkg/errorhandle"
 	"github.com/spf13/viper"
 	"log"
 )
@@ -58,7 +58,7 @@ type healthcheck struct {
 
 func (self *Config) Config() (err error) {
 	if err = viper.Unmarshal(&self); err != nil {
-		log.Printf(ErrH.ErrorLog(0142), fmt.Sprintf("%v", err))
+		log.Printf(MyERR.ErrorLog(0142), fmt.Sprintf("%v", err))
 		return
 	}
 	return nil

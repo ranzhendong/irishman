@@ -2,7 +2,8 @@ package healthcheck
 
 import (
 	"context"
-	"github.com/ranzhendong/irishman/src/kvnuts"
+	"github.com/ranzhendong/irishman/pkg/datastruck"
+	"github.com/ranzhendong/irishman/pkg/kvnuts"
 	"log"
 	"time"
 )
@@ -29,11 +30,12 @@ type unHealth struct {
 	FailuresStatus  []int `json:"failuresStatus"`
 }
 
+var c datastruck.Config
+
 func HC() {
 	var (
 		upstreamList [][]byte
 	)
-
 	_, upstreamList = kvnuts.SMem(c.NutsDB.Tag.UpstreamList, c.NutsDB.Tag.UpstreamList)
 
 	//ctx, cancel := context.WithCancel(context.Background())

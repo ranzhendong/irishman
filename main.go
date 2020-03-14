@@ -3,11 +3,11 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/ranzhendong/irishman/src/datastruck"
-	ErrH "github.com/ranzhendong/irishman/src/errorhandle"
-	"github.com/ranzhendong/irishman/src/healthcheck"
-	myInit "github.com/ranzhendong/irishman/src/init"
-	"github.com/ranzhendong/irishman/src/upstream"
+	"github.com/ranzhendong/irishman/pkg/datastruck"
+	MyERR "github.com/ranzhendong/irishman/pkg/errorhandle"
+	"github.com/ranzhendong/irishman/pkg/healthcheck"
+	MyInit "github.com/ranzhendong/irishman/pkg/init"
+	"github.com/ranzhendong/irishman/pkg/upstream"
 	"io"
 	"io/ioutil"
 	"log"
@@ -26,9 +26,10 @@ type myHandler struct{}
 
 func init() {
 	log.SetFlags(log.Ldate | log.Ltime | log.Lshortfile)
+
 	//configure read
-	if err = myInit.Config(); err != nil {
-		log.Printf(ErrH.ErrorLog(6142, fmt.Sprintf("%v", err)))
+	if err = MyInit.Config(); err != nil {
+		log.Printf(MyERR.ErrorLog(6142, fmt.Sprintf("%v", err)))
 		return
 	}
 	mux["/upstream"] = myUpstream
@@ -38,20 +39,20 @@ func init() {
 func main() {
 	//config loading
 	if err = c.Config(); err != nil {
-		log.Println(ErrH.ErrorLog(0012), fmt.Sprintf("%v", err))
+		log.Println(MyERR.ErrorLog(0012), fmt.Sprintf("%v", err))
 		return
 	}
 
 	//remove nutsDB
 	if err = os.RemoveAll(c.NutsDB.Path); err != nil {
-		log.Println(ErrH.ErrorLog(12123), fmt.Sprintf("; %v", err))
+		log.Println(MyERR.ErrorLog(12123), fmt.Sprintf("; %v", err))
 	}
 
 	//judge if remove nutsDB successful
 	if files, err := ioutil.ReadDir(c.NutsDB.Path); err == nil {
 		var f os.FileInfo
 		for _, f = range files {
-			log.Println(ErrH.ErrorLog(12124), fmt.Sprintf(";The file:%v", f.Name()))
+			log.Println(MyERR.ErrorLog(12124), fmt.Sprintf(";The file:%v", f.Name()))
 		}
 		return
 	}
@@ -68,9 +69,9 @@ func main() {
 	}
 
 	// server start
-	log.Println(ErrH.ErrorLog(142))
+	log.Println(MyERR.ErrorLog(142))
 	if err = server.ListenAndServe(); err != nil {
-		log.Printf(ErrH.ErrorLog(0011, fmt.Sprintf("%v", err)))
+		log.Printf(MyERR.ErrorLog(0011, fmt.Sprintf("%v", err)))
 	}
 }
 
@@ -80,8 +81,8 @@ func (myHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		h(w, r)
 		return
 	}
-	log.Printf(ErrH.ErrorLog(0010, fmt.Sprintf("%v", r.URL.String())))
-	res := &ErrH.MyError{Code: 0010, Error: fmt.Sprintf("%v", r.URL.String())}
+	log.Printf(MyERR.ErrorLog(0010, fmt.Sprintf("%v", r.URL.String())))
+	res := &MyERR.MyError{Code: 0010, Error: fmt.Sprintf("%v", r.URL.String())}
 	response(w, res)
 }
 
@@ -92,9 +93,9 @@ func myUpstream(w http.ResponseWriter, r *http.Request) {
 	)
 
 	//loading request body
-	if err, jsonObj = myInit.InitializeBody(r.Body); err != nil {
-		log.Printf(ErrH.ErrorLog(0002, fmt.Sprintf("%v", err)))
-		response(w, &ErrH.MyError{Error: err.Error(), Code: 0002})
+	if err, jsonObj = MyInit.InitializeBody(r.Body); err != nil {
+		log.Printf(MyERR.ErrorLog(0002, fmt.Sprintf("%v", err)))
+		response(w, &MyERR.MyError{Error: err.Error(), Code: 0002})
 		return
 	}
 
@@ -126,7 +127,7 @@ func myUpstream(w http.ResponseWriter, r *http.Request) {
 		}
 
 	default:
-		log.Printf(ErrH.ErrorLog(0007), fmt.Sprintf("%v", r.Method))
+		log.Printf(MyERR.ErrorLog(0007), fmt.Sprintf("%v", r.Method))
 	}
 }
 
@@ -137,9 +138,9 @@ func healthCheck(w http.ResponseWriter, r *http.Request) {
 	)
 
 	//loading request body
-	if err, jsonObj = myInit.InitializeBody(r.Body); err != nil {
-		log.Printf(ErrH.ErrorLog(0002, fmt.Sprintf("%v", err)))
-		response(w, &ErrH.MyError{Error: err.Error(), Code: 0002})
+	if err, jsonObj = MyInit.InitializeBody(r.Body); err != nil {
+		log.Printf(MyERR.ErrorLog(0002, fmt.Sprintf("%v", err)))
+		response(w, &MyERR.MyError{Error: err.Error(), Code: 0002})
 		return
 	}
 
@@ -166,12 +167,12 @@ func healthCheck(w http.ResponseWriter, r *http.Request) {
 		}
 
 	default:
-		log.Printf(ErrH.ErrorLog(0007), fmt.Sprintf("%v", r.Method))
+		log.Printf(MyERR.ErrorLog(0007), fmt.Sprintf("%v", r.Method))
 	}
 
 }
 
-func response(w http.ResponseWriter, res *ErrH.MyError, val ...string) {
+func response(w http.ResponseWriter, res *MyERR.MyError, val ...string) {
 	var set int
 	defer func() {
 		_ = recover()
@@ -185,7 +186,7 @@ func response(w http.ResponseWriter, res *ErrH.MyError, val ...string) {
 		} else {
 			_, err = io.WriteString(w, string(b))
 			if err != nil {
-				log.Printf(ErrH.ErrorLog(0006), fmt.Sprintf("%v", err))
+				log.Printf(MyERR.ErrorLog(0006), fmt.Sprintf("%v", err))
 			}
 		}
 	}()
@@ -193,7 +194,7 @@ func response(w http.ResponseWriter, res *ErrH.MyError, val ...string) {
 		set = 1
 		_, err = io.WriteString(w, val[0])
 		if err != nil {
-			log.Printf(ErrH.ErrorLog(0006), fmt.Sprintf("%v", err))
+			log.Printf(MyERR.ErrorLog(0006), fmt.Sprintf("%v", err))
 		}
 		return
 	}

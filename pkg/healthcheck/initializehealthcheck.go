@@ -4,15 +4,12 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/coreos/etcd/mvcc/mvccpb"
-	"github.com/ranzhendong/irishman/src/datastruck"
-	ErrH "github.com/ranzhendong/irishman/src/errorhandle"
-	"github.com/ranzhendong/irishman/src/etcd"
-	"github.com/ranzhendong/irishman/src/kvnuts"
+	MyERR "github.com/ranzhendong/irishman/pkg/errorhandle"
+	"github.com/ranzhendong/irishman/pkg/etcd"
+	"github.com/ranzhendong/irishman/pkg/kvnuts"
 	"log"
 	"time"
 )
-
-var c datastruck.Config
 
 type upstream struct {
 	UpstreamName string   `json:"upstreamName"`
@@ -25,7 +22,7 @@ type server struct {
 	Weight int    `json:"weight"`
 }
 
-func InitHealthCheck(timeNow time.Time) *ErrH.MyError {
+func InitHealthCheck(timeNow time.Time) *MyERR.MyError {
 	log.Println("InitHealthCheck")
 
 	var (
@@ -40,15 +37,15 @@ func InitHealthCheck(timeNow time.Time) *ErrH.MyError {
 
 	//config loading
 	if err = c.Config(); err != nil {
-		log.Println(ErrH.ErrorLog(0151), fmt.Sprintf("%v", err))
-		return &ErrH.MyError{Error: err.Error(), Code: 0151, TimeStamp: timeNow}
+		log.Println(MyERR.ErrorLog(0151), fmt.Sprintf("%v", err))
+		return &MyERR.MyError{Error: err.Error(), Code: 0151, TimeStamp: timeNow}
 	}
 
 	EtcUpstreamName := c.Upstream.EtcdPrefix
 	//get key from etcd
 	if err, _, val = etcd.EtcGetAll(EtcUpstreamName); err != nil {
-		log.Println(ErrH.ErrorLog(0104), fmt.Sprintf("%v", err))
-		return &ErrH.MyError{Error: err.Error(), Code: 0104, TimeStamp: timeNow}
+		log.Println(MyERR.ErrorLog(0104), fmt.Sprintf("%v", err))
+		return &MyERR.MyError{Error: err.Error(), Code: 0104, TimeStamp: timeNow}
 	}
 
 	//upstream list storage to nutsDB
@@ -68,28 +65,28 @@ func InitHealthCheck(timeNow time.Time) *ErrH.MyError {
 
 		//turn struck to json
 		if healthCheckByte, err = json.Marshal(c.HealthCheck.Template); err != nil {
-			log.Println(ErrH.ErrorLog(0004))
-			return &ErrH.MyError{Error: err.Error(), Code: 0004, TimeStamp: timeNow}
+			log.Println(MyERR.ErrorLog(0004))
+			return &MyERR.MyError{Error: err.Error(), Code: 0004, TimeStamp: timeNow}
 		}
 
 		// etcd put
 		if err = etcd.EtcPut(EtcUpstreamName, string(healthCheckByte)); err != nil {
-			log.Printf(ErrH.ErrorLog(0101, fmt.Sprintf("%v", err)))
-			return &ErrH.MyError{Error: err.Error(), Code: 0101, TimeStamp: timeNow}
+			log.Printf(MyERR.ErrorLog(0101, fmt.Sprintf("%v", err)))
+			return &MyERR.MyError{Error: err.Error(), Code: 0101, TimeStamp: timeNow}
 		}
 	}
 
-	a := &ErrH.MyError{Code: 000, TimeStamp: timeNow}
+	a := &MyERR.MyError{Code: 000, TimeStamp: timeNow}
 	a.Clock()
 	if b, err = json.Marshal(a); err != nil {
-		log.Println(ErrH.ErrorLog(0004))
-		return &ErrH.MyError{Error: err.Error(), Code: 0004, TimeStamp: timeNow}
+		log.Println(MyERR.ErrorLog(0004))
+		return &MyERR.MyError{Error: err.Error(), Code: 0004, TimeStamp: timeNow}
 	}
 
 	//split Up, Down from upstream list
 	//config loading
 	if err = c.Config(); err != nil {
-		log.Println(ErrH.ErrorLog(11012), fmt.Sprintf("%v", err))
+		log.Println(MyERR.ErrorLog(11012), fmt.Sprintf("%v", err))
 	}
 
 	//get upstream list from nutsDB
@@ -98,20 +95,20 @@ func InitHealthCheck(timeNow time.Time) *ErrH.MyError {
 	for _, v := range upstreamListByte {
 		var val string
 		if err, val = etcd.EtcGet(c.Upstream.EtcdPrefix + strFirstToUpper(string(v))); err != nil {
-			log.Println(ErrH.ErrorLog(11102), fmt.Sprintf("; %v", err))
+			log.Println(MyERR.ErrorLog(11102), fmt.Sprintf("; %v", err))
 		}
 		if err := json.Unmarshal([]byte(val), &u); err != nil {
-			log.Println(ErrH.ErrorLog(11005))
+			log.Println(MyERR.ErrorLog(11005))
 		}
 
 		UpDownToNuts(&u)
 
 		//health check to nuts
 		if err, val = etcd.EtcGet(c.HealthCheck.EtcdPrefix + strFirstToUpper(string(v))); err != nil {
-			log.Println(ErrH.ErrorLog(11102), fmt.Sprintf("; %v", err))
+			log.Println(MyERR.ErrorLog(11102), fmt.Sprintf("; %v", err))
 		}
 		if err := json.Unmarshal([]byte(val), &h); err != nil {
-			log.Println(ErrH.ErrorLog(11005))
+			log.Println(MyERR.ErrorLog(11005))
 		}
 
 		TempToNuts(v, &h)
@@ -121,8 +118,8 @@ func InitHealthCheck(timeNow time.Time) *ErrH.MyError {
 	//ready to hc
 	//HC()
 
-	log.Println(ErrH.ErrorLog(000, fmt.Sprintf(" HealthCheck %v", string(b))))
-	return &ErrH.MyError{Code: 000, TimeStamp: timeNow}
+	log.Println(MyERR.ErrorLog(000, fmt.Sprintf(" HealthCheck %v", string(b))))
+	return &MyERR.MyError{Code: 000, TimeStamp: timeNow}
 }
 
 /*

@@ -2,7 +2,7 @@ package init
 
 import (
 	"github.com/fsnotify/fsnotify"
-	ErrH "github.com/ranzhendong/irishman/src/errorhandle"
+	MyError "github.com/ranzhendong/irishman/pkg/errorhandle"
 	"github.com/spf13/viper"
 	"log"
 	"os"
@@ -23,14 +23,14 @@ func Config() (err error) {
 	//watch the config change
 	viper.WatchConfig()
 	viper.OnConfigChange(func(e fsnotify.Event) {
-		log.Printf(ErrH.ErrorLog(6140), " ", e.Name)
+		log.Printf(MyError.ErrorLog(6140), " ", e.Name)
 	})
 
 	if pwd, err = os.Getwd(); err != nil {
 		os.Exit(1)
 		return
 	}
-	log.Print(ErrH.ErrorLog(6141), " ", pwd)
+	log.Print(MyError.ErrorLog(6141), " ", pwd)
 
 	//Find and read the config and token file
 	if err = viper.ReadInConfig(); err != nil {

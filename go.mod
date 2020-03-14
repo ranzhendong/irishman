@@ -5,9 +5,7 @@ go 1.13
 require (
 	github.com/coreos/etcd v3.3.18+incompatible
 	github.com/etcd-io/etcd v3.3.18+incompatible
-	github.com/fsnotify/fsnotify v1.4.7
-	github.com/gogo/protobuf v1.3.1 // indirect
-	github.com/golang/protobuf v1.3.5 // indirect
+	github.com/fsnotify/fsnotify v1.4.9
 	github.com/google/uuid v1.1.1 // indirect
 	github.com/json-iterator/go v1.1.9 // indirect
 	github.com/mitchellh/mapstructure v1.1.2

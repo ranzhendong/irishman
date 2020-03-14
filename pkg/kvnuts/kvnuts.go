@@ -2,8 +2,8 @@ package kvnuts
 
 import (
 	"fmt"
-	"github.com/ranzhendong/irishman/src/datastruck"
-	ErrH "github.com/ranzhendong/irishman/src/errorhandle"
+	"github.com/ranzhendong/irishman/pkg/datastruck"
+	MyERR "github.com/ranzhendong/irishman/pkg/errorhandle"
 	"github.com/xujiajun/nutsdb"
 	"log"
 )
@@ -16,14 +16,14 @@ func connect() (db *nutsdb.DB) {
 	)
 
 	if err = c.Config(); err != nil {
-		log.Println(ErrH.ErrorLog(12012), fmt.Sprintf("%v", err))
+		log.Println(MyERR.ErrorLog(12012), fmt.Sprintf("%v", err))
 		return
 	}
 	opt := nutsdb.DefaultOptions
 	opt.Dir = c.NutsDB.Path
 
 	if db, err = nutsdb.Open(opt); err != nil {
-		log.Println(ErrH.ErrorLog(12161), fmt.Sprintf("%v", err))
+		log.Println(MyERR.ErrorLog(12161), fmt.Sprintf("%v", err))
 		return
 	}
 	return
@@ -66,7 +66,7 @@ func Put(bct string, key, val interface{}) error {
 			return nil
 		})
 	if err != nil {
-		log.Println(ErrH.ErrorLog(12162), fmt.Sprintf("%v", err))
+		log.Println(MyERR.ErrorLog(12162), fmt.Sprintf("%v", err))
 		return err
 	}
 	return nil
@@ -109,7 +109,7 @@ func Get(bct string, key interface{}, valType string) (err error, myReturn strin
 			return nil
 		})
 	if err != nil {
-		log.Println(ErrH.ErrorLog(12163), fmt.Sprintf("%v", err))
+		log.Println(MyERR.ErrorLog(12163), fmt.Sprintf("%v", err))
 		return
 	}
 	return

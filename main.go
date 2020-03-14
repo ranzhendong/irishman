@@ -1,19 +1,19 @@
 package main
 
 import (
-	ErrH "github.com/ranzhendong/irishman/pkg/errorhandle"
-	"datastruck"
 	"encoding/json"
 	"fmt"
-	"healthcheck"
-	myInit "init"
+	"github.com/ranzhendong/irishman/src/datastruck"
+	ErrH "github.com/ranzhendong/irishman/src/errorhandle"
+	"github.com/ranzhendong/irishman/src/healthcheck"
+	myInit "github.com/ranzhendong/irishman/src/init"
+	"github.com/ranzhendong/irishman/src/upstream"
 	"io"
 	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
 	"time"
-	"upstream"
 )
 
 var (

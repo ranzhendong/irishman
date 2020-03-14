@@ -2,10 +2,10 @@ package etcd
 
 import (
 	"context"
-	"datastruck"
 	"fmt"
 	"github.com/coreos/etcd/mvcc/mvccpb"
 	"github.com/etcd-io/etcd/clientv3"
+	"github.com/ranzhendong/irishman/src/datastruck"
 	_ "github.com/spf13/viper/remote"
 	"time"
 )

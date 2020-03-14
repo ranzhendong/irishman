@@ -2,7 +2,7 @@ package healthcheck
 
 import (
 	"context"
-	"kvnuts"
+	"github.com/ranzhendong/irishman/src/kvnuts"
 	"log"
 	"time"
 )

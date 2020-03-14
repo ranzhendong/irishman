@@ -1,8 +1,8 @@
 package init
 
 import (
-	ErrH "errorhandle"
 	"github.com/fsnotify/fsnotify"
+	ErrH "github.com/ranzhendong/irishman/src/errorhandle"
 	"github.com/spf13/viper"
 	"log"
 	"os"

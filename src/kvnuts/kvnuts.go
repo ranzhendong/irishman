@@ -1,9 +1,9 @@
 package kvnuts
 
 import (
-	"datastruck"
-	ErrH "errorhandle"
 	"fmt"
+	"github.com/ranzhendong/irishman/src/datastruck"
+	ErrH "github.com/ranzhendong/irishman/src/errorhandle"
 	"github.com/xujiajun/nutsdb"
 	"log"
 )

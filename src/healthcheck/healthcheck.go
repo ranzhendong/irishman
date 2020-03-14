@@ -1,11 +1,11 @@
 package healthcheck
 
 import (
-	"datastruck"
 	"encoding/json"
-	ErrH "errorhandle"
-	"etcd"
 	"fmt"
+	"github.com/ranzhendong/irishman/src/datastruck"
+	ErrH "github.com/ranzhendong/irishman/src/errorhandle"
+	"github.com/ranzhendong/irishman/src/etcd"
 	"gopkg.in/fatih/set.v0"
 	"log"
 	"time"
@@ -263,15 +263,20 @@ func DeleteHealthCheck(jsonObj interface{}, timeNow time.Time) (a *ErrH.MyError)
 		log.Printf(ErrH.ErrorLog(10005), fmt.Sprintf("Etcd PatchHealthCheck String: %v", err))
 		return &ErrH.MyError{Code: 10005, TimeStamp: timeNow}
 	}
+	/*
+		使用set包来对数组字符串取交集并集差集，
+		使用范围也仅限于同一数组内的元素，可以尝试后续对upstream的patch和delete进行代码重构
 
-	////并集
-	//set.Union(a, b)
-	//
-	////交集
-	//set.Intersection(a, b)
-	//
-	////差集
-	//set.Difference(a, b)
+		//并集
+		set.Union(a, b)
+
+		//交集
+		set.Intersection(a, b)
+
+		//差集
+		set.Difference(a, b)
+
+	*/
 
 	//if dh.Health.SuccessStatus not nil
 	if dh.Health.SuccessStatus != nil {

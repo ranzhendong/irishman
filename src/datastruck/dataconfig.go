@@ -1,8 +1,8 @@
 package datastruck
 
 import (
-	ErrH "errorhandle"
 	"fmt"
+	ErrH "github.com/ranzhendong/irishman/src/errorhandle"
 	"github.com/spf13/viper"
 	"log"
 )

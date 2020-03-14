@@ -1,11 +1,11 @@
 package upstream
 
 import (
-	"datastruck"
 	"encoding/json"
-	ErrH "errorhandle"
-	"etcd"
 	"fmt"
+	"github.com/ranzhendong/irishman/src/datastruck"
+	ErrH "github.com/ranzhendong/irishman/src/errorhandle"
+	"github.com/ranzhendong/irishman/src/etcd"
 	"log"
 	"time"
 )

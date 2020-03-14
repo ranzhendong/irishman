@@ -1,9 +1,9 @@
 package main
 
 import (
+	ErrH "errorhandle"
 	"datastruck"
 	"encoding/json"
-	ErrH "errorhandle"
 	"fmt"
 	"healthcheck"
 	myInit "init"

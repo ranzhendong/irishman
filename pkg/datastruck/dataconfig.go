@@ -9,9 +9,9 @@ import (
 
 //config.yaml
 type Config struct {
-	Server server `yaml:"server"`
-	Etcd   etcd   `yaml:"etcd"`
-	//Resource    resource    `yaml:"resource"`
+	Server      server      `yaml:"server"`
+	Etcd        etcd        `yaml:"etcd"`
+	Resource    resource    `yaml:"resource"`
 	NutsDB      nutsDB      `yaml:"nutsdb"`
 	Upstream    upstream    `yaml:"upstream"`
 	HealthCheck healthcheck `yaml:"healthcheck"`

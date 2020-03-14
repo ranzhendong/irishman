@@ -1,7 +1,7 @@
 package main
 
 import (
-	ErrH "errorhandle"
+	ErrH "github.com/ranzhendong/irishman/pkg/errorhandle"
 	"datastruck"
 	"encoding/json"
 	"fmt"

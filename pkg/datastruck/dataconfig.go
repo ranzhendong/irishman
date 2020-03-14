@@ -7,7 +7,7 @@ import (
 	"log"
 )
 
-//config.yaml
+//Config is struck of config.yaml
 type Config struct {
 	Server      server      `yaml:"server"`
 	Etcd        etcd        `yaml:"etcd"`
@@ -56,8 +56,9 @@ type healthcheck struct {
 	Template   HealthCheck `yaml:"template"`
 }
 
-func (self *Config) Config() (err error) {
-	if err = viper.Unmarshal(&self); err != nil {
+//Config : Unmarshal the config
+func (c *Config) Config() (err error) {
+	if err = viper.Unmarshal(&c); err != nil {
 		log.Printf(MyERR.ErrorLog(0142), fmt.Sprintf("%v", err))
 		return
 	}

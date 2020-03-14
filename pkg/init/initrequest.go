@@ -7,6 +7,7 @@ import (
 	"io/ioutil"
 )
 
+//InitializeBody : config initialize
 func InitializeBody(rBody io.Reader) (err error, jsonObj interface{}) {
 	var (
 		body []byte
@@ -14,7 +15,7 @@ func InitializeBody(rBody io.Reader) (err error, jsonObj interface{}) {
 
 	// if the body exist
 	if body, err = ioutil.ReadAll(rBody); err != nil {
-		err = fmt.Errorf("Read Body ERR: %v\n", err)
+		err = fmt.Errorf("Read Body ERR: %v ", err)
 		return
 	}
 

@@ -7,67 +7,68 @@ import (
 	"log"
 )
 
-//Upstream, for put post
+//Upstream : for put post
 type Upstream struct {
 	UpstreamName string   `json:"upstreamName" validate:"required||upstreamName"`
 	Algorithms   string   `json:"algorithms" validate:"required||in=ip-hex,round-robin"`
 	Pool         []Server `json:"pool" validate:"required"`
 }
 
-//upstream server, for put post
+//Server : upstream server, for put post
 type Server struct {
-	IpPort string `json:"ipPort" validate:"required||unique||ipPort"`
+	IPPort string `json:"ipPort" validate:"required||unique||ipPort"`
 	Status string `json:"status" validate:"required||in=up,down,nohc"`
 	Weight int    `json:"weight" validate:"required||integer"`
 }
 
-//Upstream, for get
+//GetUpstream : Upstream, for get
 type GetUpstream struct {
 	UpstreamName string `json:"upstreamName" validate:"required"`
 }
 
-//Upstream, for patch
+//PatchUpstream : Upstream, for patch
 type PatchUpstream struct {
 	UpstreamName string        `json:"upstreamName" validate:"required||upstreamName"`
 	Algorithms   string        `json:"algorithms" validate:"in=ip-hex,round-robin"`
 	Pool         []PatchServer `json:"pool"`
 }
 
-//upstream server, for patch
+//PatchServer : upstream server, for patch
 type PatchServer struct {
-	IpPort string `json:"ipPort" validate:"required||unique||ipPort"`
+	IPPort string `json:"ipPort" validate:"required||unique||ipPort"`
 	Status string `json:"status" validate:"in=up,down,nohc"`
 	Weight int    `json:"weight" validate:"integer"`
 }
 
-//Upstream, for delete
+//DeleteUpstream : Upstream, for delete
 type DeleteUpstream struct {
 	UpstreamName string         `json:"upstreamName" validate:"required||upstreamName"`
 	Algorithms   string         `json:"algorithms"`
 	Pool         []DeleteServer `json:"pool"`
 }
 
-//upstream server, for delete
+//DeleteServer : upstream server, for delete
 type DeleteServer struct {
-	IpPort string `json:"ipPort" validate:"required||unique||ipPort"`
+	IPPort string `json:"ipPort" validate:"required||unique||ipPort"`
 	Status string `json:"status"`
 	Weight int    `json:"weight"`
 }
 
-func (self *Upstream) JudgeValidator(jsonObj interface{}) (err error) {
+//JudgeValidator : judge the Upstream template values
+func (us *Upstream) JudgeValidator(jsonObj interface{}) (err error) {
 	//turn map to struck
-	if err = mapstructure.Decode(jsonObj, &self); err != nil {
+	if err = mapstructure.Decode(jsonObj, &us); err != nil {
 		return
 	}
 
 	//new filter
 	validator := govalidators.New()
 	validator.SetValidators(map[string]interface{}{
-		"ipPort": &IpPortValidator{},
+		"ipPort": &IPPortValidator{},
 	})
 
 	//if not match
-	if err := validator.Validate(self); err != nil {
+	if err := validator.Validate(us); err != nil {
 		err := fmt.Errorf("%v", err[0])
 		return err
 	}
@@ -75,9 +76,10 @@ func (self *Upstream) JudgeValidator(jsonObj interface{}) (err error) {
 	return nil
 }
 
-func (self *GetUpstream) JudgeValidator(jsonObj interface{}) (err error) {
+//JudgeValidator : judge the GetUpstream template values
+func (gus *GetUpstream) JudgeValidator(jsonObj interface{}) (err error) {
 	//turn map to struck
-	if err = mapstructure.Decode(jsonObj, &self); err != nil {
+	if err = mapstructure.Decode(jsonObj, &gus); err != nil {
 		return
 	}
 
@@ -86,7 +88,7 @@ func (self *GetUpstream) JudgeValidator(jsonObj interface{}) (err error) {
 	validator.SetValidators(map[string]interface{}{})
 
 	//if not match
-	if err := validator.Validate(self); err != nil {
+	if err := validator.Validate(gus); err != nil {
 		err := fmt.Errorf("%v", err[0])
 		return err
 	}
@@ -94,22 +96,23 @@ func (self *GetUpstream) JudgeValidator(jsonObj interface{}) (err error) {
 	return nil
 }
 
-func (self *PatchUpstream) JudgeValidator(jsonObj interface{}) (err error) {
+//JudgeValidator : judge the PatchUpstream template values
+func (pus *PatchUpstream) JudgeValidator(jsonObj interface{}) (err error) {
 	//turn map to struck
-	if err = mapstructure.Decode(jsonObj, &self); err != nil {
+	if err = mapstructure.Decode(jsonObj, &pus); err != nil {
 		return
 	}
 
 	//judge parameter
 	validator := govalidators.New()
 	validator.SetValidators(map[string]interface{}{
-		"ipPort":       &IpPortValidator{},
+		"ipPort":       &IPPortValidator{},
 		"upstreamName": &UpstreamNameValidator{},
 		"poolNil":      &PoolNilValidator{},
 	})
 
 	//if not match
-	if err := validator.Validate(self); err != nil {
+	if err := validator.Validate(pus); err != nil {
 		log.Println(err)
 		err := fmt.Errorf("%v", err[0])
 		return err
@@ -118,21 +121,22 @@ func (self *PatchUpstream) JudgeValidator(jsonObj interface{}) (err error) {
 	return nil
 }
 
-func (self *DeleteUpstream) JudgeValidator(jsonObj interface{}) (err error) {
+//JudgeValidator : judge the DeleteUpstream template values
+func (dus *DeleteUpstream) JudgeValidator(jsonObj interface{}) (err error) {
 	//turn map to struck
-	if err = mapstructure.Decode(jsonObj, &self); err != nil {
+	if err = mapstructure.Decode(jsonObj, &dus); err != nil {
 		return
 	}
 
 	//judge parameter
 	validator := govalidators.New()
 	validator.SetValidators(map[string]interface{}{
-		"ipPort":       &IpPortValidator{},
+		"ipPort":       &IPPortValidator{},
 		"upstreamName": &UpstreamNameValidator{},
 	})
 
 	//if not match
-	if err := validator.Validate(self); err != nil {
+	if err := validator.Validate(dus); err != nil {
 		log.Println(err)
 		err := fmt.Errorf("%v", err[0])
 		return err

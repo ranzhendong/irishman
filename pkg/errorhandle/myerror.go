@@ -6,6 +6,7 @@ import (
 	"time"
 )
 
+//MyError struck
 type MyError struct {
 	Error        string
 	Message      string
@@ -35,6 +36,7 @@ var (
 
 
 */
+//init register key to map
 func init() {
 	muxS[0] = "ServeHTTP: "
 	muxS[1] = "Upstream GET: "
@@ -86,23 +88,23 @@ func init() {
 	mux[163] = "Get Error"
 }
 
-//register error to message
-func (self *MyError) Messages() {
+//Messages : register error to message
+func (e *MyError) Messages() {
 	defer func() {
 		_ = recover()
-		if self.Message == "" {
-			self.Message = "No Error Match"
-		} else if self.Error == "" {
-			self.Error = self.Message
-		} else if self.Error == "" && self.Message == "" {
-			self.Error = "No Error Match"
-			self.Message = "No Error Match"
+		if e.Message == "" {
+			e.Message = "No Error Match"
+		} else if e.Error == "" {
+			e.Error = e.Message
+		} else if e.Error == "" && e.Message == "" {
+			e.Error = "No Error Match"
+			e.Message = "No Error Match"
 		}
 	}()
-	self.Message = muxS[SCode(self.Code)] + mux[Code(self.Code)]
+	e.Message = muxS[SCode(e.Code)] + mux[Code(e.Code)]
 }
 
-//error log handler
+//ErrorLog : error log handler
 func ErrorLog(code int, content ...string) string {
 	if content == nil {
 		return muxS[SCode(code)] + mux[Code(code)]
@@ -110,17 +112,17 @@ func ErrorLog(code int, content ...string) string {
 	return muxS[SCode(code)] + mux[Code(code)] + content[0]
 }
 
-//timer clock
-func (self *MyError) Clock() {
+//Clock : timer clock
+func (e *MyError) Clock() {
 	//if TimeStamp is none
-	if len(time.Since(self.TimeStamp).String()) > 20 {
-		self.ExecutorTime = time.Since(time.Now()).String()
+	if len(time.Since(e.TimeStamp).String()) > 20 {
+		e.ExecutorTime = time.Since(time.Now()).String()
 		return
 	}
-	self.ExecutorTime = time.Since(self.TimeStamp).String()
+	e.ExecutorTime = time.Since(e.TimeStamp).String()
 }
 
-//code cut out
+//Code : code cut out when four-digit values
 func Code(e int) (a int) {
 	randSlice[0] = e / 100 % 10
 	randSlice[1] = e / 10 % 10
@@ -129,13 +131,13 @@ func Code(e int) (a int) {
 	return
 }
 
+//SCode : code cut out when five-digit values
 func SCode(e int) (a int) {
 	if len(strconv.Itoa(e)) == 4 {
 		return e / 1000 % 10
-	} else {
-		sRandSlice[0] = e / 10000 % 10
-		sRandSlice[1] = e / 1000 % 10
 	}
+	sRandSlice[0] = e / 10000 % 10
+	sRandSlice[1] = e / 1000 % 10
 	a, _ = strconv.Atoi(exstrings.JoinInts(sRandSlice, ""))
 	return
 }

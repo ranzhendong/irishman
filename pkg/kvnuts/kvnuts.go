@@ -29,7 +29,7 @@ func connect() (db *nutsdb.DB) {
 	return
 }
 
-//put key values
+//Put key values
 func Put(bct string, key, val interface{}) error {
 	var (
 		keyByte, valByte []byte
@@ -72,7 +72,7 @@ func Put(bct string, key, val interface{}) error {
 	return nil
 }
 
-//get key
+//Get key
 func Get(bct string, key interface{}, valType string) (err error, myReturn string, myReturnInt int) {
 	var (
 		keyByte []byte
@@ -93,9 +93,7 @@ func Get(bct string, key interface{}, valType string) (err error, myReturn strin
 				keyByte = key.([]byte)
 			}
 
-			if e, err = tx.Get(bct, keyByte); err != nil {
-				return err
-			} else {
+			if e, err = tx.Get(bct, keyByte); err == nil {
 				switch valType {
 				case "s":
 					myReturn = string(e.Value)
@@ -105,8 +103,9 @@ func Get(bct string, key interface{}, valType string) (err error, myReturn strin
 					err = fmt.Errorf("my error")
 					return err
 				}
+				return nil
 			}
-			return nil
+			return err
 		})
 	if err != nil {
 		log.Println(MyERR.ErrorLog(12163), fmt.Sprintf("%v", err))
@@ -115,7 +114,7 @@ func Get(bct string, key interface{}, valType string) (err error, myReturn strin
 	return
 }
 
-//del key
+//Del key
 func Del(bct string, key interface{}) error {
 	var (
 		keyByte []byte
@@ -147,7 +146,7 @@ func Del(bct string, key interface{}) error {
 	return nil
 }
 
-//put key, value as set
+//SAdd Put key, but value as set
 func SAdd(bct string, key, val interface{}) error {
 	var (
 		keyByte, valByte []byte
@@ -185,7 +184,7 @@ func SAdd(bct string, key, val interface{}) error {
 	return nil
 }
 
-//get all key from set
+//SMem Get all key from set
 func SMem(bct string, key interface{}) (error, [][]byte) {
 	var (
 		keyByte []byte
@@ -219,7 +218,7 @@ func SMem(bct string, key interface{}) (error, [][]byte) {
 	return nil, items
 }
 
-//remove key, value from set
+//SRem Remove key, value from set
 func SRem(bct string, key, val interface{}) error {
 	var (
 		keyByte, valByte []byte
@@ -260,7 +259,7 @@ func SRem(bct string, key, val interface{}) error {
 	return nil
 }
 
-//judge member if exist
+//SIsMem Judge member if exist
 func SIsMem(bct string, key, val interface{}) bool {
 	var (
 		keyByte, valByte []byte
@@ -301,7 +300,7 @@ func SIsMem(bct string, key, val interface{}) bool {
 	return true
 }
 
-//put key, value as list
+//LAdd is put key, value as list
 func LAdd(bct string, key, val interface{}) error {
 	var (
 		keyByte, valByte []byte
@@ -339,8 +338,10 @@ func LAdd(bct string, key, val interface{}) error {
 	return nil
 }
 
-//get key from list
-// s and e as index of list,
+/*
+LIndex is Get key from list
+s and e as index of list,
+*/
 func LIndex(bct string, key interface{}, s, e int) (error, [][]byte) {
 	var (
 		keyByte []byte

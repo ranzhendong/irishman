@@ -39,7 +39,7 @@ func removeRepByMap(slc []map[string]interface{}) (result []map[string]interface
 	return
 }
 
-// Get upstream
+// GetUpstream : method for get upstream
 func GetUpstream(jsonObj interface{}, timeNow time.Time) (*MyERR.MyError, string) {
 	var (
 		gu  datastruck.GetUpstream
@@ -82,7 +82,7 @@ func GetUpstream(jsonObj interface{}, timeNow time.Time) (*MyERR.MyError, string
 	return &MyERR.MyError{Code: 000, TimeStamp: timeNow}, val
 }
 
-// Full Update upstream
+// PutUpstream : method for full update upstream
 func PutUpstream(jsonObj interface{}, timeNow time.Time) *MyERR.MyError {
 	var (
 		u     datastruck.Upstream
@@ -127,7 +127,7 @@ func PutUpstream(jsonObj interface{}, timeNow time.Time) *MyERR.MyError {
 	return &MyERR.MyError{Code: 000, TimeStamp: timeNow}
 }
 
-// Create Update upstream
+// PostUpstream : method for create update upstream
 func PostUpstream(jsonObj interface{}, timeNow time.Time) *MyERR.MyError {
 	var (
 		u     datastruck.Upstream
@@ -172,7 +172,7 @@ func PostUpstream(jsonObj interface{}, timeNow time.Time) *MyERR.MyError {
 	return &MyERR.MyError{Code: 000, TimeStamp: timeNow}
 }
 
-// Partial upstream
+//PatchUpstream : method for partial upstream
 func PatchUpstream(jsonObj interface{}, timeNow time.Time) *MyERR.MyError {
 	var (
 		pu, etcdpu       datastruck.PatchUpstream
@@ -247,34 +247,34 @@ func PatchUpstream(jsonObj interface{}, timeNow time.Time) *MyERR.MyError {
 	//replace upstream list
 	if puData["pool"] != nil {
 		for i := 0; i < len(puData["pool"].([]interface{})); i++ {
-			RequestIpPort := puData["pool"].([]interface{})[i].(map[string]interface{})["ipPort"]
+			RequestIPPort := puData["pool"].([]interface{})[i].(map[string]interface{})["ipPort"]
 			RequestStatus := puData["pool"].([]interface{})[i].(map[string]interface{})["status"]
 			RequestWeight := puData["pool"].([]interface{})[i].(map[string]interface{})["weight"]
 
 			for e := 0; e < len(etcdData["pool"].([]interface{})); e++ {
-				etcdIpPort := etcdData["pool"].([]interface{})[e].(map[string]interface{})["ipPort"]
+				etcdIPPort := etcdData["pool"].([]interface{})[e].(map[string]interface{})["ipPort"]
 				etcdStatus := etcdData["pool"].([]interface{})[e].(map[string]interface{})["status"]
 				etcdWeight := etcdData["pool"].([]interface{})[e].(map[string]interface{})["weight"]
 
-				if etcdIpPort == RequestIpPort {
+				if etcdIPPort == RequestIPPort {
 					if RequestWeight.(float64) == 0 {
 						etcdData["pool"].([]interface{})[e].(map[string]interface{})["status"] = RequestStatus.(string)
-						UpstreamPool = append(UpstreamPool, map[string]interface{}{"ipPort": etcdIpPort, "status": RequestStatus, "weight": etcdWeight.(float64)})
+						UpstreamPool = append(UpstreamPool, map[string]interface{}{"ipPort": etcdIPPort, "status": RequestStatus, "weight": etcdWeight.(float64)})
 					} else {
 						etcdData["pool"].([]interface{})[e].(map[string]interface{})["status"] = RequestStatus.(string)
 						etcdData["pool"].([]interface{})[e].(map[string]interface{})["weight"] = RequestWeight.(float64)
-						UpstreamPool = append(UpstreamPool, map[string]interface{}{"ipPort": etcdIpPort, "status": RequestStatus, "weight": RequestWeight})
+						UpstreamPool = append(UpstreamPool, map[string]interface{}{"ipPort": etcdIPPort, "status": RequestStatus, "weight": RequestWeight})
 					}
 					goto breakFor
 				} else {
 					if RequestWeight.(float64) != 0 {
-						UpstreamPool = append(UpstreamPool, map[string]interface{}{"ipPort": RequestIpPort, "status": RequestStatus, "weight": RequestWeight})
+						UpstreamPool = append(UpstreamPool, map[string]interface{}{"ipPort": RequestIPPort, "status": RequestStatus, "weight": RequestWeight})
 					}
 				}
 
 				// just for sure if not one server match
 				//append the etcd data
-				UpstreamPool = append(UpstreamPool, map[string]interface{}{"ipPort": etcdIpPort, "status": etcdStatus, "weight": etcdWeight})
+				UpstreamPool = append(UpstreamPool, map[string]interface{}{"ipPort": etcdIPPort, "status": etcdStatus, "weight": etcdWeight})
 			}
 		breakFor:
 		}
@@ -301,7 +301,7 @@ JUST:
 	return &MyERR.MyError{Code: 000, TimeStamp: timeNow}
 }
 
-// Delete upstream or pool's server
+//DeleteUpstream : method for delete upstream or pool's server
 func DeleteUpstream(jsonObj interface{}, timeNow time.Time) *MyERR.MyError {
 	var (
 		du, etcddu       datastruck.DeleteUpstream

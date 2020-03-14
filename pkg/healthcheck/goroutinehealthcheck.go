@@ -8,6 +8,7 @@ import (
 	"time"
 )
 
+//healthCheck : template for goroutines
 type healthCheck struct {
 	CheckProtocol string   `json:"checkProtocol"`
 	CheckPath     string   `json:"checkPath"`
@@ -32,6 +33,7 @@ type unHealth struct {
 
 var c datastruck.Config
 
+//HC : new health check
 func HC() {
 	var (
 		upstreamList [][]byte
@@ -77,6 +79,7 @@ func test(v []byte) {
 	}
 }
 
+//UpOneStart : up status health check driver
 func UpOneStart(ctx context.Context, upstreamName, protocal, path string, sInterval, sTimes, sTimeout, fInterval, fTimes, fTimeout int) {
 	for {
 		time.Sleep(time.Duration(sInterval) * time.Millisecond)
@@ -84,6 +87,7 @@ func UpOneStart(ctx context.Context, upstreamName, protocal, path string, sInter
 	}
 }
 
+//DownOneStart : down status health check driver
 func DownOneStart(ctx context.Context, upstreamName, protocal, path string, sInterval, sTimes, sTimeout, fInterval, fTimes, fTimeout int) {
 	for {
 		time.Sleep(time.Duration(fInterval) * time.Millisecond)
@@ -91,6 +95,7 @@ func DownOneStart(ctx context.Context, upstreamName, protocal, path string, sInt
 	}
 }
 
+//UpHC : up status ip&port check
 func UpHC(upstreamName, protocal, path string, times, timeout int) {
 	// get the upstream up list
 	_, ipPort := kvnuts.SMem(c.NutsDB.Tag.Up, upstreamName)
@@ -123,6 +128,7 @@ func UpHC(upstreamName, protocal, path string, times, timeout int) {
 	}
 }
 
+//DownHC : down status ip&port check
 func DownHC(upstreamName, protocal, path string, times, timeout int) {
 	// get the upstream down list
 	_, ipPort := kvnuts.SMem(c.NutsDB.Tag.Down, upstreamName)
@@ -155,7 +161,7 @@ func DownHC(upstreamName, protocal, path string, times, timeout int) {
 	}
 }
 
-// success && failed counter
+//CodeCount : success && failed counter
 func CodeCount(n, key string, times int) bool {
 	log.Println(kvnuts.Get(n, key, "i"))
 	err, _, nTime := kvnuts.Get(n, key, "i")

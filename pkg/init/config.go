@@ -8,6 +8,7 @@ import (
 	"os"
 )
 
+//Config : load config from config.yaml when irishman start
 func Config() (err error) {
 	var (
 		pwd string

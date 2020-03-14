@@ -6,7 +6,7 @@ import (
 	"fmt"
 )
 
-//turn byte to int
+//BytesToInt : turn byte to int
 func BytesToInt(b []byte, isSymbol bool) (int, error) {
 	if isSymbol {
 		return bytesToIntS(b)
@@ -38,7 +38,7 @@ func bytesToIntU(b []byte) (int, error) {
 	}
 }
 
-//字节数(大端)组转成int(有符号)
+//bytesToIntS : 字节数(大端)组转成int(有符号)
 func bytesToIntS(b []byte) (int, error) {
 	if len(b) == 3 {
 		b = append([]byte{0}, b...)
@@ -62,7 +62,7 @@ func bytesToIntS(b []byte) (int, error) {
 	}
 }
 
-//整形转换成字节
+//IntToBytes : 整形转换成字节
 func IntToBytes(n int, b byte) ([]byte, error) {
 	switch b {
 	case 1:

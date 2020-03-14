@@ -17,7 +17,7 @@ type HealthCheck struct {
 	UnHealth        UnHealth `json:"unhealth" yaml:"unhealth" validate:"required"`
 }
 
-//template and put Health
+//Health : template and put Health
 type Health struct {
 	Interval       int   `json:"interval" yaml:"interval" validate:"required||integer"`
 	SuccessTime    int   `json:"successTime" yaml:"successTime" validate:"required||integer"`
@@ -25,7 +25,7 @@ type Health struct {
 	SuccessStatus  []int `json:"successStatus" yaml:"successStatus" validate:"required||unique||array"`
 }
 
-//template and put UnHealth
+//UnHealth : template and put UnHealth
 type UnHealth struct {
 	Interval        int   `json:"interval" yaml:"interval" validate:"required||integer"`
 	FailuresTime    int   `json:"failuresTime" yaml:"failuresTime" validate:"required||integer"`
@@ -33,12 +33,12 @@ type UnHealth struct {
 	FailuresStatus  []int `json:"failuresStatus" yaml:"failuresStatus" validate:"required||unique||array"`
 }
 
-//HealthCheck for get
+//GetHealthCheck : get method for HealthCheck
 type GetHealthCheck struct {
 	HealthCheckName string `json:"healthCheckName" validate:"required"`
 }
 
-//HealthCheck for patch
+//PatchHealthCheck : patch method for HealthCheck
 type PatchHealthCheck struct {
 	HealthCheckName string        `json:"healthCheckName" validate:"required"`
 	Status          string        `json:"status" validate:"required||in=running,stop"`
@@ -48,7 +48,7 @@ type PatchHealthCheck struct {
 	UnHealth        PatchUnHealth `json:"unhealth"`
 }
 
-//patch Health
+//PatchHealth : patch method for HealthCheck's Health
 type PatchHealth struct {
 	Interval       int   `json:"interval" validate:"integer"`
 	SuccessTime    int   `json:"successTime" validate:"integer"`
@@ -56,7 +56,7 @@ type PatchHealth struct {
 	SuccessStatus  []int `json:"successStatus" validate:"unique||array"`
 }
 
-//patch UnHealth
+//PatchUnHealth : patch method for HealthCheck's UnHealth
 type PatchUnHealth struct {
 	Interval        int   `json:"interval" validate:"integer"`
 	FailuresTime    int   `json:"failuresTime" validate:"integer"`
@@ -64,7 +64,7 @@ type PatchUnHealth struct {
 	FailuresStatus  []int `json:"failuresStatus" validate:"unique||array"`
 }
 
-//HealthCheck for delete
+//DeleteHealthCheck : patch delete for HealthCheck
 type DeleteHealthCheck struct {
 	HealthCheckName string `json:"healthCheckName" validate:"required"`
 	Health          struct {
@@ -75,9 +75,10 @@ type DeleteHealthCheck struct {
 	} `json:"unhealth"`
 }
 
-func (self *HealthCheck) JudgeValidator(jsonObj interface{}) (err error) {
+//JudgeValidator : judge the HealthCheck template values
+func (hc *HealthCheck) JudgeValidator(jsonObj interface{}) (err error) {
 	//turn map to struck
-	if err = mapstructure.Decode(jsonObj, &self); err != nil {
+	if err = mapstructure.Decode(jsonObj, &hc); err != nil {
 		return
 	}
 
@@ -86,7 +87,7 @@ func (self *HealthCheck) JudgeValidator(jsonObj interface{}) (err error) {
 	validator.SetValidators(map[string]interface{}{})
 
 	//if not match
-	if err := validator.Validate(self); err != nil {
+	if err := validator.Validate(hc); err != nil {
 		log.Println(err)
 		err := fmt.Errorf("%v", err[0])
 		return err
@@ -95,9 +96,10 @@ func (self *HealthCheck) JudgeValidator(jsonObj interface{}) (err error) {
 	return nil
 }
 
-func (self *GetHealthCheck) JudgeValidator(jsonObj interface{}) (err error) {
+//JudgeValidator : judge the GetHealthCheck template values
+func (ghc *GetHealthCheck) JudgeValidator(jsonObj interface{}) (err error) {
 	//turn map to struck
-	if err = mapstructure.Decode(jsonObj, &self); err != nil {
+	if err = mapstructure.Decode(jsonObj, &ghc); err != nil {
 		return
 	}
 
@@ -106,7 +108,7 @@ func (self *GetHealthCheck) JudgeValidator(jsonObj interface{}) (err error) {
 	validator.SetValidators(map[string]interface{}{})
 
 	//if not match
-	if err := validator.Validate(self); err != nil {
+	if err := validator.Validate(ghc); err != nil {
 		log.Println(err)
 		err := fmt.Errorf("%v", err[0])
 		return err
@@ -115,9 +117,10 @@ func (self *GetHealthCheck) JudgeValidator(jsonObj interface{}) (err error) {
 	return nil
 }
 
-func (self *PatchHealthCheck) JudgeValidator(jsonObj interface{}) (err error) {
+//JudgeValidator : judge the PatchHealthCheck template values
+func (phc *PatchHealthCheck) JudgeValidator(jsonObj interface{}) (err error) {
 	//turn map to struck
-	if err = mapstructure.Decode(jsonObj, &self); err != nil {
+	if err = mapstructure.Decode(jsonObj, &phc); err != nil {
 		return
 	}
 
@@ -126,7 +129,7 @@ func (self *PatchHealthCheck) JudgeValidator(jsonObj interface{}) (err error) {
 	validator.SetValidators(map[string]interface{}{})
 
 	//if not match
-	if err := validator.Validate(self); err != nil {
+	if err := validator.Validate(phc); err != nil {
 		log.Println(err)
 		err := fmt.Errorf("%v", err[0])
 		return err
@@ -135,9 +138,10 @@ func (self *PatchHealthCheck) JudgeValidator(jsonObj interface{}) (err error) {
 	return nil
 }
 
-func (self *DeleteHealthCheck) JudgeValidator(jsonObj interface{}) (err error) {
+//JudgeValidator : judge the DeleteHealthCheck template values
+func (dhc *DeleteHealthCheck) JudgeValidator(jsonObj interface{}) (err error) {
 	//turn map to struck
-	if err = mapstructure.Decode(jsonObj, &self); err != nil {
+	if err = mapstructure.Decode(jsonObj, &dhc); err != nil {
 		return
 	}
 
@@ -146,7 +150,7 @@ func (self *DeleteHealthCheck) JudgeValidator(jsonObj interface{}) (err error) {
 	validator.SetValidators(map[string]interface{}{})
 
 	//if not match
-	if err := validator.Validate(self); err != nil {
+	if err := validator.Validate(dhc); err != nil {
 		log.Println(err)
 		err := fmt.Errorf("%v", err[0])
 		return err

@@ -7,6 +7,7 @@ import (
 	"time"
 )
 
+//TCP : health check tcp protocol
 func TCP(ip string, pingTimeout int) bool {
 	var (
 		conn net.Conn
@@ -19,6 +20,7 @@ func TCP(ip string, pingTimeout int) bool {
 	return true
 }
 
+//HTTP : health check http protocol
 func HTTP(request string, t int) (err error, code int) {
 	var (
 		myRequest  *http.Request

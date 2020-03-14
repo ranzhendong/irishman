@@ -6,11 +6,12 @@ import (
 	"github.com/coreos/etcd/mvcc/mvccpb"
 	"github.com/etcd-io/etcd/clientv3"
 	"github.com/ranzhendong/irishman/pkg/datastruck"
+	//github.com/spf13/viper/remote need to be here
 	_ "github.com/spf13/viper/remote"
 	"time"
 )
 
-//etcd connect function
+//etcConnect : connect etcd
 func etcConnect() (err error, client *clientv3.Client) {
 	var (
 		c         datastruck.Config
@@ -42,6 +43,7 @@ func etcConnect() (err error, client *clientv3.Client) {
 	return
 }
 
+//EtcGet : get key
 func EtcGet(key string) (err error, val string) {
 	var (
 		client *clientv3.Client
@@ -77,6 +79,7 @@ func EtcGet(key string) (err error, val string) {
 	return
 }
 
+//EtcGetAll : get prefix key
 func EtcGetAll(key string) (err error, val string, rVal []*mvccpb.KeyValue) {
 	var (
 		client  *clientv3.Client
@@ -103,6 +106,7 @@ func EtcGetAll(key string) (err error, val string, rVal []*mvccpb.KeyValue) {
 	return
 }
 
+//EtcPut : put key
 func EtcPut(key, val string) (err error) {
 	var (
 		client *clientv3.Client
@@ -124,6 +128,7 @@ func EtcPut(key, val string) (err error) {
 	return
 }
 
+//EtcDelete : delete key
 func EtcDelete(key string) (err error) {
 	var (
 		client *clientv3.Client
@@ -144,6 +149,7 @@ func EtcDelete(key string) (err error) {
 	return
 }
 
+//EtcWatcher : watcher key if change
 func EtcWatcher() (err error) {
 
 	var (

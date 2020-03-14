@@ -11,20 +11,23 @@ import (
 	"strings"
 )
 
-type IpPortValidator struct {
+//IPPortValidator : Variable declarations
+type IPPortValidator struct {
 	EMsg string
 }
 
+//UpstreamNameValidator : Variable declarations
 type UpstreamNameValidator struct {
 	EMsg string
 }
 
+//PoolNilValidator : Variable declarations
 type PoolNilValidator struct {
 	EMsg string
 }
 
-//ip port vaildator
-func (self *IpPortValidator) Validate(params map[string]interface{}, val reflect.Value, args ...string) (bool, error) {
+//Validate : judge ip port values
+func (ipv *IPPortValidator) Validate(params map[string]interface{}, val reflect.Value, args ...string) (bool, error) {
 
 	//regex
 	const (
@@ -64,8 +67,8 @@ func (self *IpPortValidator) Validate(params map[string]interface{}, val reflect
 	return true, nil
 }
 
-//UpstreamName Reserved field filtering
-func (self *UpstreamNameValidator) Validate(params map[string]interface{}, val reflect.Value, args ...string) (bool, error) {
+//Validate : UpstreamName Reserved field filtering
+func (unv *UpstreamNameValidator) Validate(params map[string]interface{}, val reflect.Value, args ...string) (bool, error) {
 
 	//regex
 	var (
@@ -95,8 +98,8 @@ func (self *UpstreamNameValidator) Validate(params map[string]interface{}, val r
 	return true, nil
 }
 
-//UpstreamName Reserved field filtering
-func (self *PoolNilValidator) Validate(params map[string]interface{}, val reflect.Value, args ...string) (bool, error) {
+//Validate : UpstreamName Reserved field filtering
+func (pnv *PoolNilValidator) Validate(params map[string]interface{}, val reflect.Value, args ...string) (bool, error) {
 	var err error
 
 	log.Println(val.Slice(0, 0))

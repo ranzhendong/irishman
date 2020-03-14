@@ -17,11 +17,12 @@ type upstream struct {
 }
 
 type server struct {
-	IpPort string `json:"ipPort"`
+	IPPort string `json:"ipPort"`
 	Status string `json:"status"`
 	Weight int    `json:"weight"`
 }
 
+//InitHealthCheck : goroutines for Init Health Check
 func InitHealthCheck(timeNow time.Time) *MyERR.MyError {
 	log.Println("InitHealthCheck")
 
@@ -137,12 +138,14 @@ for example TheUpstream=vmims
 |          health check status recode          |       k/v       |  TheUpstream+ipPort   |          f         |  times: 1
 
 */
+
+//UpDownToNuts : get up&down upstream form nutsDB
 func UpDownToNuts(u *upstream) {
 	for _, v := range u.Pool {
 		if v.Status == "up" {
-			_ = kvnuts.SAdd(c.NutsDB.Tag.Up, u.UpstreamName, v.IpPort)
+			_ = kvnuts.SAdd(c.NutsDB.Tag.Up, u.UpstreamName, v.IPPort)
 		} else {
-			_ = kvnuts.SAdd(c.NutsDB.Tag.Down, u.UpstreamName, v.IpPort)
+			_ = kvnuts.SAdd(c.NutsDB.Tag.Down, u.UpstreamName, v.IPPort)
 		}
 	}
 }
@@ -152,6 +155,8 @@ func UpDownToNuts(u *upstream) {
 [		0, 			  1, 			2, 				3, 						4, 					5, 						6, 						7	     ]
 storage health check info as list, but success code and failures code as set.
 */
+
+//TempToNuts : set health check template to nutsDB
 func TempToNuts(v []byte, h *healthCheck) {
 	_ = kvnuts.LAdd(string(v), v, h.UnHealth.FailuresTimeout)
 	_ = kvnuts.LAdd(string(v), v, h.UnHealth.FailuresTime)

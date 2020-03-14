@@ -36,6 +36,7 @@ func strFirstToUpper(str string) string {
 	return string(strArry)
 }
 
+//GetHealthCheck : method for get health check
 func GetHealthCheck(jsonObj interface{}, timeNow time.Time) (*MyERR.MyError, string) {
 	var (
 		gh  datastruck.GetHealthCheck
@@ -74,6 +75,7 @@ func GetHealthCheck(jsonObj interface{}, timeNow time.Time) (*MyERR.MyError, str
 	return &MyERR.MyError{Code: 000, TimeStamp: timeNow}, val
 }
 
+//PutHealthCheck : method for put health check
 func PutHealthCheck(jsonObj interface{}, timeNow time.Time) *MyERR.MyError {
 	var (
 		h     datastruck.HealthCheck
@@ -112,6 +114,7 @@ func PutHealthCheck(jsonObj interface{}, timeNow time.Time) *MyERR.MyError {
 	return &MyERR.MyError{Code: 000, TimeStamp: timeNow}
 }
 
+//PatchHealthCheck : method for patch health check
 func PatchHealthCheck(jsonObj interface{}, timeNow time.Time) (a *MyERR.MyError) {
 	var (
 		ph, etcdph   datastruck.PatchHealthCheck
@@ -231,6 +234,7 @@ READY:
 	return &MyERR.MyError{Code: 000, Error: errs.Error(), TimeStamp: timeNow}
 }
 
+//DeleteHealthCheck : method for delete health check
 func DeleteHealthCheck(jsonObj interface{}, timeNow time.Time) (a *MyERR.MyError) {
 	var (
 		dh                               datastruck.DeleteHealthCheck

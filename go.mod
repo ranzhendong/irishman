@@ -1,4 +1,4 @@
-module lrishman
+module github.com/ranzhendong/irishman
 
 go 1.13
 

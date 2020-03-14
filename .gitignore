@@ -1,7 +1,7 @@
 # Created by .ignore support plugin (hsz.mobi)
-.idea/$CACHE_FILE$
-.idea/.gitignore
-.idea/watcherTasks.xml
-
+#.idea/$CACHE_FILE$
+#.idea/.gitignore
+#.idea/watcherTasks.xml
+.idea/
 src/NutsDBStorage
 .DS_Store

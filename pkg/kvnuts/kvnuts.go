@@ -73,7 +73,7 @@ func Put(bct string, key, val interface{}) error {
 }
 
 //Get key
-func Get(bct string, key interface{}, valType string) (err error, myReturn string, myReturnInt int) {
+func Get(bct string, key interface{}, valType string) (myReturn string, myReturnInt int, err error) {
 	var (
 		keyByte []byte
 		e       *nutsdb.Entry
@@ -185,7 +185,7 @@ func SAdd(bct string, key, val interface{}) error {
 }
 
 //SMem Get all key from set
-func SMem(bct string, key interface{}) (error, [][]byte) {
+func SMem(bct string, key interface{}) ([][]byte, error) {
 	var (
 		keyByte []byte
 		err     error
@@ -213,9 +213,8 @@ func SMem(bct string, key interface{}) (error, [][]byte) {
 			return nil
 		})
 	if err != nil {
-		return err, nil
 	}
-	return nil, items
+	return items, nil
 }
 
 //SRem Remove key, value from set
@@ -342,7 +341,7 @@ func LAdd(bct string, key, val interface{}) error {
 LIndex is Get key from list
 s and e as index of list,
 */
-func LIndex(bct string, key interface{}, s, e int) (error, [][]byte) {
+func LIndex(bct string, key interface{}, s, e int) ([][]byte, error) {
 	var (
 		keyByte []byte
 		item    [][]byte
@@ -370,7 +369,7 @@ func LIndex(bct string, key interface{}, s, e int) (error, [][]byte) {
 			return nil
 		})
 	if err != nil {
-		return err, nil
+		return nil, err
 	}
-	return nil, item
+	return item, nil
 }

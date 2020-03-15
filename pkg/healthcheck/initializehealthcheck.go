@@ -44,7 +44,7 @@ func InitHealthCheck(timeNow time.Time) *MyERR.MyError {
 
 	EtcUpstreamName := c.Upstream.EtcdPrefix
 	//get key from etcd
-	if err, _, val = etcd.EtcGetAll(EtcUpstreamName); err != nil {
+	if _, val, err = etcd.EtcGetAll(EtcUpstreamName); err != nil {
 		log.Println(MyERR.ErrorLog(0104), fmt.Sprintf("%v", err))
 		return &MyERR.MyError{Error: err.Error(), Code: 0104, TimeStamp: timeNow}
 	}
@@ -91,11 +91,11 @@ func InitHealthCheck(timeNow time.Time) *MyERR.MyError {
 	}
 
 	//get upstream list from nutsDB
-	_, upstreamListByte = kvnuts.SMem(c.NutsDB.Tag.UpstreamList, c.NutsDB.Tag.UpstreamList)
+	upstreamListByte, _ = kvnuts.SMem(c.NutsDB.Tag.UpstreamList, c.NutsDB.Tag.UpstreamList)
 
 	for _, v := range upstreamListByte {
 		var val string
-		if err, val = etcd.EtcGet(c.Upstream.EtcdPrefix + strFirstToUpper(string(v))); err != nil {
+		if val, err = etcd.EtcGet(c.Upstream.EtcdPrefix + strFirstToUpper(string(v))); err != nil {
 			log.Println(MyERR.ErrorLog(11102), fmt.Sprintf("; %v", err))
 		}
 		if err := json.Unmarshal([]byte(val), &u); err != nil {
@@ -105,7 +105,7 @@ func InitHealthCheck(timeNow time.Time) *MyERR.MyError {
 		UpDownToNuts(&u)
 
 		//health check to nuts
-		if err, val = etcd.EtcGet(c.HealthCheck.EtcdPrefix + strFirstToUpper(string(v))); err != nil {
+		if val, err = etcd.EtcGet(c.HealthCheck.EtcdPrefix + strFirstToUpper(string(v))); err != nil {
 			log.Println(MyERR.ErrorLog(11102), fmt.Sprintf("; %v", err))
 		}
 		if err := json.Unmarshal([]byte(val), &h); err != nil {

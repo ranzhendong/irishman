@@ -5,3 +5,4 @@
 .idea/
 src/NutsDBStorage
 .DS_Store
+vendor

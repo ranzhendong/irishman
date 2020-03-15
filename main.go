@@ -93,7 +93,7 @@ func myUpstream(w http.ResponseWriter, r *http.Request) {
 	)
 
 	//loading request body
-	if err, jsonObj = MyInit.InitializeBody(r.Body); err != nil {
+	if jsonObj, err = MyInit.InitializeBody(r.Body); err != nil {
 		log.Printf(MyERR.ErrorLog(0002, fmt.Sprintf("%v", err)))
 		response(w, &MyERR.MyError{Error: err.Error(), Code: 0002})
 		return
@@ -138,7 +138,7 @@ func healthCheck(w http.ResponseWriter, r *http.Request) {
 	)
 
 	//loading request body
-	if err, jsonObj = MyInit.InitializeBody(r.Body); err != nil {
+	if jsonObj, err = MyInit.InitializeBody(r.Body); err != nil {
 		log.Printf(MyERR.ErrorLog(0002, fmt.Sprintf("%v", err)))
 		response(w, &MyERR.MyError{Error: err.Error(), Code: 0002})
 		return

@@ -63,7 +63,7 @@ func GetUpstream(jsonObj interface{}, timeNow time.Time) (*MyERR.MyError, string
 		//EtcUpstreamName := "Upstream"
 		EtcUpstreamName := c.Upstream.EtcdPrefix
 		//get key from etcd
-		if err, val, _ = etcd.EtcGetAll(EtcUpstreamName); err != nil {
+		if val, _, err = etcd.EtcGetAll(EtcUpstreamName); err != nil {
 			log.Println(MyERR.ErrorLog(1104), fmt.Sprintf("%v", err))
 			return &MyERR.MyError{Error: err.Error(), Code: 1104, TimeStamp: timeNow}, ""
 		}
@@ -73,7 +73,7 @@ func GetUpstream(jsonObj interface{}, timeNow time.Time) (*MyERR.MyError, string
 
 	EtcUpstreamName := c.Upstream.EtcdPrefix + strFirstToUpper(gu.UpstreamName)
 	//get key from etcd
-	if err, val = etcd.EtcGet(EtcUpstreamName); err != nil {
+	if val, err = etcd.EtcGet(EtcUpstreamName); err != nil {
 		log.Println(MyERR.ErrorLog(1102), fmt.Sprintf("; %v", err))
 		return &MyERR.MyError{Error: err.Error(), Code: 1102, TimeStamp: timeNow}, ""
 	}
@@ -112,7 +112,7 @@ func PutUpstream(jsonObj interface{}, timeNow time.Time) *MyERR.MyError {
 	EtcUpstreamName := c.Upstream.EtcdPrefix + strFirstToUpper(u.UpstreamName)
 
 	//if exist
-	if err, _ = etcd.EtcGet(EtcUpstreamName); err != nil {
+	if _, err = etcd.EtcGet(EtcUpstreamName); err != nil {
 		log.Printf(MyERR.ErrorLog(2102), fmt.Sprintf("%v", err))
 		return &MyERR.MyError{Error: err.Error(), Code: 2102, TimeStamp: timeNow}
 	}
@@ -151,7 +151,7 @@ func PostUpstream(jsonObj interface{}, timeNow time.Time) *MyERR.MyError {
 	EtcUpstreamName := c.Upstream.EtcdPrefix + strFirstToUpper(u.UpstreamName)
 
 	//if repeat
-	if err, _ = etcd.EtcGet(EtcUpstreamName); err == nil {
+	if _, err = etcd.EtcGet(EtcUpstreamName); err == nil {
 		log.Printf(MyERR.ErrorLog(3103))
 		return &MyERR.MyError{Code: 3103, TimeStamp: timeNow}
 	}
@@ -199,7 +199,7 @@ func PatchUpstream(jsonObj interface{}, timeNow time.Time) *MyERR.MyError {
 	// Characters joining together
 	EtcUpstreamName := c.Upstream.EtcdPrefix + strFirstToUpper(pu.UpstreamName)
 	//if exist
-	if err, val = etcd.EtcGet(EtcUpstreamName); err != nil {
+	if val, err = etcd.EtcGet(EtcUpstreamName); err != nil {
 		log.Printf(MyERR.ErrorLog(4102), fmt.Sprintf("%v", err))
 		return &MyERR.MyError{Error: err.Error(), Code: 4102, TimeStamp: timeNow}
 	}
@@ -328,7 +328,7 @@ func DeleteUpstream(jsonObj interface{}, timeNow time.Time) *MyERR.MyError {
 	// Characters joining together
 	EtcUpstreamName := c.Upstream.EtcdPrefix + strFirstToUpper(du.UpstreamName)
 	//if exist
-	if err, val = etcd.EtcGet(EtcUpstreamName); err != nil {
+	if val, err = etcd.EtcGet(EtcUpstreamName); err != nil {
 		log.Printf(MyERR.ErrorLog(5102), fmt.Sprintf("%v", err))
 		return &MyERR.MyError{Error: err.Error(), Code: 5102, TimeStamp: timeNow}
 	}

@@ -54,7 +54,7 @@ func GetHealthCheck(jsonObj interface{}, timeNow time.Time) (*MyERR.MyError, str
 	if gh.HealthCheckName == "ALL" {
 		EtcHealthCheckName := c.HealthCheck.EtcdPrefix
 		//get key from etcd
-		if err, val, _ = etcd.EtcGetAll(EtcHealthCheckName); err != nil {
+		if val, _, err = etcd.EtcGetAll(EtcHealthCheckName); err != nil {
 			log.Println(MyERR.ErrorLog(7104), fmt.Sprintf("%v", err))
 			return &MyERR.MyError{Error: err.Error(), Code: 7104, TimeStamp: timeNow}, ""
 		}
@@ -65,7 +65,7 @@ func GetHealthCheck(jsonObj interface{}, timeNow time.Time) (*MyERR.MyError, str
 	EtcHealthCheckName := c.HealthCheck.EtcdPrefix + strFirstToUpper(gh.HealthCheckName)
 
 	//get key from etcd
-	if err, val = etcd.EtcGet(EtcHealthCheckName); err != nil {
+	if val, err = etcd.EtcGet(EtcHealthCheckName); err != nil {
 		log.Println(err)
 		log.Println(MyERR.ErrorLog(7102), fmt.Sprintf("; %v", err))
 		return &MyERR.MyError{Error: err.Error(), Code: 7102, TimeStamp: timeNow}, ""
@@ -99,7 +99,7 @@ func PutHealthCheck(jsonObj interface{}, timeNow time.Time) *MyERR.MyError {
 	EtcHealthCheckName := c.HealthCheck.EtcdPrefix + strFirstToUpper(h.HealthCheckName)
 
 	//if exist
-	if err, _ = etcd.EtcGet(EtcHealthCheckName); err != nil {
+	if _, err = etcd.EtcGet(EtcHealthCheckName); err != nil {
 		log.Printf(MyERR.ErrorLog(8102), fmt.Sprintf("%v", err))
 		return &MyERR.MyError{Error: err.Error(), Code: 8102, TimeStamp: timeNow}
 	}
@@ -134,7 +134,7 @@ func PatchHealthCheck(jsonObj interface{}, timeNow time.Time) (a *MyERR.MyError)
 	// Characters joining together
 	EtcHealthCheckName := c.HealthCheck.EtcdPrefix + strFirstToUpper(ph.HealthCheckName)
 	//if exist
-	if err, val = etcd.EtcGet(EtcHealthCheckName); err != nil {
+	if val, err = etcd.EtcGet(EtcHealthCheckName); err != nil {
 		log.Printf(MyERR.ErrorLog(9102), fmt.Sprintf("%v", err))
 		return &MyERR.MyError{Error: err.Error(), Code: 9102, TimeStamp: timeNow}
 	}
@@ -257,7 +257,7 @@ func DeleteHealthCheck(jsonObj interface{}, timeNow time.Time) (a *MyERR.MyError
 	// Characters joining together
 	EtcHealthCheckName := c.HealthCheck.EtcdPrefix + strFirstToUpper(dh.HealthCheckName)
 	//if exist
-	if err, val = etcd.EtcGet(EtcHealthCheckName); err != nil {
+	if val, err = etcd.EtcGet(EtcHealthCheckName); err != nil {
 		log.Printf(MyERR.ErrorLog(10102), fmt.Sprintf("%v", err))
 		return &MyERR.MyError{Error: err.Error(), Code: 10102, TimeStamp: timeNow}
 	}

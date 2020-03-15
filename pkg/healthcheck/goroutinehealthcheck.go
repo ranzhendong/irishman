@@ -38,7 +38,7 @@ func HC() {
 	var (
 		upstreamList [][]byte
 	)
-	_, upstreamList = kvnuts.SMem(c.NutsDB.Tag.UpstreamList, c.NutsDB.Tag.UpstreamList)
+	upstreamList, _ = kvnuts.SMem(c.NutsDB.Tag.UpstreamList, c.NutsDB.Tag.UpstreamList)
 
 	//ctx, cancel := context.WithCancel(context.Background())
 
@@ -46,7 +46,7 @@ func HC() {
 		log.Println("my string", string(k))
 		//list has eight data, so index[0-7]
 		log.Println(kvnuts.LIndex(string(k), k, 0, 7))
-		if _, item := kvnuts.LIndex(string(k), k, 0, 7); len(item) != 0 {
+		if item, _ := kvnuts.LIndex(string(k), k, 0, 7); len(item) != 0 {
 			hp := string(item[0])
 			hps := string(item[1])
 			hi, _ := kvnuts.BytesToInt(item[2], true)
@@ -68,11 +68,11 @@ func test(v []byte) {
 	var l [][]byte
 	for {
 		time.Sleep(2 * time.Second)
-		_, l = kvnuts.SMem(c.NutsDB.Tag.Up, v)
+		l, _ = kvnuts.SMem(c.NutsDB.Tag.Up, v)
 		for _, s := range l {
 			log.Println(string(v), "Success:", string(s))
 		}
-		_, l = kvnuts.SMem(c.NutsDB.Tag.Down, v)
+		l, _ = kvnuts.SMem(c.NutsDB.Tag.Down, v)
 		for _, s := range l {
 			log.Println(string(v), "Failure:", string(s))
 		}
@@ -98,7 +98,7 @@ func DownOneStart(ctx context.Context, upstreamName, protocal, path string, sInt
 //UpHC : up status ip&port check
 func UpHC(upstreamName, protocal, path string, times, timeout int) {
 	// get the upstream up list
-	_, ipPort := kvnuts.SMem(c.NutsDB.Tag.Up, upstreamName)
+	ipPort, _ := kvnuts.SMem(c.NutsDB.Tag.Up, upstreamName)
 	if len(ipPort) == 0 {
 		return
 	}
@@ -107,7 +107,7 @@ func UpHC(upstreamName, protocal, path string, times, timeout int) {
 	for i := 0; i < len(ipPort); i++ {
 		ip := ipPort[i]
 		if protocal == "http" {
-			_, statusCode := HTTP(string(ip)+path, timeout)
+			statusCode, _ := HTTP(string(ip)+path, timeout)
 			log.Println(upstreamName, string(ip), statusCode)
 
 			//the status code can not be in failure, and must be in success code.
@@ -131,7 +131,7 @@ func UpHC(upstreamName, protocal, path string, times, timeout int) {
 //DownHC : down status ip&port check
 func DownHC(upstreamName, protocal, path string, times, timeout int) {
 	// get the upstream down list
-	_, ipPort := kvnuts.SMem(c.NutsDB.Tag.Down, upstreamName)
+	ipPort, _ := kvnuts.SMem(c.NutsDB.Tag.Down, upstreamName)
 	if len(ipPort) == 0 {
 		return
 	}
@@ -141,7 +141,7 @@ func DownHC(upstreamName, protocal, path string, times, timeout int) {
 		ip := ipPort[i]
 		log.Println(string(ip))
 		if protocal == "http" {
-			_, statusCode := HTTP(string(ip)+path, timeout)
+			statusCode, _ := HTTP(string(ip)+path, timeout)
 			log.Println(upstreamName, string(ip), statusCode)
 
 			//the status code must be in success
@@ -164,7 +164,7 @@ func DownHC(upstreamName, protocal, path string, times, timeout int) {
 //CodeCount : success && failed counter
 func CodeCount(n, key string, times int) bool {
 	log.Println(kvnuts.Get(n, key, "i"))
-	err, _, nTime := kvnuts.Get(n, key, "i")
+	_, nTime, err := kvnuts.Get(n, key, "i")
 
 	//first be counted
 	if err != nil {

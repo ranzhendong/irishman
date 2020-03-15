@@ -8,7 +8,7 @@ import (
 )
 
 //InitializeBody : config initialize
-func InitializeBody(rBody io.Reader) (err error, jsonObj interface{}) {
+func InitializeBody(rBody io.Reader) (jsonObj interface{}, err error) {
 	var (
 		body []byte
 	)

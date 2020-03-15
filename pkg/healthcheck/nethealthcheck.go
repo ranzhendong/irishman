@@ -21,7 +21,7 @@ func TCP(ip string, pingTimeout int) bool {
 }
 
 //HTTP : health check http protocol
-func HTTP(request string, t int) (err error, code int) {
+func HTTP(request string, t int) (code int, err error) {
 	var (
 		myRequest  *http.Request
 		myResponse *http.Response
@@ -55,5 +55,5 @@ func HTTP(request string, t int) (err error, code int) {
 		return
 	}
 
-	return nil, myResponse.StatusCode
+	return myResponse.StatusCode, nil
 }

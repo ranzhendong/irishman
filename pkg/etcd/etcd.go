@@ -12,7 +12,7 @@ import (
 )
 
 //etcConnect : connect etcd
-func etcConnect() (err error, client *clientv3.Client) {
+func etcConnect() (client *clientv3.Client, err error) {
 	var (
 		c         datastruck.Config
 		config    clientv3.Config
@@ -44,7 +44,7 @@ func etcConnect() (err error, client *clientv3.Client) {
 }
 
 //EtcGet : get key
-func EtcGet(key string) (err error, val string) {
+func EtcGet(key string) (val string, err error) {
 	var (
 		client *clientv3.Client
 		kv     clientv3.KV
@@ -52,7 +52,7 @@ func EtcGet(key string) (err error, val string) {
 		opResp clientv3.OpResponse
 	)
 
-	if err, client = etcConnect(); err != nil {
+	if client, err = etcConnect(); err != nil {
 		err = fmt.Errorf(" Etcd Client Initialize Failed")
 		return
 	}
@@ -80,14 +80,14 @@ func EtcGet(key string) (err error, val string) {
 }
 
 //EtcGetAll : get prefix key
-func EtcGetAll(key string) (err error, val string, rVal []*mvccpb.KeyValue) {
+func EtcGetAll(key string) (val string, rVal []*mvccpb.KeyValue, err error) {
 	var (
 		client  *clientv3.Client
 		kv      clientv3.KV
 		getResp *clientv3.GetResponse
 	)
 
-	if err, client = etcConnect(); err != nil {
+	if client, err = etcConnect(); err != nil {
 		err = fmt.Errorf(" Etcd Client Initialize Failed")
 		return
 	}
@@ -112,7 +112,7 @@ func EtcPut(key, val string) (err error) {
 		client *clientv3.Client
 		kv     clientv3.KV
 	)
-	if err, client = etcConnect(); err != nil {
+	if client, err = etcConnect(); err != nil {
 		err = fmt.Errorf(" Etcd Client Initialize Failed")
 		return
 	}
@@ -134,7 +134,7 @@ func EtcDelete(key string) (err error) {
 		client *clientv3.Client
 		kv     clientv3.KV
 	)
-	if err, client = etcConnect(); err != nil {
+	if client, err = etcConnect(); err != nil {
 		err = fmt.Errorf(" Etcd Client Initialize Failed")
 		return
 	}
@@ -160,7 +160,7 @@ func EtcWatcher() (err error) {
 		watchResp          clientv3.WatchResponse
 		event              *clientv3.Event
 	)
-	if err, client = etcConnect(); err != nil {
+	if client, err = etcConnect(); err != nil {
 		err = fmt.Errorf(" Etcd Client Initialize Failed")
 		return
 	}

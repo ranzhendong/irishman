@@ -41,8 +41,6 @@ test2:
 compile:
   stage: build
   script:
-    # Add here all the dependencies, or use glide/govendor/...
-    # to get them automatically.
     - make build
   artifacts:
     paths:

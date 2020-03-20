@@ -57,6 +57,7 @@ image_build:
     - name: docker:17.03-dind
       command: ["--insecure-registry=gitlab.ranzhendong.com.cn"]
   script:
+    - ls
     - docker info
     - docker login -u "${CI_HARBOR_USER}" -p "${CI_HARBOR_PASSWORD}" "${CI_HARBOR_URL}"
     - docker build -t "${CI_REGISTRY_IMAGE}:latest" .

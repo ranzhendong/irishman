@@ -41,6 +41,7 @@ test2:
 compile:
   stage: build
   script:
+    - ls && pwd
     - make build
 #  artifacts:
 #    paths:

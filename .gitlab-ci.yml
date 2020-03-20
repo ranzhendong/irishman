@@ -43,9 +43,10 @@ compile:
   script:
     - ls && pwd
     - make build
-#  artifacts:
-#    paths:
-#      - app
+    - ls
+  artifacts:
+    paths:
+      - ${CI_PROJECT_NAME}
 
 image_build:
   stage: release

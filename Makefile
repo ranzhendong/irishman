@@ -3,6 +3,7 @@ PROJECT_NAME := "github.com/ranzhendong/irishman"
 PKG := "$(PROJECT_NAME)"
 PKG_LIST := $(shell go list ${PKG}/... | grep -v /vendor/)
 GO_FILES := $(shell find . -name '*.go' | grep -v /vendor/ | grep -v _test.go)
+SERVER_NAME :=$(test -z ${CI_PROJECT_NAME} && echo "irishman"|| echo ${CI_PROJECT_NAME})
 
 .PHONY: all dep lint vet test test-coverage build clean
 
@@ -25,10 +26,10 @@ dep: ## Get the dependencies
 #	@cat cover.out >> coverage.txt
 
 build: dep ## Build the binary file
-	@go build -i -o build/main $(PKG)
+	@go build -i -o build/${SERVER_NAME} $(PKG)
 
-clean: ## Remove previous build
-	@rm -f ./build
+#clean: ## Remove previous build
+#	@rm -f ./build
 
 help: ## Display this help screen
 	@grep -h -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-30s\033[0m %s\n", $$1, $$2}'

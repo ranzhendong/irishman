@@ -42,9 +42,9 @@ compile:
   stage: build
   script:
     - make build
-  artifacts:
-    paths:
-      - app
+#  artifacts:
+#    paths:
+#      - app
 
 image_build:
   stage: release

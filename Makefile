@@ -26,6 +26,8 @@ dep: ## Get the dependencies
 #	@cat cover.out >> coverage.txt
 
 build: dep ## Build the binary file
+    @ls && pwd
+    @echo "go build -i -o $(SERVER_NAME) $(PKG)"
 	@go build -i -o $(SERVER_NAME) $(PKG)
 
 #clean: ## Remove previous build

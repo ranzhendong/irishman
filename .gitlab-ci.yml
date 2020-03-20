@@ -13,9 +13,9 @@ image:
 # 默认的 GOPATH 是 /go，然后你就需要将你的代码放置到 GOPATH 下面，
 # /go/src/mydomain.com/repos/projectname，用一个软链接指过来就可以了
 before_script:
-  - mkdir -p "/go/src/git.qikqiak.com/${CI_PROJECT_NAMESPACE}"
-  - ln -sf "${CI_PROJECT_DIR}" "/go/src/git.qikqiak.com/${CI_PROJECT_PATH}"
-  - cd "/go/src/git.qikqiak.com/${CI_PROJECT_PATH}/"
+  - mkdir -p "/go/src/gitlab.ranzhendong.com.cn/${CI_PROJECT_NAMESPACE}"
+  - ln -sf "${CI_PROJECT_DIR}" "/go/src/gitlab.ranzhendong.com.cn/${CI_PROJECT_PATH}"
+  - cd "/go/src/gitlab.ranzhendong.com.cn/${CI_PROJECT_PATH}/"
 
 stages:
   - test
@@ -34,39 +34,34 @@ test2:
   script:
     - sleep 3
     - echo "We did it! Something else runs in parallel!"
-    - echo $CI
-    - echo $CI_BUILDS_DIR
-    - echo $CI_COMMIT_BEFORE_SHA
-    - echo $CI_COMMIT_DESCRIPTION
-    - echo $CI_COMMIT_SHA
-    - echo $CI_COMMIT_TAG
-    - echo $CI_CONFIG_PATH
-    - echo $CI_DEFAULT_BRANCH
-    - echo $CI_DEPLOY_PASSWORD
-    - echo $CI_ENVIRONMENT_NAME
-    - echo $CI_JOB_ID
-    - echo $CI_JOB_IMAGE
-    - echo $CI_JOB_MANUAL
-    - echo $CI_JOB_NAME
-    - echo $CI_PIPELINE_ID
-    - echo $CI_PIPELINE_SOURCE
-    - echo $CI_PIPELINE_TRIGGERED
-    - echo $CI_PROJECT_DIR
-    - echo $CI_PROJECT_ID
-    - echo $CI_PROJECT_NAME
-    - echo $CI_PROJECT_NAMESPACE
-    - echo $CI_PROJECT_PATH
-    - echo $CI_PROJECT_TITLE
-    - echo $CI_PROJECT_URL
-    - echo $CI_PROJECT_VISIBILITY
-    - echo $CI_RUNNER_DESCRIPTION
-    - echo $CI_RUNNER_ID
-    - echo $CI_RUNNER_REVISION
-    - echo $CI_SERVER_URL
-    - echo $CI_SERVER_NAME
-    - echo $CI_SERVER_VERSION
-    - echo $GITLAB_CI
-    - echo $GITLAB_USER_EMAIL
-    - echo $GITLAB_USER_ID
-    - echo $GITLAB_USER_LOGIN
-    - echo $GITLAB_USER_NAME
+    - echo CI_PROJECT_NAMESPACE
+    - echo CI_PROJECT_DIR
+    - echo CI_PROJECT_PATH
+
+compile:
+  stage: build
+  script:
+    # Add here all the dependencies, or use glide/govendor/...
+    # to get them automatically.
+    - make build
+  artifacts:
+    paths:
+      - app
+
+image_build:
+  stage: release
+  image: docker:latest
+  variables:
+    DOCKER_DRIVER: overlay
+    DOCKER_HOST: tcp://localhost:2375
+    VERSION: 'cat VERSION'
+  services:
+    - name: docker:17.03-dind
+      command: ["--insecure-registry=gitlab.ranzhendong.com.cn"]
+  script:
+    - docker info
+    - docker login -u "${CI_HARBOR_USER}" -p "${CI_HARBOR_PASSWORD}" "${CI_HARBOR_URL}"
+    - docker build -t "${CI_REGISTRY_IMAGE}:latest" .
+    - docker tag "${CI_REGISTRY_IMAGE}:latest" "${CI_REGISTRY_IMAGE}:${CI_COMMIT_REF_NAME}:${VERSION}"
+    - test ! -z "${CI_COMMIT_TAG}" && docker push "${CI_REGISTRY_IMAGE}:${VERSION}"
+    - docker push "${CI_REGISTRY_IMAGE}:${CI_COMMIT_REF_NAME}:${VERSION}"

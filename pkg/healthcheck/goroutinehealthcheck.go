@@ -31,17 +31,77 @@ type unHealth struct {
 	FailuresStatus  []int `json:"failuresStatus"`
 }
 
-var c datastruck.Config
+type ctxUpstreamList struct {
+	upstreamList [][]byte
+	ctx          context.Context
+	cancel       context.CancelFunc
+}
+
+type ctxStart struct {
+	upstreamList [][]byte
+	ctx          context.Context
+}
+
+var (
+	c                   datastruck.Config
+	upstreamListChan    = make(chan [][]byte)
+	ctxCancelChan       = make(chan context.CancelFunc)
+	ctxStartChan        = make(chan ctxStart)
+	ctxUpstreamListChan = make(chan ctxUpstreamList)
+)
 
 //HC : new health check
 func HC() {
+
+	// set bit, tell hc controller need to be updated
+	//rootCtx = context.Background()
+	//
+	////Derive a context with cancel
+
+	for {
+		select {
+		case Cancels := <-ctxCancelChan:
+			Cancels()
+		case Start := <-ctxStartChan:
+			go upList(Start.upstreamList, Start.ctx)
+		case cu := <-ctxUpstreamListChan:
+			go upList(cu.upstreamList, cu.ctx)
+		default:
+			go FalgHC()
+		}
+	}
+}
+
+func FalgHC() {
 	var (
 		upstreamList [][]byte
+		cul          ctxUpstreamList
+		st           ctxStart
 	)
+
+	//first hc
+	_ = kvnuts.Del("FalgHC", "FalgHC")
 	upstreamList, _ = kvnuts.SMem(c.NutsDB.Tag.UpstreamList, c.NutsDB.Tag.UpstreamList)
+	ctx, cancel := context.WithCancel(context.Background())
+	cul.upstreamList = upstreamList
+	cul.ctx = ctx
+	cul.cancel = cancel
+	ctxUpstreamListChan <- cul
 
-	//ctx, cancel := context.WithCancel(context.Background())
+	for {
+		time.Sleep(1 * time.Second)
+		upstreamList, _ = kvnuts.SMem(c.NutsDB.Tag.UpstreamList, c.NutsDB.Tag.UpstreamList)
+		if _, _, err := kvnuts.Get("FalgHC", "FalgHC", "i"); err != nil {
+			_ = kvnuts.Del("FalgHC", "FalgHC")
+			ctxCancelChan <- cul.cancel
+			st.ctx = cul.ctx
+			st.upstreamList = upstreamList
+			ctxStartChan <- st
+		}
+	}
+}
 
+func upList(upstreamList [][]byte, ctx context.Context) {
 	for _, k := range upstreamList {
 		log.Println("my string", string(k))
 		//list has eight data, so index[0-7]
@@ -55,8 +115,8 @@ func HC() {
 			hfi, _ := kvnuts.BytesToInt(item[5], true)
 			hft, _ := kvnuts.BytesToInt(item[6], true)
 			hfto, _ := kvnuts.BytesToInt(item[7], true)
-			go UpOneStart(context.TODO(), string(k), hp, hps, hi, ht, hto, hfi, hft, hfto)
-			go DownOneStart(context.TODO(), string(k), hp, hps, hi, ht, hto, hfi, hft, hfto)
+			go UpOneStart(ctx, string(k), hp, hps, hi, ht, hto, hfi, hft, hfto)
+			go DownOneStart(ctx, string(k), hp, hps, hi, ht, hto, hfi, hft, hfto)
 			//go UpOneStart(ctx, string(k), hp, hps, hi, ht, hto, hfi, hft, hfto)
 			//go DownOneStart(ctx, string(k), hp, hps, hi, ht, hto, hfi, hft, hfto)
 			go test(k)

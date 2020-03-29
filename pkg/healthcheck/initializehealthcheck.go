@@ -92,6 +92,7 @@ func InitHealthCheck(timeNow time.Time) *MyERR.MyError {
 
 	//get upstream list from nutsDB
 	upstreamListByte, _ = kvnuts.SMem(c.NutsDB.Tag.UpstreamList, c.NutsDB.Tag.UpstreamList)
+	log.Println(upstreamListByte)
 
 	for _, v := range upstreamListByte {
 		var val string

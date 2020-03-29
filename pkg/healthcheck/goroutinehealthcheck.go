@@ -54,20 +54,18 @@ var (
 func HC() {
 
 	// set bit, tell hc controller need to be updated
-	//rootCtx = context.Background()
-	//
-	////Derive a context with cancel
-
+	go FalgHC()
 	for {
 		select {
 		case Cancels := <-ctxCancelChan:
+			log.Println("Cancels := <-ctxCancelChan:")
 			Cancels()
 		case Start := <-ctxStartChan:
-			go upList(Start.upstreamList, Start.ctx)
+			log.Println("Start := <-ctxStartChan:")
+			go upstreamList(Start.upstreamList, Start.ctx)
 		case cu := <-ctxUpstreamListChan:
-			go upList(cu.upstreamList, cu.ctx)
-		default:
-			go FalgHC()
+			log.Println("cu := <-ctxUpstreamListChan:")
+			go upstreamList(cu.upstreamList, cu.ctx)
 		}
 	}
 }
@@ -83,6 +81,7 @@ func FalgHC() {
 	_ = kvnuts.Del("FalgHC", "FalgHC")
 	upstreamList, _ = kvnuts.SMem(c.NutsDB.Tag.UpstreamList, c.NutsDB.Tag.UpstreamList)
 	ctx, cancel := context.WithCancel(context.Background())
+	log.Println("first hc upstreamList", upstreamList)
 	cul.upstreamList = upstreamList
 	cul.ctx = ctx
 	cul.cancel = cancel
@@ -90,38 +89,49 @@ func FalgHC() {
 
 	for {
 		time.Sleep(1 * time.Second)
-		upstreamList, _ = kvnuts.SMem(c.NutsDB.Tag.UpstreamList, c.NutsDB.Tag.UpstreamList)
-		if _, _, err := kvnuts.Get("FalgHC", "FalgHC", "i"); err != nil {
+		if _, _, err := kvnuts.Get("FalgHC", "FalgHC", "i"); err == nil {
+			upstreamList, _ = kvnuts.SMem(c.NutsDB.Tag.UpstreamList, c.NutsDB.Tag.UpstreamList)
 			_ = kvnuts.Del("FalgHC", "FalgHC")
+			log.Println("_ = kvnuts.Del....")
 			ctxCancelChan <- cul.cancel
 			st.ctx = cul.ctx
 			st.upstreamList = upstreamList
 			ctxStartChan <- st
+		} else {
+			log.Println("nothing.....")
 		}
 	}
 }
 
-func upList(upstreamList [][]byte, ctx context.Context) {
-	for _, k := range upstreamList {
-		log.Println("my string", string(k))
-		//list has eight data, so index[0-7]
-		log.Println(kvnuts.LIndex(string(k), k, 0, 7))
-		if item, _ := kvnuts.LIndex(string(k), k, 0, 7); len(item) != 0 {
-			hp := string(item[0])
-			hps := string(item[1])
-			hi, _ := kvnuts.BytesToInt(item[2], true)
-			ht, _ := kvnuts.BytesToInt(item[3], true)
-			hto, _ := kvnuts.BytesToInt(item[4], true)
-			hfi, _ := kvnuts.BytesToInt(item[5], true)
-			hft, _ := kvnuts.BytesToInt(item[6], true)
-			hfto, _ := kvnuts.BytesToInt(item[7], true)
-			go UpOneStart(ctx, string(k), hp, hps, hi, ht, hto, hfi, hft, hfto)
-			go DownOneStart(ctx, string(k), hp, hps, hi, ht, hto, hfi, hft, hfto)
-			//go UpOneStart(ctx, string(k), hp, hps, hi, ht, hto, hfi, hft, hfto)
-			//go DownOneStart(ctx, string(k), hp, hps, hi, ht, hto, hfi, hft, hfto)
-			go test(k)
+func upstreamList(upstreamList [][]byte, ctx context.Context) {
+
+	select {
+	case <-ctx.Done():
+		log.Println("upstreamList退出...")
+		return
+	default:
+		log.Println(upstreamList, "upstreamList goroutine监控中...")
+		time.Sleep(2 * time.Second)
+		for _, k := range upstreamList {
+			log.Println("my string", string(k))
+			//list has eight data, so index[0-7]
+			log.Println(kvnuts.LIndex(string(k), k, 0, 7))
+			if item, _ := kvnuts.LIndex(string(k), k, 0, 7); len(item) != 0 {
+				hp := string(item[0])
+				hps := string(item[1])
+				hi, _ := kvnuts.BytesToInt(item[2], true)
+				ht, _ := kvnuts.BytesToInt(item[3], true)
+				hto, _ := kvnuts.BytesToInt(item[4], true)
+				hfi, _ := kvnuts.BytesToInt(item[5], true)
+				hft, _ := kvnuts.BytesToInt(item[6], true)
+				hfto, _ := kvnuts.BytesToInt(item[7], true)
+				go UpOneStart(ctx, string(k), hp, hps, hi, ht, hto, hfi, hft, hfto)
+				go DownOneStart(ctx, string(k), hp, hps, hi, ht, hto, hfi, hft, hfto)
+				go test(k)
+			}
 		}
 	}
+
 }
 
 func test(v []byte) {
@@ -141,18 +151,37 @@ func test(v []byte) {
 
 //UpOneStart : up status health check driver
 func UpOneStart(ctx context.Context, upstreamName, protocal, path string, sInterval, sTimes, sTimeout, fInterval, fTimes, fTimeout int) {
-	for {
-		time.Sleep(time.Duration(sInterval) * time.Millisecond)
-		UpHC(upstreamName, protocal, path, fTimes, fTimeout)
+	select {
+	case <-ctx.Done():
+		log.Println("UpOneStart退出...")
+		return
+	default:
+		log.Println("UpOneStart goroutine监控中...")
+		//time.Sleep(2 * time.Second)
+		for {
+			time.Sleep(time.Duration(sInterval) * time.Millisecond)
+			UpHC(upstreamName, protocal, path, fTimes, fTimeout)
+		}
 	}
+
 }
 
 //DownOneStart : down status health check driver
 func DownOneStart(ctx context.Context, upstreamName, protocal, path string, sInterval, sTimes, sTimeout, fInterval, fTimes, fTimeout int) {
-	for {
-		time.Sleep(time.Duration(fInterval) * time.Millisecond)
-		DownHC(upstreamName, protocal, path, sTimes, sTimeout)
+
+	select {
+	case <-ctx.Done():
+		log.Println("DownOneStart监控停止了...")
+		return
+	default:
+		log.Println("DownOneStart goroutine监控中...")
+		//time.Sleep(2 * time.Second)
+		for {
+			time.Sleep(time.Duration(fInterval) * time.Millisecond)
+			DownHC(upstreamName, protocal, path, sTimes, sTimeout)
+		}
 	}
+
 }
 
 //UpHC : up status ip&port check

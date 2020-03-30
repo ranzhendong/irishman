@@ -251,32 +251,45 @@ func PatchUpstream(jsonObj interface{}, timeNow time.Time) *MyERR.MyError {
 			RequestStatus := puData["pool"].([]interface{})[i].(map[string]interface{})["status"]
 			RequestWeight := puData["pool"].([]interface{})[i].(map[string]interface{})["weight"]
 
+			if RequestWeight.(float64) != 0 {
+				UpstreamPool = append(UpstreamPool, map[string]interface{}{"ipPort": RequestIPPort, "status": RequestStatus, "weight": RequestWeight})
+			}
 			for e := 0; e < len(etcdData["pool"].([]interface{})); e++ {
 				etcdIPPort := etcdData["pool"].([]interface{})[e].(map[string]interface{})["ipPort"]
 				etcdStatus := etcdData["pool"].([]interface{})[e].(map[string]interface{})["status"]
 				etcdWeight := etcdData["pool"].([]interface{})[e].(map[string]interface{})["weight"]
 
-				if etcdIPPort == RequestIPPort {
-					if RequestWeight.(float64) == 0 {
-						etcdData["pool"].([]interface{})[e].(map[string]interface{})["status"] = RequestStatus.(string)
-						UpstreamPool = append(UpstreamPool, map[string]interface{}{"ipPort": etcdIPPort, "status": RequestStatus, "weight": etcdWeight.(float64)})
-					} else {
-						etcdData["pool"].([]interface{})[e].(map[string]interface{})["status"] = RequestStatus.(string)
-						etcdData["pool"].([]interface{})[e].(map[string]interface{})["weight"] = RequestWeight.(float64)
-						UpstreamPool = append(UpstreamPool, map[string]interface{}{"ipPort": etcdIPPort, "status": RequestStatus, "weight": RequestWeight})
-					}
-					goto breakFor
-				} else {
-					if RequestWeight.(float64) != 0 {
-						UpstreamPool = append(UpstreamPool, map[string]interface{}{"ipPort": RequestIPPort, "status": RequestStatus, "weight": RequestWeight})
+				//de-weight
+				for q := 0; q < len(UpstreamPool); q++ {
+					if UpstreamPool[q]["ipPort"] == RequestIPPort {
+						UpstreamPool = append(UpstreamPool[:q], UpstreamPool[q+1:]...)
 					}
 				}
 
-				// just for sure if not one server match
-				//append the etcd data
-				UpstreamPool = append(UpstreamPool, map[string]interface{}{"ipPort": etcdIPPort, "status": etcdStatus, "weight": etcdWeight})
+				if etcdIPPort == RequestIPPort {
+					if RequestWeight.(float64) == 0 {
+						UpstreamPool = append(UpstreamPool, map[string]interface{}{"ipPort": etcdIPPort, "status": RequestStatus, "weight": etcdWeight.(float64)})
+					} else {
+						UpstreamPool = append(UpstreamPool, map[string]interface{}{"ipPort": etcdIPPort, "status": RequestStatus, "weight": RequestWeight})
+					}
+				} else {
+					if len(UpstreamPool) == 0 {
+						UpstreamPool = append(UpstreamPool, map[string]interface{}{"ipPort": etcdIPPort, "status": etcdStatus, "weight": etcdWeight})
+					}
+
+					if RequestWeight.(float64) != 0 && RequestStatus.(string) != "" {
+						// just for sure if not one server match
+						for q := 0; q < len(UpstreamPool); q++ {
+							if UpstreamPool[q]["ipPort"] == etcdIPPort || UpstreamPool[q]["ipPort"] == RequestIPPort {
+								continue
+							} else if UpstreamPool[q]["ipPort"] != etcdIPPort && UpstreamPool[q]["ipPort"] != RequestIPPort {
+								UpstreamPool = append(UpstreamPool, map[string]interface{}{"ipPort": etcdIPPort, "status": etcdStatus, "weight": etcdWeight})
+								UpstreamPool = append(UpstreamPool, map[string]interface{}{"ipPort": RequestIPPort, "status": RequestStatus, "weight": RequestWeight})
+							}
+						}
+					}
+				}
 			}
-		breakFor:
 		}
 	}
 

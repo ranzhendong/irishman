@@ -108,7 +108,7 @@ func Get(bct string, key interface{}, valType string) (myReturn string, myReturn
 			return err
 		})
 	if err != nil {
-		log.Println(MyERR.ErrorLog(12163), fmt.Sprintf("%v", err))
+		//log.Println(MyERR.ErrorLog(12163), fmt.Sprintf("%v", err))
 		return
 	}
 	return

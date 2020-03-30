@@ -38,89 +38,128 @@ type ctxUpstreamList struct {
 }
 
 type ctxStart struct {
-	upstreamList [][]byte
-	ctx          context.Context
+	upstreamListBytes [][]byte
 }
 
 var (
-	c                            datastruck.Config
-	ctxCancelChan                = make(chan context.CancelFunc)
-	ctxStartChan                 = make(chan ctxStart)
-	ctxUpstreamListChan          = make(chan ctxUpstreamList)
-	ctxUpstreamListStartFlagChan = make(chan int)
-	ctxUpOneStartStartFlagChan   = make(chan int)
-	ctxDownOneStartStartFlagChan = make(chan int)
+	upstreamListBytes   [][]byte
+	c                   datastruck.Config
+	ctxCancelChan       = make(chan context.CancelFunc, 1)
+	ctxRestartHCChan    = make(chan ctxStart)
+	ctxStartCancelChan  = make(chan int)
+	ctxFirstHCChan      = make(chan int)
+	ctxUpstreamListChan = make(chan int)
+	ctxUpOneStartChan   = make(chan int)
+	ctxDownOneStartChan = make(chan int)
 )
 
 //HC : new health check
 func HC() {
+	var (
+		rootCtx context.Context
+		cancel  context.CancelFunc
+	)
 
-	// set bit, tell hc controller need to be updated
-	go FalgHC()
+	//first goroutines to hc
+	ctx := context.Background()
+	rootCtx, cancel = context.WithCancel(ctx)
+
+	//set cancel func to channel
+	ctxCancelChan <- cancel
+
+	//check flag if exist
+	go FlagHC()
+
+	//cancel function
+	go func() {
+		for {
+			select {
+			case <-ctxStartCancelChan:
+				cancelFuncs := <-ctxCancelChan
+				log.Println("Cancels := <-ctxCancelChan:")
+				cancelFuncs()
+			}
+		}
+	}()
+
+	// start the real hc
 	for {
 		select {
-		case Cancels := <-ctxCancelChan:
-			log.Println("Cancels := <-ctxCancelChan:")
-			Cancels()
-		case Start := <-ctxStartChan:
+
+		//restart hc
+		case s := <-ctxRestartHCChan:
+			time.Sleep(1 * time.Second)
+			rootCtx, cancel = context.WithCancel(ctx)
+			ctxCancelChan <- cancel
 			log.Println("Start := <-ctxStartChan:")
-			go upstreamList(Start.ctx, Start.upstreamList)
-		case cu := <-ctxUpstreamListChan:
+			go upstreamList(rootCtx, s.upstreamListBytes)
+			ctxUpstreamListChan <- 1
+
+		//trigger first HC
+		case <-ctxFirstHCChan:
 			log.Println("cu := <-ctxUpstreamListChan:")
-			go upstreamList(cu.ctx, cu.upstreamList)
-			ctxUpstreamListStartFlagChan <- 1
+			go upstreamList(rootCtx, upstreamListBytes)
+			ctxUpstreamListChan <- 1
 		}
 	}
 }
 
-func FalgHC() {
+//FlagHC: check flag if exist
+func FlagHC() {
 	var (
-		upstreamList [][]byte
-		cul          ctxUpstreamList
-		//st           ctxStart
+		st ctxStart
 	)
 
-	//first hc
+	//del flag, avoid key exist
 	_ = kvnuts.Del("FalgHC", "FalgHC")
-	upstreamList, _ = kvnuts.SMem(c.NutsDB.Tag.UpstreamList, c.NutsDB.Tag.UpstreamList)
-	ctx, cancel := context.WithCancel(context.Background())
-	log.Println("first hc upstreamList", upstreamList)
-	cul.upstreamList = upstreamList
-	cul.ctx = ctx
-	cul.cancel = cancel
-	ctxUpstreamListChan <- cul
 
+	//get the upstreamListBytes
+	upstreamListBytes, _ = kvnuts.SMem(c.NutsDB.Tag.UpstreamList, c.NutsDB.Tag.UpstreamList)
+	//log.Println("first hc upstreamList", upstreamListBytes)
+	//trigger first hc
+	ctxFirstHCChan <- 1
+
+	//check flag if exist
 	for {
 		time.Sleep(1 * time.Second)
 		if _, _, err := kvnuts.Get("FalgHC", "FalgHC", "i"); err == nil {
-			upstreamList, _ = kvnuts.SMem(c.NutsDB.Tag.UpstreamList, c.NutsDB.Tag.UpstreamList)
+			upstreamListBytes, _ = kvnuts.SMem(c.NutsDB.Tag.UpstreamList, c.NutsDB.Tag.UpstreamList)
 			_ = kvnuts.Del("FalgHC", "FalgHC")
 			log.Println("_ = kvnuts.Del....")
-			ctxCancelChan <- cul.cancel
-			//st.ctx = cul.ctx
-			//st.upstreamList = upstreamList
-			//ctxStartChan <- st
+
+			//if flag exist, trigger ctx cancel function
+			ctxStartCancelChan <- 1
+
+			//ready for next hc
+			st.upstreamListBytes = upstreamListBytes
+
+			//restart next hc, using the new upstreamListBytes
+			ctxRestartHCChan <- st
 		} else {
 			log.Println("nothing.....")
 		}
 	}
 }
 
+//upstreamList: distribute function about hc
 func upstreamList(ctx context.Context, upstreamList [][]byte) {
-	ctxs, cancels := context.WithCancel(context.Background())
 	for {
 		select {
+
+		//if ctx cancel function is triggered, exit
 		case <-ctx.Done():
-			log.Println("upstreamList退出...", ctx.Err())
-			cancels()
+			log.Println("upstreamList......退出...", ctx.Err())
 			return
-		case <-ctxUpstreamListStartFlagChan:
+
+		//start hc
+		case <-ctxUpstreamListChan:
 			log.Println(upstreamList, "upstreamList goroutine监控中...")
-			time.Sleep(2 * time.Second)
 			for _, k := range upstreamList {
-				log.Println("my string", string(k))
-				//list has eight data, so index[0-7]
-				log.Println(kvnuts.LIndex(string(k), k, 0, 7))
+				//log.Println("my string", string(k))
+				////list has eight data, so index[0-7]
+				//log.Println(kvnuts.LIndex(string(k), k, 0, 7))
+
+				//get hc template args
 				if item, _ := kvnuts.LIndex(string(k), k, 0, 7); len(item) != 0 {
 					hp := string(item[0])
 					hps := string(item[1])
@@ -130,11 +169,16 @@ func upstreamList(ctx context.Context, upstreamList [][]byte) {
 					hfi, _ := kvnuts.BytesToInt(item[5], true)
 					hft, _ := kvnuts.BytesToInt(item[6], true)
 					hfto, _ := kvnuts.BytesToInt(item[7], true)
-					go UpOneStart(ctxs, string(k), hp, hps, hi, ht, hto, hfi, hft, hfto)
-					go DownOneStart(ctxs, string(k), hp, hps, hi, ht, hto, hfi, hft, hfto)
-					go test(k)
-					ctxUpOneStartStartFlagChan <- 1
-					ctxDownOneStartStartFlagChan <- 1
+
+					//hc for ipPort, who's status is 'down'
+					go UpOneStart(ctx, string(k), hp, hps, hi, ht, hto, hfi, hft, hfto)
+					ctxUpOneStartChan <- 1
+
+					//hc for ipPort, who's status is 'up'
+					go DownOneStart(ctx, string(k), hp, hps, hi, ht, hto, hfi, hft, hfto)
+					ctxDownOneStartChan <- 1
+
+					//go test(k)
 				}
 			}
 		}
@@ -142,34 +186,41 @@ func upstreamList(ctx context.Context, upstreamList [][]byte) {
 
 }
 
-func test(v []byte) {
-	var l [][]byte
-	for {
-		time.Sleep(2 * time.Second)
-		l, _ = kvnuts.SMem(c.NutsDB.Tag.Up, v)
-		for _, s := range l {
-			log.Println(string(v), "Success:", string(s))
-		}
-		l, _ = kvnuts.SMem(c.NutsDB.Tag.Down, v)
-		for _, s := range l {
-			log.Println(string(v), "Failure:", string(s))
-		}
-	}
-}
+//func test(v []byte) {
+//	var l [][]byte
+//	for {
+//		time.Sleep(2 * time.Second)
+//		l, _ = kvnuts.SMem(c.NutsDB.Tag.Up, v)
+//		for _, s := range l {
+//			log.Println(string(v), "Success:", string(s))
+//		}
+//		l, _ = kvnuts.SMem(c.NutsDB.Tag.Down, v)
+//		for _, s := range l {
+//			log.Println(string(v), "Failure:", string(s))
+//		}
+//	}
+//}
 
 //UpOneStart : up status health check driver
 func UpOneStart(ctx context.Context, upstreamName, protocal, path string, sInterval, sTimes, sTimeout, fInterval, fTimes, fTimeout int) {
 	for {
 		select {
-		case <-ctx.Done():
-			log.Println("UpOneStart退出...", ctx.Err())
-			return
-		case <-ctxUpOneStartStartFlagChan:
-			log.Println("UpOneStart goroutine监控中...")
-			//time.Sleep(2 * time.Second)
+
+		//ready for be triggered to hc
+		case <-ctxUpOneStartChan:
+			log.Println(upstreamName, "UpOneStart goroutine监控中...")
+
+			//periodically round
 			for {
 				time.Sleep(time.Duration(sInterval) * time.Millisecond)
 				UpHC(upstreamName, protocal, path, fTimes, fTimeout)
+				select {
+
+				//if ctx cancel function is triggered, exit
+				case <-ctx.Done():
+					log.Println(upstreamName, "UpOneStart监控停止了...????", ctx.Err())
+					return
+				}
 			}
 		}
 	}
@@ -178,22 +229,27 @@ func UpOneStart(ctx context.Context, upstreamName, protocal, path string, sInter
 
 //DownOneStart : down status health check driver
 func DownOneStart(ctx context.Context, upstreamName, protocal, path string, sInterval, sTimes, sTimeout, fInterval, fTimes, fTimeout int) {
-
 	for {
 		select {
-		case <-ctx.Done():
-			log.Println("DownOneStart监控停止了...", ctx.Err())
-			return
-		case <-ctxDownOneStartStartFlagChan:
-			log.Println("DownOneStart goroutine监控中...")
-			//time.Sleep(2 * time.Second)
+
+		//ready for be triggered to hc
+		case <-ctxDownOneStartChan:
+			log.Println(upstreamName, "DownOneStart goroutine监控中...")
+
+			//periodically round
 			for {
 				time.Sleep(time.Duration(fInterval) * time.Millisecond)
 				DownHC(upstreamName, protocal, path, sTimes, sTimeout)
+				select {
+
+				//if ctx cancel function is triggered, exit
+				case <-ctx.Done():
+					log.Println(upstreamName, "DownOneStart监控停止了...????", ctx.Err())
+					return
+				}
 			}
 		}
 	}
-
 }
 
 //UpHC : up status ip&port check

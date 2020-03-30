@@ -92,7 +92,6 @@ func InitHealthCheck(timeNow time.Time) *MyERR.MyError {
 
 	//get upstream list from nutsDB
 	upstreamListByte, _ = kvnuts.SMem(c.NutsDB.Tag.UpstreamList, c.NutsDB.Tag.UpstreamList)
-	log.Println(upstreamListByte)
 
 	for _, v := range upstreamListByte {
 		var val string
@@ -118,7 +117,7 @@ func InitHealthCheck(timeNow time.Time) *MyERR.MyError {
 	}
 
 	//ready to hc
-	//HC()
+	HC()
 
 	log.Println(MyERR.ErrorLog(000, fmt.Sprintf(" HealthCheck %v", string(b))))
 	return &MyERR.MyError{Code: 000, TimeStamp: timeNow}

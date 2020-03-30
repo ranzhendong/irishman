@@ -7,6 +7,7 @@ import (
 	MyERR "github.com/ranzhendong/irishman/pkg/errorhandle"
 	"github.com/ranzhendong/irishman/pkg/healthcheck"
 	MyInit "github.com/ranzhendong/irishman/pkg/init"
+	"github.com/ranzhendong/irishman/pkg/kvnuts"
 	"github.com/ranzhendong/irishman/pkg/upstream"
 	"io"
 	"io/ioutil"
@@ -34,6 +35,7 @@ func init() {
 	}
 	mux["/upstream"] = myUpstream
 	mux["/healthcheck"] = healthCheck
+	mux["/nutsdb"] = nutsDB
 }
 
 func main() {
@@ -58,7 +60,7 @@ func main() {
 	}
 
 	//initialize health check
-	//go healthcheck.InitHealthCheck(time.Now())
+	go healthcheck.InitHealthCheck(time.Now())
 
 	//config about server
 	server := http.Server{
@@ -84,6 +86,11 @@ func (myHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	log.Printf(MyERR.ErrorLog(0010, fmt.Sprintf("%v", r.URL.String())))
 	res := &MyERR.MyError{Code: 0010, Error: fmt.Sprintf("%v", r.URL.String())}
 	response(w, res)
+}
+
+func nutsDB(w http.ResponseWriter, r *http.Request) {
+	log.Println("nutsDB.....")
+	_ = kvnuts.Put("FalgHC", "FalgHC", 1)
 }
 
 func myUpstream(w http.ResponseWriter, r *http.Request) {

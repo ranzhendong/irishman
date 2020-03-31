@@ -6,6 +6,7 @@ import (
 	"github.com/ranzhendong/irishman/pkg/datastruck"
 	MyERR "github.com/ranzhendong/irishman/pkg/errorhandle"
 	"github.com/ranzhendong/irishman/pkg/etcd"
+	"github.com/ranzhendong/irishman/pkg/gorountinescontroller"
 	"gopkg.in/fatih/set.v0"
 	"log"
 	"time"
@@ -13,7 +14,7 @@ import (
 
 type J interface{}
 
-//set interface,timestamp,method to struck
+//set interface,timestamp, method to struck
 type RHCStruck struct {
 	J
 	T time.Time
@@ -141,7 +142,7 @@ func (r *RHCStruck) PatchHealthCheck() (a *MyERR.MyError) {
 	}
 
 	// Characters joining together
-	EtcHealthCheckName := c.HealthCheck.EtcdPrefix + strFirstToUpper(ph.HealthCheckName)
+	EtcHealthCheckName := gorountinescontroller.c.HealthCheck.EtcdPrefix + strFirstToUpper(ph.HealthCheckName)
 	//if exist
 	if val, err = etcd.EtcGet(EtcHealthCheckName); err != nil {
 		log.Printf(MyERR.ErrorLog(9102), fmt.Sprintf("%v", err))

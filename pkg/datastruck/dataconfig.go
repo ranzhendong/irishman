@@ -56,6 +56,16 @@ type healthcheck struct {
 	Template   HealthCheck `yaml:"template"`
 }
 
+//Config: for methods
+type TConfig struct {
+	UpstreamEtcPrefix    string
+	HealthCheckEtcPrefix string
+	TagUp                string
+	TagDown              string
+	TagSuccessCode       string
+	TagFailureCode       string
+}
+
 //Config : Unmarshal the config
 func (c *Config) Config() (err error) {
 	if err = viper.Unmarshal(&c); err != nil {
@@ -63,4 +73,18 @@ func (c *Config) Config() (err error) {
 		return
 	}
 	return nil
+}
+
+//TC: for functions: SeparateUpstreamToNuts, HealthCheckTemplateToNuts
+func (c *Config) TC() *TConfig {
+
+	//specify the explicit value, just for values not exist.
+	return &TConfig{
+		UpstreamEtcPrefix:    c.Upstream.EtcdPrefix,
+		HealthCheckEtcPrefix: c.HealthCheck.EtcdPrefix,
+		TagUp:                c.NutsDB.Tag.Up,
+		TagDown:              c.NutsDB.Tag.Down,
+		TagSuccessCode:       c.NutsDB.Tag.SuccessCode,
+		TagFailureCode:       c.NutsDB.Tag.FailureCode,
+	}
 }

@@ -8,7 +8,9 @@ import (
 
 //Factory: goroutines
 func Factory() {
-	//initialize health check
+	//initialize healthCheck
 	go healthcheck.InitHealthCheck(time.Now())
+
+	//HC()
 	log.Println("Factory")
 }

@@ -1,4 +1,4 @@
-package healthcheck
+package gorountinescontroller
 
 import (
 	"context"
@@ -7,29 +7,6 @@ import (
 	"log"
 	"time"
 )
-
-//healthCheck : template for goroutines
-type healthCheck struct {
-	CheckProtocol string   `json:"checkProtocol"`
-	CheckPath     string   `json:"checkPath"`
-	Health        health   `json:"health"`
-	UnHealth      unHealth `json:"unhealth"`
-}
-
-type health struct {
-	Interval       int   `json:"interval"`
-	SuccessTime    int   `json:"successTime"`
-	SuccessTimeout int   `json:"successTimeout"`
-	SuccessStatus  []int `json:"successStatus"`
-}
-
-//template and put UnHealth
-type unHealth struct {
-	Interval        int   `json:"interval"`
-	FailuresTime    int   `json:"failuresTime"`
-	FailuresTimeout int   `json:"failuresTimeout"`
-	FailuresStatus  []int `json:"failuresStatus"`
-}
 
 //ctxStart: storage upstream list
 type ctxStart struct {

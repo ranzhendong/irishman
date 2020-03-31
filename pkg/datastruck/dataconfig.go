@@ -76,10 +76,10 @@ func (c *Config) Config() (err error) {
 }
 
 //TC: for functions: SeparateUpstreamToNuts, HealthCheckTemplateToNuts
-func (c *Config) TC() *TConfig {
+func (c *Config) TC() TConfig {
 
 	//specify the explicit value, just for values not exist.
-	return &TConfig{
+	return TConfig{
 		UpstreamEtcPrefix:    c.Upstream.EtcdPrefix,
 		HealthCheckEtcPrefix: c.HealthCheck.EtcdPrefix,
 		TagUp:                c.NutsDB.Tag.Up,

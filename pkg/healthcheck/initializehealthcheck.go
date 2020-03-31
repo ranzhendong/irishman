@@ -11,12 +11,15 @@ import (
 	"time"
 )
 
+var c datastruck.Config
+
+//type TConfig *datastruck.TConfig
+
 //InitHealthCheck : goroutines for Init Health Check
 func InitHealthCheck(timeNow time.Time) *MyERR.MyError {
 	log.Println("InitHealthCheck")
 
 	var (
-		c                              datastruck.Config
 		err                            error
 		val                            []*mvccpb.KeyValue
 		upstreamList, downUpstreamList []string
@@ -32,7 +35,15 @@ func InitHealthCheck(timeNow time.Time) *MyERR.MyError {
 	}
 
 	//set config to tc
-	&tc = c.TC()
+	tc = c.TC()
+	T := TConfig{
+		tc.UpstreamEtcPrefix,
+		tc.HealthCheckEtcPrefix,
+		tc.TagUp,
+		tc.TagDown,
+		tc.TagSuccessCode,
+		tc.TagFailureCode,
+	}
 
 	//get upstream list key from etcd
 	if _, val, err = etcd.EtcGetAll(c.Upstream.EtcdPrefix); err != nil {
@@ -48,11 +59,10 @@ func InitHealthCheck(timeNow time.Time) *MyERR.MyError {
 		}
 
 		//SeparateUpstreamToNuts
-
-		tc.SeparateUpstreamToNuts([]byte(u.UpstreamName))
+		T.SeparateUpstreamToNuts([]byte(u.UpstreamName))
 
 		//HealthCheckTemplateToNuts
-		tc.HealthCheckTemplateToNuts([]byte(u.UpstreamName))
+		T.HealthCheckTemplateToNuts([]byte(u.UpstreamName))
 
 		upstreamList = append(upstreamList, u.UpstreamName)
 	}

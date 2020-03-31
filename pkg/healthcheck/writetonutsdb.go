@@ -10,40 +10,10 @@ import (
 	"log"
 )
 
-//GoroutinesHealthCheck : write HC template to nutsDB
-type GoroutinesHealthCheck struct {
-	CheckProtocol string `json:"checkProtocol"`
-	CheckPath     string `json:"checkPath"`
-	Health        struct {
-		Interval       int   `json:"interval"`
-		SuccessTime    int   `json:"successTime"`
-		SuccessTimeout int   `json:"successTimeout"`
-		SuccessStatus  []int `json:"successStatus"`
-	} `json:"health"`
-	UnHealth struct {
-		Interval        int   `json:"interval"`
-		FailuresTime    int   `json:"failuresTime"`
-		FailuresTimeout int   `json:"failuresTimeout"`
-		FailuresStatus  []int `json:"failuresStatus"`
-	} `json:"unhealth"`
-}
-
-//Upstream: write upstream server up&down to nutsDB
-type Upstream struct {
-	UpstreamName string `json:"upstreamName"`
-	Pool         []struct {
-		IPPort string `json:"ipPort"`
-		Status string `json:"status"`
-		Weight int    `json:"weight"`
-	} `json:"pool"`
-}
-
 var (
 	val string
 	err error
 )
-
-type T datastruck.TConfig
 
 /*
 All NutsDB bucket, key, and val
@@ -62,7 +32,7 @@ for example TheUpstream=vmims
 */
 
 //SeparateUpstreamToNuts : Separate up&down server from upstream to nutsDB
-func (c T) SeparateUpstreamToNuts(v []byte) {
+func (c *TConfig) SeparateUpstreamToNuts(v []byte) {
 	var u Upstream
 
 	if val, err = etcd.EtcGet(c.UpstreamEtcPrefix + strFirstToUpper(string(v))); err != nil {
@@ -88,7 +58,7 @@ storage health check info as list, but success code and failures code as set.
 */
 
 //HealthCheckTemplateToNuts : set health check template to nutsDB
-func (c T) HealthCheckTemplateToNuts(v []byte) {
+func (c TConfig) HealthCheckTemplateToNuts(v []byte) {
 	var h datastruck.HealthCheck
 
 	//health check to nuts

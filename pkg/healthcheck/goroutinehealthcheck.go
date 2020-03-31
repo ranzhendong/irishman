@@ -36,29 +36,54 @@ type ctxStart struct {
 	upstreamListBytes [][]byte
 }
 
-// upstreamName, protocol, path, sInterval, fTimes, fTimeout
-type UpHCS struct {
+//healthCheckUpstreamName: health check upstream name
+type healthCheckUpstreamName string
 
-	//health check upstream name
-	un string
+//healthCheckProtocol: health check protocol, such as: http,tcp
+type healthCheckProtocol string
 
-	//health check protocol, such as: http,tcp
-	ptc string
+//healthCheckPath: health check successful Interval
+type healthCheckPath string
 
-	// health check successful Interval
-	p string
+//healthChecksSuccessInterval: successful Interval
+type healthCheckSuccessInterval int
 
-	//successful Interval
-	si int
+//healthChecksSuccessTimes: successful times
+type healthCheckSuccessTimes int
 
-	//failed times
-	ft int
+//healthChecksSuccessTimeout: successful timeout
+type healthCheckSuccessTimeout int
 
-	//failed timeout
-	fto int
+//healthChecksFailureInterval: failed Interval
+type healthCheckFailureInterval int
+
+//healthCheckFailureTimes: failed times
+type healthCheckFailureTimes int
+
+//healthCheckFailureTimeout: failed timeout
+type healthCheckFailureTimeout int
+
+//public: public info
+type public struct {
+	un  healthCheckUpstreamName
+	ptc healthCheckProtocol
+	p   healthCheckPath
 }
 
-type DownHCS struct {
+//upHCS: healthCheck for status is 'down'
+type upHCS struct {
+	pu  public
+	si  healthCheckSuccessInterval
+	ft  healthCheckFailureTimes
+	fto healthCheckFailureTimeout
+}
+
+//downHCS: healthCheck for status is 'up'
+type downHCS struct {
+	pu  public
+	fi  healthCheckFailureInterval
+	st  healthCheckSuccessTimes
+	sto healthCheckSuccessTimeout
 }
 
 var (
@@ -178,27 +203,38 @@ func upstreamList(ctx context.Context, upstreamList [][]byte) {
 		case <-ctxUpstreamListChan:
 			log.Println(upstreamList, "upstreamList goroutine监控中...")
 			for _, k := range upstreamList {
-				//log.Println("my string", string(k))
-				////list has eight data, so index[0-7]
-				//log.Println(kvnuts.LIndex(string(k), k, 0, 7))
 
-				//get hc template args
+				//get hc template args, list has eight data, so index[0-7]
 				if item, _ := kvnuts.LIndex(string(k), k, 0, 7); len(item) != 0 {
-					hp := string(item[0])
-					hps := string(item[1])
-					hi, _ := kvnuts.BytesToInt(item[2], true)
-					ht, _ := kvnuts.BytesToInt(item[3], true)
-					hto, _ := kvnuts.BytesToInt(item[4], true)
-					hfi, _ := kvnuts.BytesToInt(item[5], true)
-					hft, _ := kvnuts.BytesToInt(item[6], true)
-					hfto, _ := kvnuts.BytesToInt(item[7], true)
+					var (
+						p   public
+						uhc upHCS
+						dhc downHCS
+					)
+
+					//set public info
+					p.un = healthCheckUpstreamName(string(k))
+					p.ptc = healthCheckProtocol(string(item[0]))
+					p.p = healthCheckPath(string(item[1]))
+					uhc.pu = p
+					dhc.pu = p
+
+					//shunt upHC
+					uhc.si = healthCheckSuccessInterval(kvnuts.BytesToInt(item[2], true))
+					uhc.ft = healthCheckFailureTimes(kvnuts.BytesToInt(item[6], true))
+					uhc.fto = healthCheckFailureTimeout(kvnuts.BytesToInt(item[7], true))
+
+					//shunt downHC
+					dhc.fi = healthCheckFailureInterval(kvnuts.BytesToInt(item[5], true))
+					dhc.st = healthCheckSuccessTimes(kvnuts.BytesToInt(item[3], true))
+					dhc.sto = healthCheckSuccessTimeout(kvnuts.BytesToInt(item[4], true))
 
 					//hc for ipPort, who's status is 'down'
-					go UpOneStart(ctx, string(k), hp, hps, hi, ht, hto, hfi, hft, hfto)
+					go uhc.upOneStart(ctx)
 					ctxUpOneStartChan <- 1
 
 					//hc for ipPort, who's status is 'up'
-					go DownOneStart(ctx, string(k), hp, hps, hi, ht, hto, hfi, hft, hfto)
+					go dhc.downOneStart(ctx)
 					ctxDownOneStartChan <- 1
 
 					go test(k)
@@ -224,13 +260,13 @@ func test(v []byte) {
 }
 
 //UpOneStart : up status health check driver
-func UpOneStart(ctx context.Context, upstreamName, protocol, path string, sInterval, sTimes, sTimeout, fInterval, fTimes, fTimeout int) {
+func (uhc upHCS) upOneStart(ctx context.Context) {
 	for {
 		select {
 
 		//ready for be triggered to hc
 		case <-ctxUpOneStartChan:
-			log.Println(upstreamName, "UpOneStart goroutine监控中...")
+			log.Println(uhc.pu.un, "UpOneStart goroutine监控中...")
 
 			//periodically round
 			for {
@@ -238,13 +274,13 @@ func UpOneStart(ctx context.Context, upstreamName, protocol, path string, sInter
 
 				//if ctx cancel function is triggered, exit
 				case <-ctx.Done():
-					log.Println(upstreamName, "UpOneStart监控停止了...????", ctx.Err())
+					log.Println(uhc.pu.un, "UpOneStart监控停止了...????", ctx.Err())
 					return
 
 				//default to hc
 				default:
-					time.Sleep(time.Duration(sInterval) * time.Millisecond)
-					UpHC(upstreamName, protocol, path, fTimes, fTimeout)
+					time.Sleep(time.Duration(uhc.si) * time.Millisecond)
+					uhc.upHC()
 				}
 
 			}
@@ -254,24 +290,24 @@ func UpOneStart(ctx context.Context, upstreamName, protocol, path string, sInter
 }
 
 //DownOneStart : down status health check driver
-func DownOneStart(ctx context.Context, upstreamName, protocol, path string, sInterval, sTimes, sTimeout, fInterval, fTimes, fTimeout int) {
+func (dhc downHCS) downOneStart(ctx context.Context) {
 	for {
 		select {
 
 		//ready for be triggered to hc
 		case <-ctxDownOneStartChan:
-			log.Println(upstreamName, "DownOneStart goroutine监控中...")
+			log.Println(dhc.pu.un, "DownOneStart goroutine监控中...")
 
 			//periodically round
 			for {
 				select {
 				//if ctx cancel function is triggered, exit
 				case <-ctx.Done():
-					log.Println(upstreamName, "DownOneStart监控停止了...????", ctx.Err())
+					log.Println(dhc.pu.un, "DownOneStart监控停止了...????", ctx.Err())
 					return
 				default:
-					time.Sleep(time.Duration(fInterval) * time.Millisecond)
-					DownHC(upstreamName, protocol, path, sTimes, sTimeout)
+					time.Sleep(time.Duration(dhc.fi) * time.Millisecond)
+					dhc.downHC()
 				}
 			}
 		}
@@ -279,9 +315,12 @@ func DownOneStart(ctx context.Context, upstreamName, protocol, path string, sInt
 }
 
 //UpHC : up status ip&port check
-func UpHC(upstreamName, protocol, path string, times, timeout int) {
+func (uhc upHCS) upHC() {
+	//turn upstream name to string name
+	name := string(uhc.pu.un)
+
 	// get the upstream up list
-	ipPort, _ := kvnuts.SMem(c.NutsDB.Tag.Up, upstreamName)
+	ipPort, _ := kvnuts.SMem(c.NutsDB.Tag.Up, name)
 	if len(ipPort) == 0 {
 		return
 	}
@@ -289,32 +328,35 @@ func UpHC(upstreamName, protocol, path string, times, timeout int) {
 	//check every ip port
 	for i := 0; i < len(ipPort); i++ {
 		ip := ipPort[i]
-		if protocol == "http" {
-			statusCode, _ := HTTP(string(ip)+path, timeout)
-			log.Println(upstreamName, string(ip), statusCode)
+		if uhc.pu.ptc == "http" {
+			statusCode, _ := HTTP(string(ip)+string(uhc.pu.p), int(uhc.fto))
+			log.Println(name, string(ip), statusCode)
 
 			//the status code can not be in failure, and must be in success code.
-			if !kvnuts.SIsMem(c.NutsDB.Tag.FailureCode+upstreamName, upstreamName, statusCode) &&
-				kvnuts.SIsMem(c.NutsDB.Tag.SuccessCode+upstreamName, upstreamName, statusCode) {
+			if !kvnuts.SIsMem(c.NutsDB.Tag.FailureCode+name, name, statusCode) &&
+				kvnuts.SIsMem(c.NutsDB.Tag.SuccessCode+name, name, statusCode) {
 				continue
 			}
 		} else {
-			if TCP(string(ip), timeout) {
+			if TCP(string(ip), int(uhc.fto)) {
 				continue
 			}
 		}
 
-		if CodeCount(upstreamName+string(ip), "f", times) {
-			_ = kvnuts.SRem(c.NutsDB.Tag.Up, upstreamName, ip)
-			_ = kvnuts.SAdd(c.NutsDB.Tag.Down, upstreamName, ip)
+		if CodeCount(name+string(ip), "f", int(uhc.ft)) {
+			_ = kvnuts.SRem(c.NutsDB.Tag.Up, name, ip)
+			_ = kvnuts.SAdd(c.NutsDB.Tag.Down, name, ip)
 		}
 	}
 }
 
 //DownHC : down status ip&port check
-func DownHC(upstreamName, protocol, path string, times, timeout int) {
+func (dhc downHCS) downHC() {
+	//turn upstream name to string name
+	name := string(dhc.pu.un)
+
 	// get the upstream down list
-	ipPort, _ := kvnuts.SMem(c.NutsDB.Tag.Down, upstreamName)
+	ipPort, _ := kvnuts.SMem(c.NutsDB.Tag.Down, name)
 	if len(ipPort) == 0 {
 		return
 	}
@@ -323,23 +365,23 @@ func DownHC(upstreamName, protocol, path string, times, timeout int) {
 	for i := 0; i < len(ipPort); i++ {
 		ip := ipPort[i]
 		log.Println(string(ip))
-		if protocol == "http" {
-			statusCode, _ := HTTP(string(ip)+path, timeout)
-			log.Println(upstreamName, string(ip), statusCode)
+		if dhc.pu.ptc == "http" {
+			statusCode, _ := HTTP(string(ip)+string(dhc.pu.p), int(dhc.sto))
+			log.Println(name, string(ip), statusCode)
 
 			//the status code must be in success
-			if !kvnuts.SIsMem(c.NutsDB.Tag.SuccessCode+upstreamName, upstreamName, statusCode) {
+			if !kvnuts.SIsMem(c.NutsDB.Tag.SuccessCode+name, name, statusCode) {
 				continue
 			}
 		} else {
-			if !TCP(string(ip), timeout) {
+			if !TCP(string(ip), int(dhc.sto)) {
 				continue
 			}
 		}
 
-		if CodeCount(upstreamName+string(ip), "s", times) {
-			_ = kvnuts.SRem(c.NutsDB.Tag.Down, upstreamName, ip)
-			_ = kvnuts.SAdd(c.NutsDB.Tag.Up, upstreamName, ip)
+		if CodeCount(name+string(ip), "s", int(dhc.st)) {
+			_ = kvnuts.SRem(c.NutsDB.Tag.Down, name, ip)
+			_ = kvnuts.SAdd(c.NutsDB.Tag.Up, name, ip)
 		}
 	}
 }

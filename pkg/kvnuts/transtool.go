@@ -7,11 +7,16 @@ import (
 )
 
 //BytesToInt : turn byte to int
-func BytesToInt(b []byte, isSymbol bool) (int, error) {
+//because of request, Error screen
+func BytesToInt(b []byte, isSymbol bool) int {
 	if isSymbol {
-		return bytesToIntS(b)
+		i, _ := bytesToIntS(b)
+		return i
+		//return bytesToIntS(b)
 	}
-	return bytesToIntU(b)
+	i, _ := bytesToIntU(b)
+	return i
+	//return bytesToIntU(b)
 }
 
 //字节数(大端)组转成int(无符号的)

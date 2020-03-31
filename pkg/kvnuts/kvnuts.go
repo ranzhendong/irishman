@@ -98,7 +98,7 @@ func Get(bct string, key interface{}, valType string) (myReturn string, myReturn
 				case "s":
 					myReturn = string(e.Value)
 				case "i":
-					myReturnInt, _ = BytesToInt(e.Value, true)
+					myReturnInt = BytesToInt(e.Value, true)
 				default:
 					err = fmt.Errorf("my error")
 					return err

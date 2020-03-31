@@ -70,17 +70,8 @@ func HC() {
 	//check flag if exist
 	go FlagHC()
 
-	//cancel function
-	go func() {
-		for {
-			select {
-			case <-ctxStartCancelChan:
-				cancelFuncs := <-ctxCancelChan
-				log.Println("Cancels := <-ctxCancelChan:")
-				cancelFuncs()
-			}
-		}
-	}()
+	//if cancel function be triggered
+	go ifCancel()
 
 	// start the real hc
 	for {
@@ -100,6 +91,18 @@ func HC() {
 			log.Println("cu := <-ctxUpstreamListChan:")
 			go upstreamList(rootCtx, upstreamListBytes)
 			ctxUpstreamListChan <- 1
+		}
+	}
+}
+
+//ifCancel function
+func ifCancel() {
+	for {
+		select {
+		case <-ctxStartCancelChan:
+			cancelFuncs := <-ctxCancelChan
+			log.Println("Cancels := <-ctxCancelChan:")
+			cancelFuncs()
 		}
 	}
 }
@@ -178,28 +181,27 @@ func upstreamList(ctx context.Context, upstreamList [][]byte) {
 					go DownOneStart(ctx, string(k), hp, hps, hi, ht, hto, hfi, hft, hfto)
 					ctxDownOneStartChan <- 1
 
-					//go test(k)
+					go test(k)
 				}
 			}
 		}
 	}
-
 }
 
-//func test(v []byte) {
-//	var l [][]byte
-//	for {
-//		time.Sleep(2 * time.Second)
-//		l, _ = kvnuts.SMem(c.NutsDB.Tag.Up, v)
-//		for _, s := range l {
-//			log.Println(string(v), "Success:", string(s))
-//		}
-//		l, _ = kvnuts.SMem(c.NutsDB.Tag.Down, v)
-//		for _, s := range l {
-//			log.Println(string(v), "Failure:", string(s))
-//		}
-//	}
-//}
+func test(v []byte) {
+	var l [][]byte
+	for {
+		time.Sleep(2 * time.Second)
+		l, _ = kvnuts.SMem(c.NutsDB.Tag.Up, v)
+		for _, s := range l {
+			log.Println(string(v), "Success:", string(s))
+		}
+		l, _ = kvnuts.SMem(c.NutsDB.Tag.Down, v)
+		for _, s := range l {
+			log.Println(string(v), "Failure:", string(s))
+		}
+	}
+}
 
 //UpOneStart : up status health check driver
 func UpOneStart(ctx context.Context, upstreamName, protocal, path string, sInterval, sTimes, sTimeout, fInterval, fTimes, fTimeout int) {
@@ -212,15 +214,19 @@ func UpOneStart(ctx context.Context, upstreamName, protocal, path string, sInter
 
 			//periodically round
 			for {
-				time.Sleep(time.Duration(sInterval) * time.Millisecond)
-				UpHC(upstreamName, protocal, path, fTimes, fTimeout)
 				select {
 
 				//if ctx cancel function is triggered, exit
 				case <-ctx.Done():
 					log.Println(upstreamName, "UpOneStart监控停止了...????", ctx.Err())
 					return
+
+				//default to hc
+				default:
+					time.Sleep(time.Duration(sInterval) * time.Millisecond)
+					UpHC(upstreamName, protocal, path, fTimes, fTimeout)
 				}
+
 			}
 		}
 	}
@@ -238,14 +244,14 @@ func DownOneStart(ctx context.Context, upstreamName, protocal, path string, sInt
 
 			//periodically round
 			for {
-				time.Sleep(time.Duration(fInterval) * time.Millisecond)
-				DownHC(upstreamName, protocal, path, sTimes, sTimeout)
 				select {
-
 				//if ctx cancel function is triggered, exit
 				case <-ctx.Done():
 					log.Println(upstreamName, "DownOneStart监控停止了...????", ctx.Err())
 					return
+				default:
+					time.Sleep(time.Duration(fInterval) * time.Millisecond)
+					DownHC(upstreamName, protocal, path, sTimes, sTimeout)
 				}
 			}
 		}

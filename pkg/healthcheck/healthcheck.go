@@ -11,6 +11,15 @@ import (
 	"time"
 )
 
+type J interface{}
+
+//set interface,timestamp,method to struck
+type RHCStruck struct {
+	J
+	T time.Time
+	M string
+}
+
 //repeat remove
 func removeRepByMap(slc []int) (result []int) {
 	tempMap := map[interface{}]byte{}
@@ -37,7 +46,7 @@ func strFirstToUpper(str string) string {
 }
 
 //GetHealthCheck : method for get health check
-func GetHealthCheck(jsonObj interface{}, timeNow time.Time) (*MyERR.MyError, string) {
+func (r *RHCStruck) GetHealthCheck() (*MyERR.MyError, string) {
 	var (
 		gh  datastruck.GetHealthCheck
 		err error
@@ -45,9 +54,9 @@ func GetHealthCheck(jsonObj interface{}, timeNow time.Time) (*MyERR.MyError, str
 	)
 
 	//judge
-	if err = gh.JudgeValidator(jsonObj); err != nil {
+	if err = gh.JudgeValidator(r.J); err != nil {
 		log.Println(MyERR.ErrorLog(7003), fmt.Sprintf("%v", err))
-		return &MyERR.MyError{Error: err.Error(), Code: 7003, TimeStamp: timeNow}, ""
+		return &MyERR.MyError{Error: err.Error(), Code: 7003, TimeStamp: r.T}, ""
 	}
 
 	//get values
@@ -56,10 +65,10 @@ func GetHealthCheck(jsonObj interface{}, timeNow time.Time) (*MyERR.MyError, str
 		//get key from etcd
 		if val, _, err = etcd.EtcGetAll(EtcHealthCheckName); err != nil {
 			log.Println(MyERR.ErrorLog(7104), fmt.Sprintf("%v", err))
-			return &MyERR.MyError{Error: err.Error(), Code: 7104, TimeStamp: timeNow}, ""
+			return &MyERR.MyError{Error: err.Error(), Code: 7104, TimeStamp: r.T}, ""
 		}
 		log.Println(MyERR.ErrorLog(000, fmt.Sprintf(" Get ALL HealthCheck %v, Values %v", EtcHealthCheckName, val)))
-		return &MyERR.MyError{Code: 000, TimeStamp: timeNow}, val
+		return &MyERR.MyError{Code: 000, TimeStamp: r.T}, val
 	}
 
 	EtcHealthCheckName := c.HealthCheck.EtcdPrefix + strFirstToUpper(gh.HealthCheckName)
@@ -68,15 +77,15 @@ func GetHealthCheck(jsonObj interface{}, timeNow time.Time) (*MyERR.MyError, str
 	if val, err = etcd.EtcGet(EtcHealthCheckName); err != nil {
 		log.Println(err)
 		log.Println(MyERR.ErrorLog(7102), fmt.Sprintf("; %v", err))
-		return &MyERR.MyError{Error: err.Error(), Code: 7102, TimeStamp: timeNow}, ""
+		return &MyERR.MyError{Error: err.Error(), Code: 7102, TimeStamp: r.T}, ""
 	}
 
 	log.Println(MyERR.ErrorLog(000, fmt.Sprintf(" Get HealthCheck: %v, Values %v", EtcHealthCheckName, val)))
-	return &MyERR.MyError{Code: 000, TimeStamp: timeNow}, val
+	return &MyERR.MyError{Code: 000, TimeStamp: r.T}, val
 }
 
 //PutHealthCheck : method for put health check
-func PutHealthCheck(jsonObj interface{}, timeNow time.Time) *MyERR.MyError {
+func (r *RHCStruck) PutHealthCheck() *MyERR.MyError {
 	var (
 		h     datastruck.HealthCheck
 		err   error
@@ -84,15 +93,15 @@ func PutHealthCheck(jsonObj interface{}, timeNow time.Time) *MyERR.MyError {
 	)
 
 	//judge
-	if err = h.JudgeValidator(jsonObj); err != nil {
+	if err = h.JudgeValidator(r.J); err != nil {
 		log.Println(MyERR.ErrorLog(8003), fmt.Sprintf("%v", err))
-		return &MyERR.MyError{Error: err.Error(), Code: 8003, TimeStamp: timeNow}
+		return &MyERR.MyError{Error: err.Error(), Code: 8003, TimeStamp: r.T}
 	}
 
 	//turn to json
 	if jsonU, err = json.Marshal(h); err != nil {
 		log.Println(MyERR.ErrorLog(8004))
-		return &MyERR.MyError{Error: err.Error(), Code: 8004, TimeStamp: timeNow}
+		return &MyERR.MyError{Error: err.Error(), Code: 8004, TimeStamp: r.T}
 	}
 
 	// Characters joining together
@@ -101,21 +110,21 @@ func PutHealthCheck(jsonObj interface{}, timeNow time.Time) *MyERR.MyError {
 	//if exist
 	if _, err = etcd.EtcGet(EtcHealthCheckName); err != nil {
 		log.Printf(MyERR.ErrorLog(8102), fmt.Sprintf("%v", err))
-		return &MyERR.MyError{Error: err.Error(), Code: 8102, TimeStamp: timeNow}
+		return &MyERR.MyError{Error: err.Error(), Code: 8102, TimeStamp: r.T}
 	}
 
 	//etcd put
 	if err = etcd.EtcPut(EtcHealthCheckName, string(jsonU)); err != nil {
 		log.Printf(MyERR.ErrorLog(8101, fmt.Sprintf("%v", err)))
-		return &MyERR.MyError{Error: err.Error(), Code: 8101, TimeStamp: timeNow}
+		return &MyERR.MyError{Error: err.Error(), Code: 8101, TimeStamp: r.T}
 	}
 
 	log.Println(MyERR.ErrorLog(000, fmt.Sprintf(" Put HealthCheck: %v, Values %v", EtcHealthCheckName, string(jsonU))))
-	return &MyERR.MyError{Code: 000, TimeStamp: timeNow}
+	return &MyERR.MyError{Code: 000, TimeStamp: r.T}
 }
 
 //PatchHealthCheck : method for patch health check
-func PatchHealthCheck(jsonObj interface{}, timeNow time.Time) (a *MyERR.MyError) {
+func (r *RHCStruck) PatchHealthCheck() (a *MyERR.MyError) {
 	var (
 		ph, etcdph   datastruck.PatchHealthCheck
 		err, errs    error
@@ -126,9 +135,9 @@ func PatchHealthCheck(jsonObj interface{}, timeNow time.Time) (a *MyERR.MyError)
 	)
 
 	//judge
-	if err = ph.JudgeValidator(jsonObj); err != nil {
+	if err = ph.JudgeValidator(r.J); err != nil {
 		log.Println(MyERR.ErrorLog(9003), fmt.Sprintf("%v", err))
-		return &MyERR.MyError{Error: err.Error(), Code: 9003, TimeStamp: timeNow}
+		return &MyERR.MyError{Error: err.Error(), Code: 9003, TimeStamp: r.T}
 	}
 
 	// Characters joining together
@@ -136,13 +145,13 @@ func PatchHealthCheck(jsonObj interface{}, timeNow time.Time) (a *MyERR.MyError)
 	//if exist
 	if val, err = etcd.EtcGet(EtcHealthCheckName); err != nil {
 		log.Printf(MyERR.ErrorLog(9102), fmt.Sprintf("%v", err))
-		return &MyERR.MyError{Error: err.Error(), Code: 9102, TimeStamp: timeNow}
+		return &MyERR.MyError{Error: err.Error(), Code: 9102, TimeStamp: r.T}
 	}
 
 	//turn etcd data to struck, for compare and judge
 	if err = json.Unmarshal([]byte(val), &etcdph); err != nil {
 		log.Printf(MyERR.ErrorLog(9005), fmt.Sprintf("Etcd PatchHealthCheck String: %v", err))
-		return &MyERR.MyError{Code: 9005, TimeStamp: timeNow}
+		return &MyERR.MyError{Code: 9005, TimeStamp: r.T}
 	}
 
 	// first set
@@ -215,27 +224,27 @@ READY:
 	//turn struck or map to json
 	if jsonU, err = json.Marshal(middleware); err != nil {
 		log.Println(MyERR.ErrorLog(9004))
-		return &MyERR.MyError{Error: err.Error(), Code: 9004, TimeStamp: timeNow}
+		return &MyERR.MyError{Error: err.Error(), Code: 9004, TimeStamp: r.T}
 	}
 
 	//etcd put
 	if err = etcd.EtcPut(EtcHealthCheckName, string(jsonU)); err != nil {
 		log.Printf(MyERR.ErrorLog(9101, fmt.Sprintf("%v", err)))
-		return &MyERR.MyError{Error: err.Error(), Code: 9101, TimeStamp: timeNow}
+		return &MyERR.MyError{Error: err.Error(), Code: 9101, TimeStamp: r.T}
 	}
 
 	defer func() {
 		_ = recover()
 		if errs == nil {
-			a = &MyERR.MyError{Code: 000, TimeStamp: timeNow}
+			a = &MyERR.MyError{Code: 000, TimeStamp: r.T}
 		}
 	}()
 	log.Println(MyERR.ErrorLog(000, fmt.Sprintf(" Patch HealthCheck %v, Values [%v]", EtcHealthCheckName, string(jsonU))))
-	return &MyERR.MyError{Code: 000, Error: errs.Error(), TimeStamp: timeNow}
+	return &MyERR.MyError{Code: 000, Error: errs.Error(), TimeStamp: r.T}
 }
 
 //DeleteHealthCheck : method for delete health check
-func DeleteHealthCheck(jsonObj interface{}, timeNow time.Time) (a *MyERR.MyError) {
+func (r *RHCStruck) DeleteHealthCheck() (a *MyERR.MyError) {
 	var (
 		dh                               datastruck.DeleteHealthCheck
 		etcddh                           datastruck.HealthCheck
@@ -249,9 +258,9 @@ func DeleteHealthCheck(jsonObj interface{}, timeNow time.Time) (a *MyERR.MyError
 		intersectionSetF, differenceSetF set.Interface
 	)
 	//judge
-	if err = dh.JudgeValidator(jsonObj); err != nil {
+	if err = dh.JudgeValidator(r.J); err != nil {
 		log.Println(MyERR.ErrorLog(10003), fmt.Sprintf("%v", err))
-		return &MyERR.MyError{Error: err.Error(), Code: 10003, TimeStamp: timeNow}
+		return &MyERR.MyError{Error: err.Error(), Code: 10003, TimeStamp: r.T}
 	}
 
 	// Characters joining together
@@ -259,13 +268,13 @@ func DeleteHealthCheck(jsonObj interface{}, timeNow time.Time) (a *MyERR.MyError
 	//if exist
 	if val, err = etcd.EtcGet(EtcHealthCheckName); err != nil {
 		log.Printf(MyERR.ErrorLog(10102), fmt.Sprintf("%v", err))
-		return &MyERR.MyError{Error: err.Error(), Code: 10102, TimeStamp: timeNow}
+		return &MyERR.MyError{Error: err.Error(), Code: 10102, TimeStamp: r.T}
 	}
 
 	//turn etcd data to struck, for compare and judge
 	if err = json.Unmarshal([]byte(val), &etcddh); err != nil {
 		log.Printf(MyERR.ErrorLog(10005), fmt.Sprintf("Etcd PatchHealthCheck String: %v", err))
-		return &MyERR.MyError{Code: 10005, TimeStamp: timeNow}
+		return &MyERR.MyError{Code: 10005, TimeStamp: r.T}
 	}
 	/*
 		使用set包来对数组字符串取交集并集差集，
@@ -307,7 +316,7 @@ SUCCESS:
 	//if is least one
 	if differenceSet.Size() == 0 {
 		log.Printf(MyERR.ErrorLog(10152))
-		return &MyERR.MyError{Code: 10152, TimeStamp: timeNow}
+		return &MyERR.MyError{Code: 10152, TimeStamp: r.T}
 	}
 
 	for _, v := range differenceSet.List() {
@@ -334,7 +343,7 @@ FAILURES:
 
 	if differenceSetF.Size() == 0 {
 		log.Printf(MyERR.ErrorLog(10153))
-		return &MyERR.MyError{Code: 10153, TimeStamp: timeNow}
+		return &MyERR.MyError{Code: 10153, TimeStamp: r.T}
 	}
 
 	for _, v := range differenceSetF.List() {
@@ -345,15 +354,15 @@ FAILURES:
 	//turn struck or map to json
 	if jsonU, err = json.Marshal(etcddh); err != nil {
 		log.Println(MyERR.ErrorLog(10004))
-		return &MyERR.MyError{Error: err.Error(), Code: 10004, TimeStamp: timeNow}
+		return &MyERR.MyError{Error: err.Error(), Code: 10004, TimeStamp: r.T}
 	}
 
 	//etcd put
 	if err = etcd.EtcPut(EtcHealthCheckName, string(jsonU)); err != nil {
 		log.Printf(MyERR.ErrorLog(10101, fmt.Sprintf("%v", err)))
-		return &MyERR.MyError{Error: err.Error(), Code: 10101, TimeStamp: timeNow}
+		return &MyERR.MyError{Error: err.Error(), Code: 10101, TimeStamp: r.T}
 	}
 
 	log.Println(MyERR.ErrorLog(000, fmt.Sprintf(" Dlete HealthCheck %v, New Values [%v]", EtcHealthCheckName, string(jsonU))))
-	return &MyERR.MyError{Code: 000, TimeStamp: timeNow}
+	return &MyERR.MyError{Code: 000, TimeStamp: r.T}
 }

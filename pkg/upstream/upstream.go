@@ -14,6 +14,15 @@ var (
 	c datastruck.Config
 )
 
+type J interface{}
+
+//set interface,timestamp,method to struck
+type RStruck struct {
+	J
+	T time.Time
+	M string
+}
+
 //upper the first letter
 func strFirstToUpper(str string) string {
 	if len(str) < 1 {
@@ -40,7 +49,7 @@ func removeRepByMap(slc []map[string]interface{}) (result []map[string]interface
 }
 
 // GetUpstream : method for get upstream
-func GetUpstream(jsonObj interface{}, timeNow time.Time) (*MyERR.MyError, string) {
+func (r *RStruck) GetUpstream() (*MyERR.MyError, string) {
 	var (
 		gu  datastruck.GetUpstream
 		err error
@@ -50,13 +59,13 @@ func GetUpstream(jsonObj interface{}, timeNow time.Time) (*MyERR.MyError, string
 	//config loading
 	if err = c.Config(); err != nil {
 		log.Println(MyERR.ErrorLog(1012), fmt.Sprintf("%v", err))
-		return &MyERR.MyError{Error: err.Error(), Code: 1012, TimeStamp: timeNow}, ""
+		return &MyERR.MyError{Error: err.Error(), Code: 1012, TimeStamp: r.T}, ""
 	}
 
 	//judge
-	if err = gu.JudgeValidator(jsonObj); err != nil {
+	if err = gu.JudgeValidator(r.J); err != nil {
 		log.Println(MyERR.ErrorLog(1003), fmt.Sprintf("%v", err))
-		return &MyERR.MyError{Error: err.Error(), Code: 1003, TimeStamp: timeNow}, ""
+		return &MyERR.MyError{Error: err.Error(), Code: 1003, TimeStamp: r.T}, ""
 	}
 
 	if gu.UpstreamName == "ALL" {
@@ -65,25 +74,25 @@ func GetUpstream(jsonObj interface{}, timeNow time.Time) (*MyERR.MyError, string
 		//get key from etcd
 		if val, _, err = etcd.EtcGetAll(EtcUpstreamName); err != nil {
 			log.Println(MyERR.ErrorLog(1104), fmt.Sprintf("%v", err))
-			return &MyERR.MyError{Error: err.Error(), Code: 1104, TimeStamp: timeNow}, ""
+			return &MyERR.MyError{Error: err.Error(), Code: 1104, TimeStamp: r.T}, ""
 		}
 		log.Println(MyERR.ErrorLog(000, fmt.Sprintf(" Get ALL Key [%v], Values [%v]", EtcUpstreamName, val)))
-		return &MyERR.MyError{Code: 000, TimeStamp: timeNow}, val
+		return &MyERR.MyError{Code: 000, TimeStamp: r.T}, val
 	}
 
 	EtcUpstreamName := c.Upstream.EtcdPrefix + strFirstToUpper(gu.UpstreamName)
 	//get key from etcd
 	if val, err = etcd.EtcGet(EtcUpstreamName); err != nil {
 		log.Println(MyERR.ErrorLog(1102), fmt.Sprintf("; %v", err))
-		return &MyERR.MyError{Error: err.Error(), Code: 1102, TimeStamp: timeNow}, ""
+		return &MyERR.MyError{Error: err.Error(), Code: 1102, TimeStamp: r.T}, ""
 	}
 
 	log.Println(MyERR.ErrorLog(000, fmt.Sprintf(" Get Key [%v], Values [%v]", EtcUpstreamName, val)))
-	return &MyERR.MyError{Code: 000, TimeStamp: timeNow}, val
+	return &MyERR.MyError{Code: 000, TimeStamp: r.T}, val
 }
 
 // PutUpstream : method for full update upstream
-func PutUpstream(jsonObj interface{}, timeNow time.Time) *MyERR.MyError {
+func (r *RStruck) PutUpstream() *MyERR.MyError {
 	var (
 		u     datastruck.Upstream
 		jsonU []byte
@@ -93,19 +102,19 @@ func PutUpstream(jsonObj interface{}, timeNow time.Time) *MyERR.MyError {
 	//config loading
 	if err = c.Config(); err != nil {
 		log.Println(MyERR.ErrorLog(2012), fmt.Sprintf("%v", err))
-		return &MyERR.MyError{Error: err.Error(), Code: 2012, TimeStamp: timeNow}
+		return &MyERR.MyError{Error: err.Error(), Code: 2012, TimeStamp: r.T}
 	}
 
 	//judge
-	if err = u.JudgeValidator(jsonObj); err != nil {
+	if err = u.JudgeValidator(r.J); err != nil {
 		log.Println(MyERR.ErrorLog(2003), fmt.Sprintf("%v", err))
-		return &MyERR.MyError{Error: err.Error(), Code: 2003, TimeStamp: timeNow}
+		return &MyERR.MyError{Error: err.Error(), Code: 2003, TimeStamp: r.T}
 	}
 
 	//turn to json
 	if jsonU, err = json.Marshal(u); err != nil {
 		log.Println(MyERR.ErrorLog(2004))
-		return &MyERR.MyError{Error: err.Error(), Code: 2004, TimeStamp: timeNow}
+		return &MyERR.MyError{Error: err.Error(), Code: 2004, TimeStamp: r.T}
 	}
 
 	// Characters joining together
@@ -114,21 +123,21 @@ func PutUpstream(jsonObj interface{}, timeNow time.Time) *MyERR.MyError {
 	//if exist
 	if _, err = etcd.EtcGet(EtcUpstreamName); err != nil {
 		log.Printf(MyERR.ErrorLog(2102), fmt.Sprintf("%v", err))
-		return &MyERR.MyError{Error: err.Error(), Code: 2102, TimeStamp: timeNow}
+		return &MyERR.MyError{Error: err.Error(), Code: 2102, TimeStamp: r.T}
 	}
 
 	//etcd put
 	if err = etcd.EtcPut(EtcUpstreamName, string(jsonU)); err != nil {
 		log.Printf(MyERR.ErrorLog(2101, fmt.Sprintf("%v", err)))
-		return &MyERR.MyError{Error: err.Error(), Code: 2101, TimeStamp: timeNow}
+		return &MyERR.MyError{Error: err.Error(), Code: 2101, TimeStamp: r.T}
 	}
 
 	log.Println(MyERR.ErrorLog(000, fmt.Sprintf(" Put Key [%v], Values [%v]", EtcUpstreamName, string(jsonU))))
-	return &MyERR.MyError{Code: 000, TimeStamp: timeNow}
+	return &MyERR.MyError{Code: 000, TimeStamp: r.T}
 }
 
 // PostUpstream : method for create update upstream
-func PostUpstream(jsonObj interface{}, timeNow time.Time) *MyERR.MyError {
+func (r *RStruck) PostUpstream() *MyERR.MyError {
 	var (
 		u     datastruck.Upstream
 		jsonU []byte
@@ -138,13 +147,13 @@ func PostUpstream(jsonObj interface{}, timeNow time.Time) *MyERR.MyError {
 	//config loading
 	if err = c.Config(); err != nil {
 		log.Println(MyERR.ErrorLog(3012), fmt.Sprintf("%v", err))
-		return &MyERR.MyError{Error: err.Error(), Code: 3012, TimeStamp: timeNow}
+		return &MyERR.MyError{Error: err.Error(), Code: 3012, TimeStamp: r.T}
 	}
 
 	//judge
-	if err = u.JudgeValidator(jsonObj); err != nil {
+	if err = u.JudgeValidator(r.J); err != nil {
 		log.Println(MyERR.ErrorLog(3003), fmt.Sprintf("%v", err))
-		return &MyERR.MyError{Error: err.Error(), Code: 3003, TimeStamp: timeNow}
+		return &MyERR.MyError{Error: err.Error(), Code: 3003, TimeStamp: r.T}
 	}
 
 	// Characters joining together
@@ -153,27 +162,27 @@ func PostUpstream(jsonObj interface{}, timeNow time.Time) *MyERR.MyError {
 	//if repeat
 	if _, err = etcd.EtcGet(EtcUpstreamName); err == nil {
 		log.Printf(MyERR.ErrorLog(3103))
-		return &MyERR.MyError{Code: 3103, TimeStamp: timeNow}
+		return &MyERR.MyError{Code: 3103, TimeStamp: r.T}
 	}
 
 	//turn to json
 	if jsonU, err = json.Marshal(u); err != nil {
 		log.Println(MyERR.ErrorLog(3004))
-		return &MyERR.MyError{Error: err.Error(), Code: 3004, TimeStamp: timeNow}
+		return &MyERR.MyError{Error: err.Error(), Code: 3004, TimeStamp: r.T}
 	}
 
 	//etcd put
 	if err = etcd.EtcPut(EtcUpstreamName, string(jsonU)); err != nil {
 		log.Printf(MyERR.ErrorLog(3101, fmt.Sprintf("%v", err)))
-		return &MyERR.MyError{Error: err.Error(), Code: 3101, TimeStamp: timeNow}
+		return &MyERR.MyError{Error: err.Error(), Code: 3101, TimeStamp: r.T}
 	}
 
 	log.Println(MyERR.ErrorLog(000, fmt.Sprintf(" Set Key [%v], Values [%v]", EtcUpstreamName, string(jsonU))))
-	return &MyERR.MyError{Code: 000, TimeStamp: timeNow}
+	return &MyERR.MyError{Code: 000, TimeStamp: r.T}
 }
 
 //PatchUpstream : method for partial upstream
-func PatchUpstream(jsonObj interface{}, timeNow time.Time) *MyERR.MyError {
+func (r *RStruck) PatchUpstream() *MyERR.MyError {
 	var (
 		pu, etcdpu       datastruck.PatchUpstream
 		puData, etcdData map[string]interface{}
@@ -187,13 +196,13 @@ func PatchUpstream(jsonObj interface{}, timeNow time.Time) *MyERR.MyError {
 	//config loading
 	if err = c.Config(); err != nil {
 		log.Println(MyERR.ErrorLog(4012), fmt.Sprintf("%v", err))
-		return &MyERR.MyError{Error: err.Error(), Code: 4012, TimeStamp: timeNow}
+		return &MyERR.MyError{Error: err.Error(), Code: 4012, TimeStamp: r.T}
 	}
 
 	//judge
-	if err = pu.JudgeValidator(jsonObj); err != nil {
+	if err = pu.JudgeValidator(r.J); err != nil {
 		log.Println(MyERR.ErrorLog(4003), fmt.Sprintf("%v", err))
-		return &MyERR.MyError{Error: err.Error(), Code: 4003, TimeStamp: timeNow}
+		return &MyERR.MyError{Error: err.Error(), Code: 4003, TimeStamp: r.T}
 	}
 
 	// Characters joining together
@@ -201,13 +210,13 @@ func PatchUpstream(jsonObj interface{}, timeNow time.Time) *MyERR.MyError {
 	//if exist
 	if val, err = etcd.EtcGet(EtcUpstreamName); err != nil {
 		log.Printf(MyERR.ErrorLog(4102), fmt.Sprintf("%v", err))
-		return &MyERR.MyError{Error: err.Error(), Code: 4102, TimeStamp: timeNow}
+		return &MyERR.MyError{Error: err.Error(), Code: 4102, TimeStamp: r.T}
 	}
 
 	//turn etcd data to struck, for compare and judge
 	if err := json.Unmarshal([]byte(val), &etcdpu); err != nil {
 		log.Printf(MyERR.ErrorLog(4005), fmt.Sprintf("Etcd PatchUpstream String: %v", err))
-		return &MyERR.MyError{Code: 4005, TimeStamp: timeNow}
+		return &MyERR.MyError{Code: 4005, TimeStamp: r.T}
 	}
 
 	if pu.Pool == nil {
@@ -218,17 +227,17 @@ func PatchUpstream(jsonObj interface{}, timeNow time.Time) *MyERR.MyError {
 
 	if err := json.Unmarshal([]byte(val), &etcdData); err != nil {
 		log.Printf(MyERR.ErrorLog(4005), fmt.Sprintf("Etcd PatchUpstream Map: %v", err))
-		return &MyERR.MyError{Code: 4005, TimeStamp: timeNow}
+		return &MyERR.MyError{Code: 4005, TimeStamp: r.T}
 	}
 
 	//turn struct to json string，then turn json string to map
 	if puByte, err = json.Marshal(pu); err != nil {
 		log.Printf(MyERR.ErrorLog(4004), fmt.Sprintf("Request PatchUpstream Struck: %v", err))
-		return &MyERR.MyError{Code: 4004, TimeStamp: timeNow}
+		return &MyERR.MyError{Code: 4004, TimeStamp: r.T}
 	}
 	if err := json.Unmarshal(puByte, &puData); err != nil {
 		log.Printf(MyERR.ErrorLog(4005), fmt.Sprintf("Request PatchUpstream Map: %v", err))
-		return &MyERR.MyError{Code: 4005, TimeStamp: timeNow}
+		return &MyERR.MyError{Code: 4005, TimeStamp: r.T}
 	}
 
 	/*
@@ -301,21 +310,21 @@ JUST:
 	//turn struck or map to json
 	if jsonU, err = json.Marshal(middleware); err != nil {
 		log.Println(MyERR.ErrorLog(4004))
-		return &MyERR.MyError{Error: err.Error(), Code: 4004, TimeStamp: timeNow}
+		return &MyERR.MyError{Error: err.Error(), Code: 4004, TimeStamp: r.T}
 	}
 
 	//etcd put
 	if err = etcd.EtcPut(EtcUpstreamName, string(jsonU)); err != nil {
 		log.Printf(MyERR.ErrorLog(4101, fmt.Sprintf("%v", err)))
-		return &MyERR.MyError{Error: err.Error(), Code: 4101, TimeStamp: timeNow}
+		return &MyERR.MyError{Error: err.Error(), Code: 4101, TimeStamp: r.T}
 	}
 
 	log.Println(MyERR.ErrorLog(000, fmt.Sprintf(" Patch Key [%v], Values %v", EtcUpstreamName, string(jsonU))))
-	return &MyERR.MyError{Code: 000, TimeStamp: timeNow}
+	return &MyERR.MyError{Code: 000, TimeStamp: r.T}
 }
 
 //DeleteUpstream : method for delete upstream or pool's server
-func DeleteUpstream(jsonObj interface{}, timeNow time.Time) *MyERR.MyError {
+func (r *RStruck) DeleteUpstream() *MyERR.MyError {
 	var (
 		du, etcddu       datastruck.DeleteUpstream
 		duData, etcdData map[string]interface{}
@@ -329,13 +338,13 @@ func DeleteUpstream(jsonObj interface{}, timeNow time.Time) *MyERR.MyError {
 	//config loading
 	if err = c.Config(); err != nil {
 		log.Println(MyERR.ErrorLog(5012), fmt.Sprintf("%v", err))
-		return &MyERR.MyError{Error: err.Error(), Code: 5012, TimeStamp: timeNow}
+		return &MyERR.MyError{Error: err.Error(), Code: 5012, TimeStamp: r.T}
 	}
 
 	//judge
-	if err = du.JudgeValidator(jsonObj); err != nil {
+	if err = du.JudgeValidator(r.J); err != nil {
 		log.Println(MyERR.ErrorLog(5003), fmt.Sprintf("%v", err))
-		return &MyERR.MyError{Error: err.Error(), Code: 5003, TimeStamp: timeNow}
+		return &MyERR.MyError{Error: err.Error(), Code: 5003, TimeStamp: r.T}
 	}
 
 	// Characters joining together
@@ -343,7 +352,7 @@ func DeleteUpstream(jsonObj interface{}, timeNow time.Time) *MyERR.MyError {
 	//if exist
 	if val, err = etcd.EtcGet(EtcUpstreamName); err != nil {
 		log.Printf(MyERR.ErrorLog(5102), fmt.Sprintf("%v", err))
-		return &MyERR.MyError{Error: err.Error(), Code: 5102, TimeStamp: timeNow}
+		return &MyERR.MyError{Error: err.Error(), Code: 5102, TimeStamp: r.T}
 	}
 
 	//if no server, mean to delete upstream
@@ -354,7 +363,7 @@ func DeleteUpstream(jsonObj interface{}, timeNow time.Time) *MyERR.MyError {
 	//turn etcd data to struck, for compare and judge
 	if err := json.Unmarshal([]byte(val), &etcddu); err != nil {
 		log.Printf(MyERR.ErrorLog(5005), fmt.Sprintf("Etcd DeleteUpstream String: %v", err))
-		return &MyERR.MyError{Code: 5005, TimeStamp: timeNow}
+		return &MyERR.MyError{Code: 5005, TimeStamp: r.T}
 	}
 
 	//need to least one
@@ -365,17 +374,17 @@ func DeleteUpstream(jsonObj interface{}, timeNow time.Time) *MyERR.MyError {
 
 	if err := json.Unmarshal([]byte(val), &etcdData); err != nil {
 		log.Printf(MyERR.ErrorLog(5005), fmt.Sprintf("Etcd DeleteUpstream struck: %v", err))
-		return &MyERR.MyError{Code: 5005, TimeStamp: timeNow}
+		return &MyERR.MyError{Code: 5005, TimeStamp: r.T}
 	}
 
 	//turn struct to json string，then turn json string to map
 	if duByte, err = json.Marshal(du); err != nil {
 		log.Printf(MyERR.ErrorLog(5004), fmt.Sprintf("Request DeleteUpstream Struck: %v", err))
-		return &MyERR.MyError{Code: 5004, TimeStamp: timeNow}
+		return &MyERR.MyError{Code: 5004, TimeStamp: r.T}
 	}
 	if err := json.Unmarshal(duByte, &duData); err != nil {
 		log.Printf(MyERR.ErrorLog(5005), fmt.Sprintf("Request DeleteUpstream Map: %v", err))
-		return &MyERR.MyError{Code: 5005, TimeStamp: timeNow}
+		return &MyERR.MyError{Code: 5005, TimeStamp: r.T}
 	}
 
 	//replace data, but need to last one
@@ -414,24 +423,24 @@ func DeleteUpstream(jsonObj interface{}, timeNow time.Time) *MyERR.MyError {
 DELETESERVER:
 	if jsonU, err = json.Marshal(etcdData); err != nil {
 		log.Println(MyERR.ErrorLog(5004))
-		return &MyERR.MyError{Error: err.Error(), Code: 5004, TimeStamp: timeNow}
+		return &MyERR.MyError{Error: err.Error(), Code: 5004, TimeStamp: r.T}
 	}
 
 	if err = etcd.EtcPut(EtcUpstreamName, string(jsonU)); err != nil {
 		log.Printf(MyERR.ErrorLog(5101, fmt.Sprintf("%v", err)))
-		return &MyERR.MyError{Error: err.Error(), Code: 5101, TimeStamp: timeNow}
+		return &MyERR.MyError{Error: err.Error(), Code: 5101, TimeStamp: r.T}
 	}
 	log.Println(MyERR.ErrorLog(000, fmt.Sprintf(" Delete Upstream Key [%v], New Values %v", EtcUpstreamName, string(jsonU))))
-	return &MyERR.MyError{Code: 000, TimeStamp: timeNow}
+	return &MyERR.MyError{Code: 000, TimeStamp: r.T}
 
 DELETEUPSTREAM:
 	if err = etcd.EtcDelete(EtcUpstreamName); err != nil {
 		log.Printf(MyERR.ErrorLog(5105, fmt.Sprintf("%v", err)))
-		return &MyERR.MyError{Error: err.Error(), Code: 5105, TimeStamp: timeNow}
+		return &MyERR.MyError{Error: err.Error(), Code: 5105, TimeStamp: r.T}
 	}
-	return &MyERR.MyError{Code: 000, TimeStamp: timeNow}
+	return &MyERR.MyError{Code: 000, TimeStamp: r.T}
 
 DELETENOTHING:
-	return &MyERR.MyError{Code: middleware, TimeStamp: timeNow}
+	return &MyERR.MyError{Code: middleware, TimeStamp: r.T}
 
 }

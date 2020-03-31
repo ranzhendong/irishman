@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/ranzhendong/irishman/pkg/datastruck"
 	MyERR "github.com/ranzhendong/irishman/pkg/errorhandle"
+	gc "github.com/ranzhendong/irishman/pkg/gorountinescontroller"
 	"github.com/ranzhendong/irishman/pkg/healthcheck"
 	MyInit "github.com/ranzhendong/irishman/pkg/init"
 	"github.com/ranzhendong/irishman/pkg/kvnuts"
@@ -33,6 +34,8 @@ func init() {
 		log.Printf(MyERR.ErrorLog(6142, fmt.Sprintf("%v", err)))
 		return
 	}
+
+	//set route
 	mux["/upstream"] = myUpstream
 	mux["/healthcheck"] = healthCheck
 	mux["/nutsdb"] = nutsDB
@@ -59,8 +62,8 @@ func main() {
 		return
 	}
 
-	//initialize health check
-	go healthcheck.InitHealthCheck(time.Now())
+	//goroutines controller: hc, etcd watcher
+	gc.Factory()
 
 	//config about server
 	server := http.Server{
@@ -95,41 +98,43 @@ func nutsDB(w http.ResponseWriter, r *http.Request) {
 
 func myUpstream(w http.ResponseWriter, r *http.Request) {
 	var (
-		jsonObj interface{}
-		timeNow = time.Now()
+		rs upstream.RStruck
 	)
 
+	//set timestamp
+	rs.T = time.Now()
+
 	//loading request body
-	if jsonObj, err = MyInit.InitializeBody(r.Body); err != nil {
+	if rs.J, err = MyInit.InitializeBody(r.Body); err != nil {
 		log.Printf(MyERR.ErrorLog(0002, fmt.Sprintf("%v", err)))
 		response(w, &MyERR.MyError{Error: err.Error(), Code: 0002})
 		return
 	}
 
-	//restful switch
+	//restful switch method
 	switch r.Method {
 	case "GET":
-		if res, val := upstream.GetUpstream(jsonObj, timeNow); res != nil {
+		if res, val := rs.GetUpstream(); res != nil {
 			response(w, res, val)
 		}
 
 	case "PUT":
-		if res := upstream.PutUpstream(jsonObj, timeNow); res != nil {
+		if res := rs.PutUpstream(); res != nil {
 			response(w, res)
 		}
 
 	case "POST":
-		if res := upstream.PostUpstream(jsonObj, timeNow); res != nil {
+		if res := rs.PostUpstream(); res != nil {
 			response(w, res)
 		}
 
 	case "PATCH":
-		if res := upstream.PatchUpstream(jsonObj, timeNow); res != nil {
+		if res := rs.PatchUpstream(); res != nil {
 			response(w, res)
 		}
 
 	case "DELETE":
-		if res := upstream.DeleteUpstream(jsonObj, timeNow); res != nil {
+		if res := rs.DeleteUpstream(); res != nil {
 			response(w, res)
 		}
 
@@ -140,36 +145,38 @@ func myUpstream(w http.ResponseWriter, r *http.Request) {
 
 func healthCheck(w http.ResponseWriter, r *http.Request) {
 	var (
-		jsonObj interface{}
-		timeNow = time.Now()
+		rhos healthcheck.RHCStruck
 	)
 
+	//set timestamp
+	rhos.T = time.Now()
+
 	//loading request body
-	if jsonObj, err = MyInit.InitializeBody(r.Body); err != nil {
+	if rhos.J, err = MyInit.InitializeBody(r.Body); err != nil {
 		log.Printf(MyERR.ErrorLog(0002, fmt.Sprintf("%v", err)))
 		response(w, &MyERR.MyError{Error: err.Error(), Code: 0002})
 		return
 	}
 
-	//restful switch
+	//restful switch method
 	switch r.Method {
 	case "GET":
-		if res, val := healthcheck.GetHealthCheck(jsonObj, timeNow); res != nil {
+		if res, val := rhos.GetHealthCheck(); res != nil {
 			response(w, res, val)
 		}
 
 	case "PUT":
-		if res := healthcheck.PutHealthCheck(jsonObj, timeNow); res != nil {
+		if res := rhos.PutHealthCheck(); res != nil {
 			response(w, res)
 		}
 
 	case "PATCH":
-		if res := healthcheck.PatchHealthCheck(jsonObj, timeNow); res != nil {
+		if res := rhos.PatchHealthCheck(); res != nil {
 			response(w, res)
 		}
 
 	case "DELETE":
-		if res := healthcheck.DeleteHealthCheck(jsonObj, timeNow); res != nil {
+		if res := rhos.DeleteHealthCheck(); res != nil {
 			response(w, res)
 		}
 

@@ -31,14 +31,34 @@ type unHealth struct {
 	FailuresStatus  []int `json:"failuresStatus"`
 }
 
-type ctxUpstreamList struct {
-	upstreamList [][]byte
-	ctx          context.Context
-	cancel       context.CancelFunc
-}
-
+//ctxStart: storage upstream list
 type ctxStart struct {
 	upstreamListBytes [][]byte
+}
+
+// upstreamName, protocol, path, sInterval, fTimes, fTimeout
+type UpHCS struct {
+
+	//health check upstream name
+	un string
+
+	//health check protocol, such as: http,tcp
+	ptc string
+
+	// health check successful Interval
+	p string
+
+	//successful Interval
+	si int
+
+	//failed times
+	ft int
+
+	//failed timeout
+	fto int
+}
+
+type DownHCS struct {
 }
 
 var (
@@ -204,7 +224,7 @@ func test(v []byte) {
 }
 
 //UpOneStart : up status health check driver
-func UpOneStart(ctx context.Context, upstreamName, protocal, path string, sInterval, sTimes, sTimeout, fInterval, fTimes, fTimeout int) {
+func UpOneStart(ctx context.Context, upstreamName, protocol, path string, sInterval, sTimes, sTimeout, fInterval, fTimes, fTimeout int) {
 	for {
 		select {
 
@@ -224,7 +244,7 @@ func UpOneStart(ctx context.Context, upstreamName, protocal, path string, sInter
 				//default to hc
 				default:
 					time.Sleep(time.Duration(sInterval) * time.Millisecond)
-					UpHC(upstreamName, protocal, path, fTimes, fTimeout)
+					UpHC(upstreamName, protocol, path, fTimes, fTimeout)
 				}
 
 			}
@@ -234,7 +254,7 @@ func UpOneStart(ctx context.Context, upstreamName, protocal, path string, sInter
 }
 
 //DownOneStart : down status health check driver
-func DownOneStart(ctx context.Context, upstreamName, protocal, path string, sInterval, sTimes, sTimeout, fInterval, fTimes, fTimeout int) {
+func DownOneStart(ctx context.Context, upstreamName, protocol, path string, sInterval, sTimes, sTimeout, fInterval, fTimes, fTimeout int) {
 	for {
 		select {
 
@@ -251,7 +271,7 @@ func DownOneStart(ctx context.Context, upstreamName, protocal, path string, sInt
 					return
 				default:
 					time.Sleep(time.Duration(fInterval) * time.Millisecond)
-					DownHC(upstreamName, protocal, path, sTimes, sTimeout)
+					DownHC(upstreamName, protocol, path, sTimes, sTimeout)
 				}
 			}
 		}
@@ -259,7 +279,7 @@ func DownOneStart(ctx context.Context, upstreamName, protocal, path string, sInt
 }
 
 //UpHC : up status ip&port check
-func UpHC(upstreamName, protocal, path string, times, timeout int) {
+func UpHC(upstreamName, protocol, path string, times, timeout int) {
 	// get the upstream up list
 	ipPort, _ := kvnuts.SMem(c.NutsDB.Tag.Up, upstreamName)
 	if len(ipPort) == 0 {
@@ -269,7 +289,7 @@ func UpHC(upstreamName, protocal, path string, times, timeout int) {
 	//check every ip port
 	for i := 0; i < len(ipPort); i++ {
 		ip := ipPort[i]
-		if protocal == "http" {
+		if protocol == "http" {
 			statusCode, _ := HTTP(string(ip)+path, timeout)
 			log.Println(upstreamName, string(ip), statusCode)
 
@@ -292,7 +312,7 @@ func UpHC(upstreamName, protocal, path string, times, timeout int) {
 }
 
 //DownHC : down status ip&port check
-func DownHC(upstreamName, protocal, path string, times, timeout int) {
+func DownHC(upstreamName, protocol, path string, times, timeout int) {
 	// get the upstream down list
 	ipPort, _ := kvnuts.SMem(c.NutsDB.Tag.Down, upstreamName)
 	if len(ipPort) == 0 {
@@ -303,7 +323,7 @@ func DownHC(upstreamName, protocal, path string, times, timeout int) {
 	for i := 0; i < len(ipPort); i++ {
 		ip := ipPort[i]
 		log.Println(string(ip))
-		if protocal == "http" {
+		if protocol == "http" {
 			statusCode, _ := HTTP(string(ip)+path, timeout)
 			log.Println(upstreamName, string(ip), statusCode)
 

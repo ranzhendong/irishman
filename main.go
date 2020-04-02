@@ -62,7 +62,7 @@ func main() {
 		return
 	}
 
-	//goroutines controller: hc, etcd watcher
+	//goroutines controller factory: hc, etcd, nutsDB watcher
 	if !gc.Factory() {
 		return
 	}
@@ -94,8 +94,8 @@ func (myHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 }
 
 func nutsDB(w http.ResponseWriter, r *http.Request) {
-	log.Println("nutsDB.....")
-	_ = kvnuts.Put("FalgHC", "FalgHC", 1)
+	log.Println("kvNutsDB Route.....")
+	kvnuts.SetFlagHC()
 }
 
 func myUpstream(w http.ResponseWriter, r *http.Request) {

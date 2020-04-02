@@ -27,7 +27,17 @@ func Factory() bool {
 		return false
 	}
 
-	//go startHealthCheck()
-	go etcdWatcher()
+	//start health check
+	go startHealthCheck()
+
+	//create watcher based prefix , c.HealthCheck.EtcdPrefix
+	go etcWatcher(c.Upstream.EtcdPrefix, c.HealthCheck.EtcdPrefix)
+
+	//create watcher about monitor nutsDB upstream flag
+	go FlagUpstreamNutsDB()
+
+	//create watcher about monitor nutsDB health check flag
+	go FlagHCNutsDB()
+
 	return true
 }

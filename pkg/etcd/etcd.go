@@ -6,6 +6,9 @@ import (
 	"github.com/coreos/etcd/mvcc/mvccpb"
 	"github.com/etcd-io/etcd/clientv3"
 	"github.com/ranzhendong/irishman/pkg/datastruck"
+	"github.com/ranzhendong/irishman/pkg/kvnuts"
+	"log"
+
 	//github.com/spf13/viper/remote need to be here
 	_ "github.com/spf13/viper/remote"
 	"time"
@@ -150,15 +153,12 @@ func EtcDelete(key string) (err error) {
 }
 
 //EtcWatcher : watcher key if change
-func EtcWatcher() (err error) {
+func EtcWatcher(key string) (err error) {
 
 	var (
 		client             *clientv3.Client
 		watchStartRevision int64
 		watcher            clientv3.Watcher
-		watchRespChan      <-chan clientv3.WatchResponse
-		watchResp          clientv3.WatchResponse
-		event              *clientv3.Event
 	)
 	if client, err = etcConnect(); err != nil {
 		err = fmt.Errorf(" Etcd Client Initialize Failed")
@@ -167,29 +167,43 @@ func EtcWatcher() (err error) {
 
 	// 创建一个监听器
 	watcher = clientv3.NewWatcher(client)
-	// 启动监听 5秒后关闭
 
-	ctx, _ := context.WithCancel(context.TODO())
-	//time.AfterFunc(10*time.Second, func() {
-	//	cancelFunc()
-	//})
-	watchRespChan = watcher.Watch(ctx, "name", clientv3.WithRev(watchStartRevision))
+	ctx := context.Background()
+	ctxRoot, _ := context.WithCancel(ctx)
+	watchRespChan := watcher.Watch(ctxRoot, key, clientv3.WithPrefix(), clientv3.WithRev(watchStartRevision))
+	log.Println("EtcWatcher KEYS", key)
+	go Watcher(ctxRoot, watchRespChan)
 
-	go func() { // 处理kv变化事件
-		for {
+	return
+}
 
-			for watchResp = range watchRespChan {
-				for _, event = range watchResp.Events {
-					switch event.Type {
-					case mvccpb.PUT:
-						fmt.Println("key patch", string(event.Kv.Value))
-					case mvccpb.DELETE:
-						fmt.Println("key delete", string(event.Kv.Key))
-					}
+//Watcher : goroutines if watcher
+func Watcher(ctx context.Context, watchRespChan <-chan clientv3.WatchResponse) {
+
+	var (
+		watchResp clientv3.WatchResponse
+		event     *clientv3.Event
+	)
+
+	for {
+		for watchResp = range watchRespChan {
+			for _, event = range watchResp.Events {
+				switch event.Type {
+
+				//be triggered when method is put, post, patch
+				case mvccpb.PUT:
+					log.Println("EtcWatcher PUT", string(event.Kv.Key), string(event.Kv.Value))
+					//set flag SetFlagNutsDB, nutsDB watcher is triggered
+					kvnuts.SetFlagUpstreamNutsDB()
+
+				//be triggered when method is delete
+				case mvccpb.DELETE:
+					log.Println("EtcWatcher DELETE", string(event.Kv.Key))
+
+				default:
+					log.Println("EtcWatcher DEFAULT", string(event.Kv.Key))
 				}
 			}
 		}
-	}()
-
-	return
+	}
 }

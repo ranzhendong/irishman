@@ -1,7 +1,12 @@
 package gorountinescontroller
 
-import "github.com/ranzhendong/irishman/pkg/etcd"
+import (
+	"github.com/ranzhendong/irishman/pkg/etcd"
+)
 
-func etcWatcher() {
-	_ = etcd.EtcWatcher()
+//etcWatcher : just for etcd
+func etcWatcher(watcherKeys ...string) {
+	for _, v := range watcherKeys {
+		_ = etcd.EtcWatcher(v)
+	}
 }

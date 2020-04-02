@@ -145,10 +145,10 @@ func FlagHC() {
 	//check flag if exist
 	for {
 		time.Sleep(1 * time.Second)
-		if _, _, err := kvnuts.Get("FalgHC", "FalgHC", "i"); err == nil {
+		if _, _, err := kvnuts.Get("FlagHC", "FlagHC", "i"); err == nil {
 			upstreamListBytes, _ = kvnuts.SMem(c.NutsDB.Tag.UpstreamList, c.NutsDB.Tag.UpstreamList)
-			_ = kvnuts.Del("FalgHC", "FalgHC")
-			log.Println("_ = kvnuts.Del....")
+			_ = kvnuts.Del("FlagHC", "FlagHC")
+			log.Println("kvNuts.Del....")
 
 			//if flag exist, trigger ctx cancel function
 			ctxStartCancelChan <- 1

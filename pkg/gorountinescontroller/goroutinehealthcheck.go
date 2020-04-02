@@ -2,7 +2,6 @@ package gorountinescontroller
 
 import (
 	"context"
-	"github.com/ranzhendong/irishman/pkg/datastruck"
 	"github.com/ranzhendong/irishman/pkg/kvnuts"
 	"log"
 	"time"
@@ -65,7 +64,6 @@ type downHCS struct {
 
 var (
 	upstreamListBytes   [][]byte
-	c                   datastruck.Config
 	ctxCancelChan       = make(chan context.CancelFunc, 1)
 	ctxRestartHCChan    = make(chan ctxStart)
 	ctxStartCancelChan  = make(chan int)
@@ -76,7 +74,7 @@ var (
 )
 
 //HC : new health check
-func HC() {
+func startHealthCheck() {
 	var (
 		rootCtx context.Context
 		cancel  context.CancelFunc

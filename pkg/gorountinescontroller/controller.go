@@ -1,16 +1,33 @@
 package gorountinescontroller
 
 import (
+	"fmt"
+	"github.com/ranzhendong/irishman/pkg/datastruck"
+	MyERR "github.com/ranzhendong/irishman/pkg/errorhandle"
 	"github.com/ranzhendong/irishman/pkg/healthcheck"
 	"log"
 	"time"
 )
 
-//Factory: goroutines
-func Factory() {
-	//initialize healthCheck
-	go healthcheck.InitHealthCheck(time.Now())
+var c datastruck.Config
 
-	//HC()
+//Factory: goroutines
+func Factory() bool {
+	var err error
 	log.Println("Factory")
+
+	//config loading
+	if err = c.Config(); err != nil {
+		log.Println(MyERR.ErrorLog(0151), fmt.Sprintf("%v", err))
+		return false
+	}
+
+	//initialize healthCheck
+	if err := healthcheck.InitHealthCheck(time.Now()); err.Error != "" {
+		return false
+	}
+
+	//go startHealthCheck()
+	go etcdWatcher()
+	return true
 }

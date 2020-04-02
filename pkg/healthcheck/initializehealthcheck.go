@@ -7,17 +7,18 @@ import (
 	"github.com/ranzhendong/irishman/pkg/datastruck"
 	MyERR "github.com/ranzhendong/irishman/pkg/errorhandle"
 	"github.com/ranzhendong/irishman/pkg/etcd"
+	"github.com/ranzhendong/irishman/pkg/kvnuts"
 	"log"
 	"time"
 )
 
-var c datastruck.Config
-
-//type TConfig *datastruck.TConfig
+var (
+	c datastruck.Config
+)
 
 //InitHealthCheck : goroutines for Init Health Check
 func InitHealthCheck(timeNow time.Time) *MyERR.MyError {
-	log.Println("InitHealthCheck")
+	log.Println("Init HealthCheck")
 
 	var (
 		err                            error
@@ -64,6 +65,9 @@ func InitHealthCheck(timeNow time.Time) *MyERR.MyError {
 		//HealthCheckTemplateToNuts
 		T.HealthCheckTemplateToNuts([]byte(u.UpstreamName))
 
+		//set upstream list to nutsDB, as set
+		_ = kvnuts.SAdd(c.NutsDB.Tag.UpstreamList, c.NutsDB.Tag.UpstreamList, u.UpstreamName)
+
 		upstreamList = append(upstreamList, u.UpstreamName)
 	}
 
@@ -95,6 +99,6 @@ func InitHealthCheck(timeNow time.Time) *MyERR.MyError {
 		return &MyERR.MyError{Error: err.Error(), Code: 0004, TimeStamp: timeNow}
 	}
 
-	log.Println(MyERR.ErrorLog(000, fmt.Sprintf(" HealthCheck %v", string(b))))
+	log.Println(MyERR.ErrorLog(000, fmt.Sprintf("Init HealthCheck %v", string(b))))
 	return &MyERR.MyError{Code: 000, TimeStamp: timeNow}
 }

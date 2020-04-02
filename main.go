@@ -63,7 +63,9 @@ func main() {
 	}
 
 	//goroutines controller: hc, etcd watcher
-	gc.Factory()
+	if !gc.Factory() {
+		return
+	}
 
 	//config about server
 	server := http.Server{

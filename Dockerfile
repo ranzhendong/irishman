@@ -1,7 +1,11 @@
-FROM busybox:1.28.4-glibc
+FROM golang:1.13.8-alpine
 
-COPY build/${CI_PROJECT_NAME} /bin/${CI_PROJECT_NAME}
+ADD . /home/irishman
 
-RUN chmod +x bin/${CI_PROJECT_NAME}
+WORKDIR /home/irishman
 
-CMD ["bin/${CI_PROJECT_NAME}"]
+RUN go mod tidy
+
+RUN go build -v -o /home/irishman/irishman
+
+CMD ["./irishman"]

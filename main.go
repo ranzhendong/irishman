@@ -62,8 +62,10 @@ func main() {
 		return
 	}
 
-	//goroutines controller: hc, etcd watcher
-	gc.Factory()
+	//goroutines controller factory: hc, etcd, nutsDB watcher
+	if !gc.Factory() {
+		return
+	}
 
 	//config about server
 	server := http.Server{
@@ -92,8 +94,8 @@ func (myHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 }
 
 func nutsDB(w http.ResponseWriter, r *http.Request) {
-	log.Println("nutsDB.....")
-	_ = kvnuts.Put("FalgHC", "FalgHC", 1)
+	log.Println("kvNutsDB Route.....")
+	kvnuts.SetFlagHC()
 }
 
 func myUpstream(w http.ResponseWriter, r *http.Request) {

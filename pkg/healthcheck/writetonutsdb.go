@@ -32,7 +32,7 @@ for example TheUpstream=vmims
 */
 
 //SeparateUpstreamToNuts : Separate up&down server from upstream to nutsDB
-func (c *TConfig) SeparateUpstreamToNuts(v []byte) {
+func (c *TConfig) SeparateUpstreamEtcdToNuts(v []byte) {
 	var u Upstream
 
 	if val, err = etcd.EtcGet(c.UpstreamEtcPrefix + strFirstToUpper(string(v))); err != nil {
@@ -57,8 +57,8 @@ func (c *TConfig) SeparateUpstreamToNuts(v []byte) {
 storage health check info as list, but success code and failures code as set.
 */
 
-//HealthCheckTemplateToNuts : set health check template to nutsDB
-func (c TConfig) HealthCheckTemplateToNuts(v []byte) {
+//HealthCheckToNuts : set health check from etcd to nutsDB
+func (c TConfig) HealthCheckEtcdToNuts(v []byte) {
 	var h datastruck.HealthCheck
 
 	//health check to nuts
@@ -66,7 +66,7 @@ func (c TConfig) HealthCheckTemplateToNuts(v []byte) {
 		log.Println(MyERR.ErrorLog(11102), fmt.Sprintf("; %v", err))
 	}
 
-	if err := json.Unmarshal([]byte(val), &h); err != nil {
+	if err = json.Unmarshal([]byte(val), &h); err != nil {
 		log.Println(MyERR.ErrorLog(11005))
 	}
 

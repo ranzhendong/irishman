@@ -2,7 +2,6 @@ package gorountinescontroller
 
 import (
 	"context"
-	"github.com/ranzhendong/irishman/pkg/datastruck"
 	"github.com/ranzhendong/irishman/pkg/kvnuts"
 	"log"
 	"time"
@@ -65,7 +64,6 @@ type downHCS struct {
 
 var (
 	upstreamListBytes   [][]byte
-	c                   datastruck.Config
 	ctxCancelChan       = make(chan context.CancelFunc, 1)
 	ctxRestartHCChan    = make(chan ctxStart)
 	ctxStartCancelChan  = make(chan int)
@@ -76,7 +74,7 @@ var (
 )
 
 //HC : new health check
-func HC() {
+func startHealthCheck() {
 	var (
 		rootCtx context.Context
 		cancel  context.CancelFunc
@@ -147,10 +145,10 @@ func FlagHC() {
 	//check flag if exist
 	for {
 		time.Sleep(1 * time.Second)
-		if _, _, err := kvnuts.Get("FalgHC", "FalgHC", "i"); err == nil {
+		if _, _, err := kvnuts.Get("FlagHC", "FlagHC", "i"); err == nil {
 			upstreamListBytes, _ = kvnuts.SMem(c.NutsDB.Tag.UpstreamList, c.NutsDB.Tag.UpstreamList)
-			_ = kvnuts.Del("FalgHC", "FalgHC")
-			log.Println("_ = kvnuts.Del....")
+			_ = kvnuts.Del("FlagHC", "FlagHC")
+			log.Println("kvNuts.Del....")
 
 			//if flag exist, trigger ctx cancel function
 			ctxStartCancelChan <- 1

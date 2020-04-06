@@ -1,6 +1,17 @@
 node ('jenkins-slave-k8s'){
 
-    stage('ECHO') {
+    stage('Prepare') {
+        echo "1.Prepare Stage"
+        checkout scm
+        script {
+            build_tag = sh(returnStdout: true, script: 'git rev-parse --short HEAD').trim()
+            if (env.BRANCH_NAME != 'master') {
+                build_tag = "${env.BRANCH_NAME}-${build_tag}"
+            }
+        }
+    }
+
+    stage('To hosts') {
         sh " echo ${env.HARBOR_URL}"
         sh "echo '192.168.10.10   ${env.HARBOR_URL_TAG}' >>/etc/hosts "
         sh "cat /etc/hosts"
@@ -12,8 +23,6 @@ node ('jenkins-slave-k8s'){
 
     stage('Build') {
         echo "3.Build Docker Image Stage"
-
-
         sh "docker build -t ${env.HARBOR_URL_TAG}/${env.IRISHMAN_HARBOR_IMAGE}:${build_tag} ."
     }
 

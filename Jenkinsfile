@@ -5,7 +5,7 @@ node ('jenkins-slave-k8s'){
         checkout scm
         script {
             build_tag = sh(returnStdout: true, script: 'git rev-parse --short HEAD').trim()
-            if (env.BRANCH_NAME != 'master') {
+            if (env.BRANCH_NAME != 'master' && env.BRANCH_NAME != 'null') {
                 build_tag = "${env.BRANCH_NAME}-${build_tag}"
             }
         }
@@ -37,10 +37,8 @@ node ('jenkins-slave-k8s'){
 
     stage('YAML') {
         echo "5. Change YAML File Stage"
-
         sh "sed -i 's!image:.*!image: ${env.HARBOR_URL_TAG}/${env.IRISHMAN_HARBOR_IMAGE}:${build_tag}!' /irishman/irishman-deployment.yaml"
-        sh "sed -i 's/value: .*/value: ${env.BRANCH_NAME}/' /irishman/irishman-deployment.yaml"
-
+        sh "sed -i 's!value:.*!value: ${env.BRANCH_NAME}!' /irishman/irishman-deployment.yaml"
         sh "kubectl apply -f /irishman/irishman-deployment.yaml"
     }
 

@@ -1,45 +1,109 @@
-node ('jenkins-slave-k8s'){
+def slave_label() {
+    return "jenkins-slave-k8s"
+}
 
-    stage('Prepare') {
-        echo "1.Prepare Stage"
-        checkout scm
-        script {
-            build_tag = sh(returnStdout: true, script: 'git rev-parse --short HEAD').trim()
-            if (env.BRANCH_NAME != 'master' && env.BRANCH_NAME != 'null') {
-                build_tag = "${env.BRANCH_NAME}-${build_tag}"
+def imageTag() {
+    return  sh(script: "git rev-parse --short HEAD", returnStdout: true).trim()
+}
+
+def createVersion() {
+    // 定义一个版本号作为当次构建的版本，输出结果 20191210175842_69
+    return new Date().format('yyyyMMddHHmmss') + "_${env.BUILD_ID}"
+}
+
+pipeline {
+    // agent any
+    agent{
+        label slave_label()
+    }
+
+    environment {
+        git_irishman_url = "https://gitlab.ranzhendong.com.cn/ranzhendong/irishman.git"
+        // build_tag = imageTag()
+    }
+
+    options {
+         // 表示保留10次构建历史
+        buildDiscarder(logRotator(numToKeepStr: '10'))
+
+        // 不允许同时执行流水线，被用来防止同时访问共享资源等
+        disableConcurrentBuilds()
+
+        // 设置流水线运行的超时时间, 在此之后，Jenkins将中止流水线
+        timeout(time: 10, unit: 'MINUTES')
+
+        // 重试次数
+        retry(1)
+        
+    }
+    
+    stages {
+        stage('Clone') {
+            steps {
+                git url: "${git_irishman_url}"
+                //git url: "https://gitlab.ranzhendong.com.cn/ranzhendong/irishman.git"
+                echo 'rsync'
+                echo imageTag()
+                script {
+                    build_tag = imageTag()
+                }
             }
         }
-    }
 
-    stage('To hosts') {
-        sh " echo ${env.HARBOR_URL}"
-        sh "echo '192.168.10.10   ${env.HARBOR_URL_TAG}' >>/etc/hosts "
-        sh "cat /etc/hosts"
+        stage('Build') {
+            steps {
+                echo "3.Build Docker Image Stage"
+                sh "docker build -t ${env.HARBOR_URL_TAG}/ranzhendong/irishman:${build_tag} ."
+            }
+        }
+        
+        stage('Push') {
+            steps {
+                echo "4.Push Docker Image Stage"
+                withCredentials([usernamePassword(credentialsId: 'zhendongharbor', passwordVariable: 'zhendongharborPassword', usernameVariable: 'zhendongharborUser')]) {
+                sh "docker login -u ${zhendongharborUser} -p ${zhendongharborPassword} ${env.HARBOR_URL}"
+                sh "docker push ${env.HARBOR_URL_TAG}/ranzhendong/irishman:${build_tag}"
+                }
+            }
+        }
+        
+        stage('YAML') {
+            steps {
+                echo "5. Change YAML File Stage"
+                sh "sed -i 's/<BUILD_TAG>/${build_tag}/' /irishman/irishman-deployment.yaml"
+                sh "sed -i 's/<BRANCH_NAME>/${env.BRANCH_NAME}/' /irishman/irishman-deployment.yaml"
+            }
+        }
+        
+        stage('DEPLOY') {
+            steps {
+                sh "kubectl apply -f /irishman/irishman-deployment.yaml"
+            }
+        }
+        
     }
-
-    stage('Test') {
-        echo "2.Test Stage"
-    }
-
-    stage('Build') {
-        echo "3.Build Docker Image Stage"
-        sh "docker build -t ${env.HARBOR_URL_TAG}/${env.IRISHMAN_HARBOR_IMAGE}:${build_tag} ."
-    }
-
-    stage('Push') {
-        echo "4.Push Docker Image Stage"
-        withCredentials(
-            [usernamePassword(credentialsId: 'zhendongharbor', passwordVariable: 'zhendongharborPassword', usernameVariable: 'zhendongharborUser')]) {
-            sh "docker login -u ${zhendongharborUser} -p ${zhendongharborPassword} ${env.HARBOR_URL}"
-            sh "docker push ${env.HARBOR_URL_TAG}/${env.IRISHMAN_HARBOR_IMAGE}:${build_tag}"
+    post {
+        success {
+            sh """
+             curl '${env.DINGTALK_ROBOT}' \
+             -H 'Content-Type: application/json' \
+             -d '{"msgtype": "text", 
+                    "text": {
+                    "content": "部署成功"
+                    }
+                }'
+            """
+        }
+        failure {
+            sh """
+             curl '${env.DINGTALK_ROBOT}' \
+             -H 'Content-Type: application/json' \
+             -d '{"msgtype": "text", 
+                    "text": {
+                    "content": "部署失败"
+                    }
+                }'
+            """
         }
     }
-
-    stage('YAML') {
-        echo "5. Change YAML File Stage"
-        sh "sed -i 's!image:.*!image: ${env.HARBOR_URL_TAG}/${env.IRISHMAN_HARBOR_IMAGE}:${build_tag}!' /irishman/irishman-deployment.yaml"
-        sh "sed -i 's!value:.*!value: ${env.BRANCH_NAME}!' /irishman/irishman-deployment.yaml"
-        sh "kubectl apply -f /irishman/irishman-deployment.yaml"
-    }
-
 }

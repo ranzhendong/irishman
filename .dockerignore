@@ -1,0 +1,11 @@
+# avoid files
+.*
+Dockerfile
+Dockerfile-gitlab
+Jenkinsfile
+LICENSE
+Makefile
+README.md
+VERSION
+go.sum
+revive.toml

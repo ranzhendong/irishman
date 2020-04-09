@@ -26,7 +26,6 @@ test-coverage: ## Run tests with coverage
 	@cat cover.out >> coverage.txt
 
 build: dep ## Build the binary file
-    @echo "go build -i -o $(SERVER_NAME) $(PKG)"
 	@go build -i -o $(SERVER_NAME) $(PKG)
 
 #clean: ## Remove previous build

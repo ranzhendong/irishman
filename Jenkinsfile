@@ -17,11 +17,6 @@ pipeline {
         label slave_label()
     }
 
-    environment {
-        git_irishman_url = "https://gitlab.ranzhendong.com.cn/ranzhendong/irishman.git"
-        // build_tag = imageTag()
-    }
-
     options {
          // 表示保留10次构建历史
         buildDiscarder(logRotator(numToKeepStr: '10'))
@@ -38,17 +33,6 @@ pipeline {
     }
     
     stages {
-        stage('Clone') {
-            steps {
-                git url: "${git_irishman_url}"
-                //git url: "https://gitlab.ranzhendong.com.cn/ranzhendong/irishman.git"
-                echo 'rsync'
-                echo imageTag()
-                script {
-                    build_tag = imageTag()
-                }
-            }
-        }
 
         stage('Build') {
             steps {

@@ -1,15 +1,24 @@
 def slave_label() {
     return "jenkins-slave-k8s"
-}
+    }
 
 def imageTag() {
     return  sh(script: "git rev-parse --short HEAD", returnStdout: true).trim()
-}
+    }
 
 def createVersion() {
     // 定义一个版本号作为当次构建的版本，输出结果 20191210175842_69
     return new Date().format('yyyyMMddHHmmss') + "_${env.BUILD_ID}"
-}
+    }
+
+def buildImage() {
+    // docker.build("${env.HARBOR_URL_TAG}/ranzhendong/irishman:${build_tag}")
+    // script表示里面是脚本式写法
+        script {
+            docker.build("${env.HARBOR_URL_TAG}/ranzhendong/irishman:${build_tag}")
+        }
+    }
+
 
 pipeline {
     // agent any
@@ -36,8 +45,13 @@ pipeline {
 
         stage('Build') {
             steps {
-                echo "3.Build Docker Image Stage"
-                sh "docker build -t ${env.HARBOR_URL_TAG}/ranzhendong/irishman:${build_tag} ."
+                sh 'printenv'
+                // 脚本式写法，赋值变量
+                script {
+                    build_tag = imageTag()
+                }
+                // 镜像构建
+                buildImage()
             }
         }
         

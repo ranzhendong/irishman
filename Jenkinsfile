@@ -43,13 +43,34 @@ pipeline {
     
     stages {
 
-        stage('Build') {
-            steps {
+        stage('Add ENV'){
+            steps{
                 sh 'printenv'
                 // 脚本式写法，赋值变量
                 script {
                     build_tag = imageTag()
+                    //dingtalk robot infomation
+                    title = "Jenkins Notice"
+                    successtext = """
+### 【${env.gitlabSourceRepoName} 构建Success】\n\n
+#### 构建人：${env.gitlabUserName}\n
+> 触发分支：${env.gitlabTargetBranch}\n
+> 项目地址：[${env.gitlabSourceRepoName}](${env.gitlabSourceRepoHomepage})\n
+> COMMIT地址：[${env.gitlabMergeRequestLastCommit}](${env.gitlabSourceRepoHomepage}/commit/${env.gitlabMergeRequestLastCommit})\n
+"""
+                    failuretext = """
+### 【${env.gitlabSourceRepoName} 构建Success】\n\n
+#### 构建人：${env.gitlabUserName}\n
+> 触发分支：${env.gitlabTargetBranch}\n
+> 项目地址：[${env.gitlabSourceRepoName}](${env.gitlabSourceRepoHomepage})\n
+> COMMIT地址：[${env.gitlabMergeRequestLastCommit}](${env.gitlabSourceRepoHomepage}/commit/${env.gitlabMergeRequestLastCommit})\n
+"""
                 }
+            }
+        }
+
+        stage('Build') {
+            steps {
                 // 镜像构建
                 buildImage()
             }
@@ -85,9 +106,10 @@ pipeline {
             sh """
              curl '${env.DINGTALK_ROBOT}' \
              -H 'Content-Type: application/json' \
-             -d '{"msgtype": "text", 
-                    "text": {
-                    "content": "部署成功"
+             -d '{"msgtype": "markdown", 
+                "markdown": {
+                    "title": "${title}",
+                    "text": "${successtext}"
                     }
                 }'
             """
@@ -96,9 +118,10 @@ pipeline {
             sh """
              curl '${env.DINGTALK_ROBOT}' \
              -H 'Content-Type: application/json' \
-             -d '{"msgtype": "text", 
-                    "text": {
-                    "content": "部署失败"
+             -d '{"msgtype": "markdown", 
+                "markdown": {
+                    "title": "${title}",
+                    "text": "${failuretext}"
                     }
                 }'
             """

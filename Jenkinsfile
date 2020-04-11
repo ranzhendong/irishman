@@ -99,7 +99,7 @@ pipeline {
                         <li>变更概要：${CHANGES}</li>
                         <li>测试报告地址：<a href=${BUILD_URL}HTML_20Report>${BUILD_URL}HTML_20Report</a></li>
                         <li>变更状态: ${JELLY_SCRIPT}</li>
-                        <li>总览: ${JELLY_SCRIPT,template="zhendong"}</li>
+                        <li>总览:${JELLY_SCRIPT,template="zhendong"}</li>
                     </div>
                 </ul>
             </td>
@@ -170,6 +170,7 @@ pipeline {
     }
     post {
         success {
+            //dingtalk
             sh """
              curl '${env.DINGTALK_ROBOT}' \
              -H 'Content-Type: application/json' \
@@ -184,6 +185,8 @@ pipeline {
                 color = "green"
                 info = "Successful"
             }
+            
+            //email
             emailext (
                 subject: "SUCCESSFUL: Job '${env.JOB_NAME} [${env.BUILD_NUMBER}]'",
                 to: "${env.EMAIL_TO}",

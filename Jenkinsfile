@@ -65,6 +65,73 @@ pipeline {
 > 项目地址：[${env.gitlabSourceRepoName}](${env.gitlabSourceRepoHomepage})\n
 > COMMIT地址：[${build_tag}](${env.gitlabSourceRepoHomepage}/commit/${env.gitlabMergeRequestLastCommit})\n
 """
+                emailextBody = """
+                <!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+</head>
+
+<body leftmargin="8" marginwidth="0" topmargin="8" marginheight="4" offset="0">
+    <table width="95%" cellpadding="0" cellspacing="0"
+        style="font-size: 16pt; font-family: Tahoma, Arial, Helvetica, sans-serif">
+        <tr>
+            <td><br /> <b>
+                    <font color="#0B610B">
+                        <font size="6">构建信息</font>
+                    </font>
+                </b>
+                <hr size="2" width="100%" align="center" />
+            </td>
+        </tr>
+        <tr>
+            <td>
+                <ul>
+                    <div style="font-size:18px">
+                        <li>构建名称：${PROJECT_NAME}</li>
+                        <li>构建结果: <span style="color:${color}"> ${info} </span></li>
+                        <li>构建编号：${BUILD_NUMBER}</li>
+                        <li>触发原因：${CAUSE}</li>
+                        <li>部署分支：${gitlabBranch}</li>
+                        <li>构建地址：<a href=${BUILD_URL}>${BUILD_URL}</a></li>
+                        <li>构建日志：<a href=${BUILD_URL}console>${BUILD_URL}console</a></li>
+                        <li>变更概要：${CHANGES}</li>
+                        <li>测试报告地址：<a href=${BUILD_URL}HTML_20Report>${BUILD_URL}HTML_20Report</a></li>
+                        <li>状态:${JELLY_SCRIPT}</li>
+                        <li>总览:${JELLY_SCRIPT,template="zhendong"}</li>
+                    </div>
+                </ul>
+            </td>
+        </tr>
+        <tr>
+            <td><br /> <b>
+                <font color="#0B610B">
+                    <font size="6">GitLab ${gitlabSourceRepoName} repo信息</font>
+                </font>
+                </b>
+                <hr size="2" width="100%" align="center" />
+            </td>
+        </tr>
+        <tr>
+            <td>
+                <ul>
+                    <div style="font-size:18px">
+                        <li>项目名称：<a href=${gitlabSourceRepoHomepage}>${gitlabSourceRepoName}</a></li>
+                        <li>部署分支：${gitlabBranch}</li>
+                        <li>触发原因：${gitlabActionType}</li>
+                        <li>触发人员：${gitlabUserName}</li>
+                        <li>Commits：<a href=${gitlabSourceRepoHomepage}/commit/${gitlabMergeRequestLastCommit}>${gitlabMergeRequestLastCommit}</a></li>
+                    </div>
+                </ul>
+            </td>
+        </tr>
+
+    </table>
+    </font>
+</body>
+</html>
+                """
                 }
             }
         }
@@ -113,6 +180,18 @@ pipeline {
                     }
                 }'
             """
+            script {
+                color = "green"
+                info = "Successful"
+            }
+            emailext (
+                subject: "SUCCESSFUL: Job '${env.JOB_NAME} [${env.BUILD_NUMBER}]'",
+                to: "${env.EMAIL_TO}",
+                from: "${env.EMAIL_SEND}",
+                attachLog: true,
+                compressLog: true,
+                body: "${emailextBody}"
+            )
         }
         failure {
             sh """
@@ -125,6 +204,18 @@ pipeline {
                     }
                 }'
             """
+            script {
+                color = "red"
+                info = "Failure"
+            }
+            emailext (
+                subject: "SUCCESSFUL: Job '${env.JOB_NAME} [${env.BUILD_NUMBER}]'",
+                to: "${env.EMAIL_TO}",
+                from: "${env.EMAIL_SEND}",
+                attachLog: true,
+                compressLog: true,
+                body: "${emailextBody}"
+            )
         }
     }
 }

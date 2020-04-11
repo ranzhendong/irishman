@@ -56,14 +56,14 @@ pipeline {
 #### 构建人：${env.gitlabUserName}\n
 > 触发分支：${env.gitlabTargetBranch}\n
 > 项目地址：[${env.gitlabSourceRepoName}](${env.gitlabSourceRepoHomepage})\n
-> COMMIT地址：[${env.gitlabMergeRequestLastCommit}](${env.gitlabSourceRepoHomepage}/commit/${env.gitlabMergeRequestLastCommit})\n
+> COMMIT地址：[${build_tag}](${env.gitlabSourceRepoHomepage}/commit/${env.gitlabMergeRequestLastCommit})\n
 """
                     failuretext = """
 ### 【${env.gitlabSourceRepoName} 构建Success】\n\n
 #### 构建人：${env.gitlabUserName}\n
 > 触发分支：${env.gitlabTargetBranch}\n
 > 项目地址：[${env.gitlabSourceRepoName}](${env.gitlabSourceRepoHomepage})\n
-> COMMIT地址：[${env.gitlabMergeRequestLastCommit}](${env.gitlabSourceRepoHomepage}/commit/${env.gitlabMergeRequestLastCommit})\n
+> COMMIT地址：[${build_tag}](${env.gitlabSourceRepoHomepage}/commit/${env.gitlabMergeRequestLastCommit})\n
 """
                 }
             }

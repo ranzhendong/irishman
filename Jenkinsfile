@@ -65,7 +65,7 @@ pipeline {
 > 项目地址：[${env.gitlabSourceRepoName}](${env.gitlabSourceRepoHomepage})\n
 > COMMIT地址：[${build_tag}](${env.gitlabSourceRepoHomepage}/commit/${env.gitlabMergeRequestLastCommit})\n
 """
-                emailextBody = """
+                emailextBody = '''
                 <!DOCTYPE html>
 <html>
 
@@ -98,8 +98,8 @@ pipeline {
                         <li>构建日志：<a href=${BUILD_URL}console>${BUILD_URL}console</a></li>
                         <li>变更概要：${CHANGES}</li>
                         <li>测试报告地址：<a href=${BUILD_URL}HTML_20Report>${BUILD_URL}HTML_20Report</a></li>
-                        <li>变更状态: ${JELLY_SCRIPT}</li>
-                        <li>总览:${JELLY_SCRIPT,template="zhendong"}</li>
+                        <li>变更状态：${JELLY_SCRIPT}</li>
+                        <li>总览：${JELLY_SCRIPT,template="zhendong"}</li>
                     </div>
                 </ul>
             </td>
@@ -131,7 +131,7 @@ pipeline {
     </font>
 </body>
 </html>
-                """
+                '''
                 }
             }
         }
@@ -185,7 +185,7 @@ pipeline {
                 color = "green"
                 info = "Successful"
             }
-            
+
             //email
             emailext (
                 subject: "SUCCESSFUL: Job '${env.JOB_NAME} [${env.BUILD_NUMBER}]'",

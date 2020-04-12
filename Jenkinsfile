@@ -1,24 +1,64 @@
+/*
+Create By Jack Ran
+2020.04.12
+
+Set the environment variable in Jenkins
+
+DINGTALK_ROBOT
+EMAIL_TO
+HARBOR_URL
+HARBOR_URL_TAG
+IRISHMAN_HARBOR_IMAGE
+EMAIL_TEMPLATE_MOUNT_FILE
+
+*/
+
+//set slave label
 def slave_label() {
-    return "jenkins-slave-k8s"
+        return "jenkins-slave-k8s"
     }
 
+//get commit tag
 def imageTag() {
-    return  sh(script: "git rev-parse --short HEAD", returnStdout: true).trim()
+        return  sh(script: "git rev-parse --short HEAD", returnStdout: true).trim()
     }
 
+//set version using timestamp
 def createVersion() {
     // 定义一个版本号作为当次构建的版本，输出结果 20191210175842_69
-    return new Date().format('yyyyMMddHHmmss') + "_${env.BUILD_ID}"
+        return new Date().format('yyyyMMddHHmmss') + "_${env.BUILD_ID}"
     }
 
+//dcoker build 
 def buildImage() {
-    // docker.build("${env.HARBOR_URL_TAG}/ranzhendong/irishman:${build_tag}")
-    // script表示里面是脚本式写法
+        // docker.build("${env.HARBOR_URL_TAG}/ranzhendong/irishman:${build_tag}")
+        // script表示里面是脚本式写法
         script {
             docker.build("${env.HARBOR_URL_TAG}/ranzhendong/irishman:${build_tag}")
         }
     }
 
+//change email template html
+//using configmap mount to slave node
+def changeTemp(String color, res, agent) {
+        sh "cat ${env.EMAIL_TEMPLATE_MOUNT_FILE} > /home/email-template.html "
+        sh "sed -i 's/BUILD_COLOR/${color}/g' /home/email-template.html"
+        sh "sed -i 's/BUILD_RESULT/${res}/g' /home/email-template.html"
+        sh "sed -i 's/JENKINS_AGENT_NAME/${agent}/g' /home/email-template.html"
+        return sh(script: "cat /home/email-template.html", returnStdout: true)
+}
+
+//dingtalk info
+def changeDingtalk(String res) {
+    return """
+### ${env.gitlabSourceRepoName}项目构建通知
+#### **构建状态:** ${res}\n\n
+#### **构建人员:** ${env.gitlabUserName}\n
+> 触发分支: ${env.gitlabTargetBranch}\n
+> 项目地址: [${env.gitlabSourceRepoName}](${env.gitlabSourceRepoHomepage})\n
+> Commit地址: [${build_tag}](${env.gitlabSourceRepoHomepage}/commit/${env.gitlabMergeRequestLastCommit})\n
+"""
+}
 
 pipeline {
     // agent any
@@ -28,7 +68,7 @@ pipeline {
 
     options {
          // 表示保留10次构建历史
-        buildDiscarder(logRotator(numToKeepStr: '10'))
+        //buildDiscarder(logRotator(numToKeepStr: '10'))
 
         // 不允许同时执行流水线，被用来防止同时访问共享资源等
         disableConcurrentBuilds()
@@ -48,90 +88,10 @@ pipeline {
                 sh 'printenv'
                 // 脚本式写法，赋值变量
                 script {
+                    //build tag
                     build_tag = imageTag()
                     //dingtalk robot infomation
                     title = "Jenkins Notice"
-                    successtext = """
-### 【${env.gitlabSourceRepoName} 构建Success】\n\n
-#### 构建人：${env.gitlabUserName}\n
-> 触发分支：${env.gitlabTargetBranch}\n
-> 项目地址：[${env.gitlabSourceRepoName}](${env.gitlabSourceRepoHomepage})\n
-> COMMIT地址：[${build_tag}](${env.gitlabSourceRepoHomepage}/commit/${env.gitlabMergeRequestLastCommit})\n
-"""
-                    failuretext = """
-### 【${env.gitlabSourceRepoName} 构建Success】\n\n
-#### 构建人：${env.gitlabUserName}\n
-> 触发分支：${env.gitlabTargetBranch}\n
-> 项目地址：[${env.gitlabSourceRepoName}](${env.gitlabSourceRepoHomepage})\n
-> COMMIT地址：[${build_tag}](${env.gitlabSourceRepoHomepage}/commit/${env.gitlabMergeRequestLastCommit})\n
-"""
-                emailextBody = '''
-                <!DOCTYPE html>
-<html>
-
-<head>
-    <meta charset="UTF-8">
-</head>
-
-<body leftmargin="8" marginwidth="0" topmargin="8" marginheight="4" offset="0">
-    <table width="95%" cellpadding="0" cellspacing="0"
-        style="font-size: 16pt; font-family: Tahoma, Arial, Helvetica, sans-serif">
-        <tr>
-            <td><br /> <b>
-                    <font color="#0B610B">
-                        <font size="6">构建信息</font>
-                    </font>
-                </b>
-                <hr size="2" width="100%" align="center" />
-            </td>
-        </tr>
-        <tr>
-            <td>
-                <ul>
-                    <div style="font-size:18px">
-                        <li>构建名称：${PROJECT_NAME}</li>
-                        <li>构建结果: <span style="color:${color}"> ${info} </span></li>
-                        <li>构建编号：${BUILD_NUMBER}</li>
-                        <li>触发原因：${CAUSE}</li>
-                        <li>部署分支：${gitlabBranch}</li>
-                        <li>构建地址：<a href=${BUILD_URL}>${BUILD_URL}</a></li>
-                        <li>构建日志：<a href=${BUILD_URL}console>${BUILD_URL}console</a></li>
-                        <li>变更概要：${CHANGES}</li>
-                        <li>测试报告地址：<a href=${BUILD_URL}HTML_20Report>${BUILD_URL}HTML_20Report</a></li>
-                        <li>变更状态：${JELLY_SCRIPT}</li>
-                        <li>总览：${JELLY_SCRIPT,template="zhendong"}</li>
-                    </div>
-                </ul>
-            </td>
-        </tr>
-        <tr>
-            <td><br /> <b>
-                <font color="#0B610B">
-                    <font size="6">GitLab ${gitlabSourceRepoName} repo信息</font>
-                </font>
-                </b>
-                <hr size="2" width="100%" align="center" />
-            </td>
-        </tr>
-        <tr>
-            <td>
-                <ul>
-                    <div style="font-size:18px">
-                        <li>项目名称：<a href=${gitlabSourceRepoHomepage}>${gitlabSourceRepoName}</a></li>
-                        <li>部署分支：${gitlabBranch}</li>
-                        <li>触发原因：${gitlabActionType}</li>
-                        <li>触发人员：${gitlabUserName}</li>
-                        <li>Commits：<a href=${gitlabSourceRepoHomepage}/commit/${gitlabMergeRequestLastCommit}>${gitlabMergeRequestLastCommit}</a></li>
-                    </div>
-                </ul>
-            </td>
-        </tr>
-
-    </table>
-    </font>
-</body>
-</html>
-                '''
                 }
             }
         }
@@ -170,54 +130,52 @@ pipeline {
     }
     post {
         success {
-            //dingtalk
+            script {
+                info = changeDingtalk("Success✅")
+            }
+            //dingtalk notice
             sh """
              curl '${env.DINGTALK_ROBOT}' \
              -H 'Content-Type: application/json' \
              -d '{"msgtype": "markdown", 
                 "markdown": {
                     "title": "${title}",
-                    "text": "${successtext}"
+                    "text": "${info}"
                     }
                 }'
             """
-            script {
-                color = "green"
-                info = "Successful"
-            }
 
-            //email
+            //email notice
+            //emailext has default configure at jenkins Global configuration
             emailext (
-                subject: "SUCCESSFUL: Job '${env.JOB_NAME} [${env.BUILD_NUMBER}]'",
+                subject: "Successful: Pipeline ${env.JOB_NAME} - Build: #${env.BUILD_NUMBER}",
                 to: "${env.EMAIL_TO}",
-                from: "${env.EMAIL_SEND}",
                 attachLog: true,
                 compressLog: true,
-                body: "${emailextBody}"
+                body: changeTemp("green"," SUCCESSFUL","${env.JENKINS_AGENT_NAME}")
             )
         }
         failure {
+            script {
+                info = changeDingtalk("Failure❌")
+            }
             sh """
              curl '${env.DINGTALK_ROBOT}' \
              -H 'Content-Type: application/json' \
              -d '{"msgtype": "markdown", 
                 "markdown": {
                     "title": "${title}",
-                    "text": "${failuretext}"
+                    "text": "${info}"
                     }
                 }'
             """
-            script {
-                color = "red"
-                info = "Failure"
-            }
+
             emailext (
-                subject: "SUCCESSFUL: Job '${env.JOB_NAME} [${env.BUILD_NUMBER}]'",
+                subject: "Failure: Pipeline ${env.JOB_NAME} - Build: #${env.BUILD_NUMBER}",
                 to: "${env.EMAIL_TO}",
-                from: "${env.EMAIL_SEND}",
                 attachLog: true,
                 compressLog: true,
-                body: "${emailextBody}"
+                body: changeTemp("red"," FAILURE","${env.JENKINS_AGENT_NAME}")
             )
         }
     }

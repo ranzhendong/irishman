@@ -168,8 +168,7 @@ func EtcWatcher(key string) (err error) {
 	// 创建一个监听器
 	watcher = clientv3.NewWatcher(client)
 
-	ctx := context.Background()
-	ctxRoot, _ := context.WithCancel(ctx)
+	ctxRoot := context.WithValue(context.Background(), "watcherFlag", key)
 	watchRespChan := watcher.Watch(ctxRoot, key, clientv3.WithPrefix(), clientv3.WithRev(watchStartRevision))
 	log.Println("EtcWatcher KEYS", key)
 	go Watcher(ctxRoot, watchRespChan)
@@ -194,7 +193,7 @@ func Watcher(ctx context.Context, watchRespChan <-chan clientv3.WatchResponse) {
 				case mvccpb.PUT:
 					log.Println("EtcWatcher PUT", string(event.Kv.Key), string(event.Kv.Value))
 					//set flag SetFlagNutsDB, nutsDB watcher is triggered
-					kvnuts.SetFlagUpstreamNutsDB()
+					kvnuts.SetFlagUpstreamNutsDB(ctx.Value("watcherFlag").(interface{}).(string), string(event.Kv.Key))
 
 				//be triggered when method is delete
 				case mvccpb.DELETE:

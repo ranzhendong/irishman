@@ -1,6 +1,21 @@
 package kvnuts
 
-import "log"
+import (
+	"log"
+	"strings"
+)
+
+//upper the first letter
+func strFirstToLower(str string) string {
+	if len(str) < 1 {
+		return ""
+	}
+	strArry := []rune(str)
+	if strArry[0] >= 65 && strArry[0] <= 90 {
+		strArry[0] += 32
+	}
+	return string(strArry)
+}
 
 //SetFlagHC : set flag healthCheck to nutsDB
 func SetFlagHC() {
@@ -9,9 +24,10 @@ func SetFlagHC() {
 }
 
 //SetFlagUpstreamNutsDB : set flag Upstream to nutsDB
-func SetFlagUpstreamNutsDB() {
-	log.Println("SetFlagNutsDBSetFlagNutsDBSetFlagNutsDB")
+func SetFlagUpstreamNutsDB(watcherFlag, ectKey string) {
+	log.Println("SetFlagNutsDBSetFlagNutsDBSetFlagNutsDB", strFirstToLower(strings.Split(ectKey, watcherFlag)[1]))
 	_ = Put("FlagUpstreamNutsDB", "FlagUpstreamNutsDB", 1)
+	_ = Put("FlagUpstreamNutsDB", "FlagUpstreamNutsDBWatcherFlag", ectKey)
 }
 
 //SetFlagUpstreamNutsDB : set flag Upstream to nutsDB

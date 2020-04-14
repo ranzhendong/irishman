@@ -1,4 +1,4 @@
-package gorountinescontroller
+package gorountines
 
 import (
 	"fmt"

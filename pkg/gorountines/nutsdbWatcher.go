@@ -1,4 +1,4 @@
-package gorountinescontroller
+package gorountines
 
 import (
 	"fmt"
@@ -14,7 +14,8 @@ import (
 //nutsWatcher : Flag NutsDB Upstream watcher
 func FlagUpstreamNutsDB() {
 	var (
-		val []*mvccpb.KeyValue
+		val  string
+		vals []*mvccpb.KeyValue
 	)
 
 	for {
@@ -22,16 +23,15 @@ func FlagUpstreamNutsDB() {
 		if _, _, err := kvnuts.Get("FlagUpstreamNutsDB", "FlagUpstreamNutsDB", "i"); err == nil {
 			_ = kvnuts.Del("FlagUpstreamNutsDB", "FlagUpstreamNutsDB")
 
-			//get upstream list key from etcd
-			if _, val, err = etcd.EtcGetAll(c.Upstream.EtcdPrefix); err != nil {
-				log.Println(MyERR.ErrorLog(0104), fmt.Sprintf("%v", err))
-			}
+			WatcherFlag, _, _ := kvnuts.Get("FlagUpstreamNutsDB", "FlagUpstreamNutsDBWatcherFlag", "s")
+			log.Println("++++++++++++++", WatcherFlag)
 
 			//set upstream list storage to nutsDB, set flag
 			utnf := healthcheck.UpstreamToNutsDBFlag{
-				1,
-				0}.UpstreamAndHCEtcdToNutsDB
-			utnf(val)
+				SeparateUpstreamEtcdToNutsForOne: 1,
+				HealthCheckEtcdToNuts:            0,
+				OneKey:                           WatcherFlag}.UpstreamAndHCFromEtcdToNutsDB
+			utnf(vals, val)
 
 			//trigger restart hc
 			kvnuts.SetFlagHC()
@@ -50,15 +50,15 @@ func FlagHCNutsDB() {
 		if _, _, err := kvnuts.Get("FlagHCNutsDB", "FlagHCNutsDB", "i"); err == nil {
 			_ = kvnuts.Del("FlagHCNutsDB", "FlagHCNutsDB")
 
-			//get upstream list key from etcd
+			//get upstream list key from etcd, using upstream prefix
 			if _, val, err = etcd.EtcGetAll(c.Upstream.EtcdPrefix); err != nil {
 				log.Println(MyERR.ErrorLog(0104), fmt.Sprintf("%v", err))
 			}
 
 			//set upstream list storage to nutsDB, set flag
 			utnf := healthcheck.UpstreamToNutsDBFlag{
-				0,
-				1}.UpstreamAndHCEtcdToNutsDB
+				SeparateUpstreamEtcdToNuts: 0,
+				HealthCheckEtcdToNuts:      1}.UpstreamAndHCFromEtcdToNutsDB
 			utnf(val)
 
 			//trigger restart hc

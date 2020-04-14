@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"github.com/ranzhendong/irishman/pkg/datastruck"
 	MyERR "github.com/ranzhendong/irishman/pkg/errorhandle"
-	gc "github.com/ranzhendong/irishman/pkg/gorountinescontroller"
+	Gc "github.com/ranzhendong/irishman/pkg/gorountines"
 	"github.com/ranzhendong/irishman/pkg/healthcheck"
 	MyInit "github.com/ranzhendong/irishman/pkg/init"
 	"github.com/ranzhendong/irishman/pkg/kvnuts"
@@ -63,7 +63,7 @@ func main() {
 	}
 
 	//goroutines controller factory: hc, etcd, nutsDB watcher
-	if !gc.Factory() {
+	if !Gc.Factory() {
 		return
 	}
 

@@ -15,19 +15,6 @@ var (
 	err error
 )
 
-//repeat remove
-func removeRepByMap(slc []map[string]interface{}) (result []map[string]interface{}) {
-	tempMap := map[interface{}]byte{}
-	for _, e := range slc {
-		l := len(tempMap)
-		tempMap[e["ipPort"]] = 0
-		if len(tempMap) != l {
-			result = append(result, e)
-		}
-	}
-	return
-}
-
 /*
 All NutsDB bucket, key, and val
 
@@ -69,6 +56,7 @@ func (tc TConfig) SeparateUpstreamFromEtcdToNutsForOne(v string) {
 		u                            Upstream
 		c                            datastruck.Config
 		EtcdUpIpPort, EtcdDownIpPort []string
+		NutsUpIpPort, NutsDownIpPort [][]byte
 	)
 
 	//config loading
@@ -92,26 +80,91 @@ func (tc TConfig) SeparateUpstreamFromEtcdToNutsForOne(v string) {
 	}
 
 	//get up ip port from nuts
-	NutsUpIpPort, _ := kvnuts.SMem(c.NutsDB.Tag.Up, u.UpstreamName)
+	NutsUpIpPort, _ = kvnuts.SMem(c.NutsDB.Tag.Up, u.UpstreamName)
 
 	//get down ip port from nuts
-	//NutsDownIpPort, _ := kvnuts.SMem(c.NutsDB.Tag.Up, u.UpstreamName)
-
+	NutsDownIpPort, _ = kvnuts.SMem(c.NutsDB.Tag.Down, u.UpstreamName)
+	_ = NutsDownIpPort
 	for _, v := range EtcdUpIpPort {
-		log.Println(v)
-		//check every ip port
-		for i := 0; i < len(NutsUpIpPort); i++ {
-			ip := NutsUpIpPort[i]
-			log.Println(string(ip))
-			if string(ip) == v {
-				NutsUpIpPort = append(NutsUpIpPort, []byte(v))
-				goto Exit
-			}
+		if !kvnuts.SIsMem(tc.TagUp, u.UpstreamName, v) && !kvnuts.SIsMem(tc.TagDown, u.UpstreamName, v) {
+			_ = kvnuts.SAdd(tc.TagUp, u.UpstreamName, v)
 		}
-	Exit:
 	}
 
+	for _, v := range EtcdDownIpPort {
+		if !kvnuts.SIsMem(tc.TagUp, u.UpstreamName, v) && !kvnuts.SIsMem(tc.TagDown, u.UpstreamName, v) {
+			_ = kvnuts.SAdd(tc.TagDown, u.UpstreamName, v)
+		}
+	}
+
+	for i := 0; i < len(NutsUpIpPort); i++ {
+		if !kvnuts.SIsMem(tc.TagUp, u.UpstreamName, NutsUpIpPort[i]) && !kvnuts.SIsMem(tc.TagDown, u.UpstreamName, NutsUpIpPort[i]) {
+			_ = kvnuts.SAdd(tc.TagUp, u.UpstreamName, v)
+		}
+	}
+
+	//if v.Status == "up" {
+	//	_ = kvnuts.SAdd(tc.TagUp, u.UpstreamName, v.IPPort)
+	//} else {
+	//	_ = kvnuts.SAdd(tc.TagDown, u.UpstreamName, v.IPPort)
+	//}
+	//go func() {
+	//	for _, v := range tc.tmp(u.UpstreamName, "up", EtcdUpIpPort, NutsUpIpPort, NutsDownIpPort) {
+	//		log.Println("------------------------------------------", string(v))
+	//		//_ = kvnuts.SAdd(tc.TagUp, u.UpstreamName, v)
+	//	}
+	//	return
+	//}()
+	//
+	//go func() {
+	//	time.Sleep(100 * time.Millisecond)
+	//	for _, v := range tc.tmp(u.UpstreamName, "down", EtcdDownIpPort, NutsDownIpPort, NutsUpIpPort) {
+	//		log.Println("*******************************************", string(v))
+	//		//_ = kvnuts.SAdd(tc.TagDown, u.UpstreamName, v)
+	//	}
+	//	return
+	//}()
+
 }
+
+//func (tc TConfig) tmp(name, flag string, e []string, nu, nd [][]byte) [][]byte {
+//	for _, v := range e {
+//		log.Println("9999999999999999999999999999999999999999999", v)
+//		////check every up ip port
+//		//for i := 0; i < len(nu); i++ {
+//		//	ip := nu[i]
+//		//	log.Println(string(ip))
+//		//	if string(ip) == v {
+//		//		goto Exit
+//		//	}
+//		//}
+//		//
+//		////check every down ip port
+//		//for i := 0; i < len(nd); i++ {
+//		//	ip := nd[i]
+//		//	log.Println(string(ip))
+//		//	if string(ip) == v {
+//		//		goto Exit
+//		//	}
+//		//}
+//
+//		if flag == "up" {
+//			if !kvnuts.SIsMem(tc.TagUp, name, v) {
+//				_ = kvnuts.SAdd(tc.TagUp, name, v)
+//			}
+//
+//		} else {
+//			if !kvnuts.SIsMem(tc.TagUp, name, v) {
+//				_ = kvnuts.SAdd(tc.TagDown, name, v)
+//			}
+//		}
+//		//nu = append(nu, []byte(v))
+//		log.Println("33333333333333333333333333333333333")
+//
+//	Exit:
+//	}
+//	return nu
+//}
 
 /*
 [CheckProtocol, CheckPath, Health.Interval, Health.SuccessTime, Health.SuccessTimeout, UnHealth.Interval, UnHealth.FailuresTime, UnHealth.FailuresTimeout]

@@ -35,3 +35,9 @@ func SetFlagHCNutsDB() {
 	log.Println("FlagHCNutsDBFlagHCNutsDBFlagHCNutsDBFlagHCNutsDB")
 	_ = Put("FlagHCNutsDB", "FlagHCNutsDB", 1)
 }
+
+//SetFlagUpstreamNutsDB : set flag Upstream to nutsDB
+func SetFlagUpstreamReadyTo() {
+	log.Println("SetFlagUpstreamReadyToSetFlagUpstreamReadyToSetFlagUpstreamReadyTo")
+	_ = Put("SetFlagUpstreamReadyTo", "SetFlagUpstreamReadyTo", 1)
+}

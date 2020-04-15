@@ -84,7 +84,19 @@ func (tc TConfig) SeparateUpstreamFromEtcdToNutsForOne(v string) {
 
 	//get down ip port from nuts
 	NutsDownIpPort, _ = kvnuts.SMem(c.NutsDB.Tag.Down, u.UpstreamName)
-	_ = NutsDownIpPort
+	//_ = NutsDownIpPort
+
+	// if nutsDB server number greater than etcd server number, upstream method is post, put
+	// if nutsDB server number less than etcd server number, upstream method is patch
+	log.Println("!!!!!!!!!!!!")
+	if len(NutsUpIpPort)+len(NutsDownIpPort) > len(EtcdUpIpPort)+len(EtcdDownIpPort) {
+		log.Println("cccc", len(NutsUpIpPort)+len(NutsDownIpPort), "+++", len(EtcdUpIpPort)+len(EtcdDownIpPort))
+		goto OTHERS
+	} else {
+		log.Println("pppp", len(NutsUpIpPort)+len(NutsDownIpPort), "---", len(EtcdUpIpPort)+len(EtcdDownIpPort))
+		goto PATCH
+	}
+PATCH:
 	for _, v := range EtcdUpIpPort {
 		if !kvnuts.SIsMem(tc.TagUp, u.UpstreamName, v) && !kvnuts.SIsMem(tc.TagDown, u.UpstreamName, v) {
 			_ = kvnuts.SAdd(tc.TagUp, u.UpstreamName, v)
@@ -97,74 +109,53 @@ func (tc TConfig) SeparateUpstreamFromEtcdToNutsForOne(v string) {
 		}
 	}
 
+	kvnuts.SetFlagUpstreamReadyTo()
+	return
+
+OTHERS:
+	log.Println("??????????????")
 	for i := 0; i < len(NutsUpIpPort); i++ {
-		if !kvnuts.SIsMem(tc.TagUp, u.UpstreamName, NutsUpIpPort[i]) && !kvnuts.SIsMem(tc.TagDown, u.UpstreamName, NutsUpIpPort[i]) {
-			_ = kvnuts.SAdd(tc.TagUp, u.UpstreamName, v)
+		log.Println("AAAAAAAAA", string(NutsUpIpPort[i]))
+	}
+
+	for i := 0; i < len(NutsDownIpPort); i++ {
+		log.Println("BBBBBBBBB", string(NutsDownIpPort[i]))
+	}
+
+	if len(NutsUpIpPort) > 0 {
+		for i := 0; i < len(NutsUpIpPort); i++ {
+			log.Println(tc.TagUp, u.UpstreamName, string(NutsUpIpPort[i]))
+			err = kvnuts.SRem(tc.TagUp, u.UpstreamName, NutsUpIpPort[i])
+			log.Println("$$$$$$$$$$$$", err)
 		}
 	}
 
-	//if v.Status == "up" {
-	//	_ = kvnuts.SAdd(tc.TagUp, u.UpstreamName, v.IPPort)
-	//} else {
-	//	_ = kvnuts.SAdd(tc.TagDown, u.UpstreamName, v.IPPort)
+	if len(NutsDownIpPort) > 0 {
+		for i := 0; i < len(NutsDownIpPort); i++ {
+			log.Println(tc.TagDown, u.UpstreamName, string(NutsDownIpPort[i]))
+			err = kvnuts.SRem(tc.TagDown, u.UpstreamName, NutsDownIpPort[i])
+			log.Println("$$$$$$$$$$$$", err)
+		}
+	}
+
+	//for _, v := range u.Pool {
+	//	if v.Status == "up" {
+	//		_ = kvnuts.SAdd(tc.TagUp, u.UpstreamName, v.IPPort)
+	//	} else {
+	//		_ = kvnuts.SAdd(tc.TagDown, u.UpstreamName, v.IPPort)
+	//	}
 	//}
-	//go func() {
-	//	for _, v := range tc.tmp(u.UpstreamName, "up", EtcdUpIpPort, NutsUpIpPort, NutsDownIpPort) {
-	//		log.Println("------------------------------------------", string(v))
-	//		//_ = kvnuts.SAdd(tc.TagUp, u.UpstreamName, v)
-	//	}
-	//	return
-	//}()
-	//
-	//go func() {
-	//	time.Sleep(100 * time.Millisecond)
-	//	for _, v := range tc.tmp(u.UpstreamName, "down", EtcdDownIpPort, NutsDownIpPort, NutsUpIpPort) {
-	//		log.Println("*******************************************", string(v))
-	//		//_ = kvnuts.SAdd(tc.TagDown, u.UpstreamName, v)
-	//	}
-	//	return
-	//}()
 
+	for i := 0; i < len(NutsUpIpPort); i++ {
+		log.Println("////////////////", string(NutsUpIpPort[i]))
+	}
+
+	for i := 0; i < len(NutsDownIpPort); i++ {
+		log.Println("^^^^^^^^^^^^^^^^", string(NutsDownIpPort[i]))
+	}
+
+	kvnuts.SetFlagUpstreamReadyTo()
 }
-
-//func (tc TConfig) tmp(name, flag string, e []string, nu, nd [][]byte) [][]byte {
-//	for _, v := range e {
-//		log.Println("9999999999999999999999999999999999999999999", v)
-//		////check every up ip port
-//		//for i := 0; i < len(nu); i++ {
-//		//	ip := nu[i]
-//		//	log.Println(string(ip))
-//		//	if string(ip) == v {
-//		//		goto Exit
-//		//	}
-//		//}
-//		//
-//		////check every down ip port
-//		//for i := 0; i < len(nd); i++ {
-//		//	ip := nd[i]
-//		//	log.Println(string(ip))
-//		//	if string(ip) == v {
-//		//		goto Exit
-//		//	}
-//		//}
-//
-//		if flag == "up" {
-//			if !kvnuts.SIsMem(tc.TagUp, name, v) {
-//				_ = kvnuts.SAdd(tc.TagUp, name, v)
-//			}
-//
-//		} else {
-//			if !kvnuts.SIsMem(tc.TagUp, name, v) {
-//				_ = kvnuts.SAdd(tc.TagDown, name, v)
-//			}
-//		}
-//		//nu = append(nu, []byte(v))
-//		log.Println("33333333333333333333333333333333333")
-//
-//	Exit:
-//	}
-//	return nu
-//}
 
 /*
 [CheckProtocol, CheckPath, Health.Interval, Health.SuccessTime, Health.SuccessTimeout, UnHealth.Interval, UnHealth.FailuresTime, UnHealth.FailuresTimeout]

@@ -27,15 +27,30 @@ func FlagUpstreamNutsDB() {
 			log.Println("++++++++++++++", WatcherFlag)
 
 			//set upstream list storage to nutsDB, set flag
-			utnf := healthcheck.UpstreamToNutsDBFlag{
-				SeparateUpstreamEtcdToNutsForOne: 1,
-				HealthCheckEtcdToNuts:            0,
-				OneKey:                           WatcherFlag}.UpstreamAndHCFromEtcdToNutsDB
-			utnf(vals, val)
+			go func() {
+				utnf := healthcheck.UpstreamToNutsDBFlag{
+					SeparateUpstreamEtcdToNutsForOne: 1,
+					HealthCheckEtcdToNuts:            0,
+					OneKey:                           WatcherFlag}.UpstreamAndHCFromEtcdToNutsDB
+				utnf(vals, val)
+			}()
 
-			//trigger restart hc
-			kvnuts.SetFlagHC()
+			for {
+				time.Sleep(100 * time.Millisecond)
+				log.Println("111111111111111111")
+				if _, _, err := kvnuts.Get("SetFlagUpstreamReadyTo", "SetFlagUpstreamReadyTo", "i"); err == nil {
+					log.Println("time.Sleep(100 * time.Millisecond)time.Sleep(100 * time.Millisecond)time.Sleep(100 * time.Millisecond)time.Sleep(100 * time.Millisecond)")
+					_ = kvnuts.Del("SetFlagUpstreamReadyTo", "SetFlagUpstreamReadyTo")
+
+					log.Println("##################")
+					//trigger restart hc
+					kvnuts.SetFlagHC()
+					log.Println("##################")
+					goto BREAKFOR
+				}
+			}
 		}
+	BREAKFOR:
 	}
 }
 

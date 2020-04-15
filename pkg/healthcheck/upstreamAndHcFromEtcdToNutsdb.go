@@ -38,11 +38,11 @@ func (f UpstreamToNutsDBFlag) UpstreamAndHCFromEtcdToNutsDB(vals []*mvccpb.KeyVa
 		return
 	}
 
-	//Separate Upstream Etcd To Nuts when etcd watcher triggered
-	if f.SeparateUpstreamEtcdToNutsForOne != 0 {
-		T.SeparateUpstreamFromEtcdToNutsForOne(f.OneKey)
-		return
-	}
+	////Separate Upstream Etcd To Nuts when etcd watcher triggered
+	//if f.SeparateUpstreamEtcdToNutsForOne != 0 {
+	//	T.SeparateUpstreamFromEtcdToNutsForOne(f.OneKey)
+	//	return
+	//}
 
 	//set upstream list storage to nutsDB
 	for _, v := range vals {

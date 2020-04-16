@@ -88,72 +88,84 @@ func (tc TConfig) SeparateUpstreamFromEtcdToNutsForOne(v string) {
 
 	// if nutsDB server number greater than etcd server number, upstream method is post, put
 	// if nutsDB server number less than etcd server number, upstream method is patch
-	log.Println("!!!!!!!!!!!!")
-	if len(NutsUpIpPort)+len(NutsDownIpPort) > len(EtcdUpIpPort)+len(EtcdDownIpPort) {
-		log.Println("cccc", len(NutsUpIpPort)+len(NutsDownIpPort), "+++", len(EtcdUpIpPort)+len(EtcdDownIpPort))
+	if len(NutsUpIpPort)+len(NutsDownIpPort) > len(u.Pool) {
 		goto OTHERS
 	} else {
-		log.Println("pppp", len(NutsUpIpPort)+len(NutsDownIpPort), "---", len(EtcdUpIpPort)+len(EtcdDownIpPort))
 		goto PATCH
 	}
+
 PATCH:
+
+	//if not exist in up and down, add to up
 	for _, v := range EtcdUpIpPort {
 		if !kvnuts.SIsMem(tc.TagUp, u.UpstreamName, v) && !kvnuts.SIsMem(tc.TagDown, u.UpstreamName, v) {
 			_ = kvnuts.SAdd(tc.TagUp, u.UpstreamName, v)
 		}
 	}
 
+	//if not exist in up and down, add to down
 	for _, v := range EtcdDownIpPort {
 		if !kvnuts.SIsMem(tc.TagUp, u.UpstreamName, v) && !kvnuts.SIsMem(tc.TagDown, u.UpstreamName, v) {
 			_ = kvnuts.SAdd(tc.TagDown, u.UpstreamName, v)
 		}
 	}
 
+	//set flag
 	kvnuts.SetFlagUpstreamReadyTo()
+
 	return
 
 OTHERS:
-	log.Println("??????????????")
-	for i := 0; i < len(NutsUpIpPort); i++ {
-		log.Println("AAAAAAAAA", string(NutsUpIpPort[i]))
-	}
-
-	for i := 0; i < len(NutsDownIpPort); i++ {
-		log.Println("BBBBBBBBB", string(NutsDownIpPort[i]))
-	}
-
-	if len(NutsUpIpPort) > 0 {
-		for i := 0; i < len(NutsUpIpPort); i++ {
-			log.Println(tc.TagUp, u.UpstreamName, string(NutsUpIpPort[i]))
-			err = kvnuts.SRem(tc.TagUp, u.UpstreamName, NutsUpIpPort[i])
-			log.Println("$$$$$$$$$$$$", err)
-		}
-	}
-
-	if len(NutsDownIpPort) > 0 {
-		for i := 0; i < len(NutsDownIpPort); i++ {
-			log.Println(tc.TagDown, u.UpstreamName, string(NutsDownIpPort[i]))
-			err = kvnuts.SRem(tc.TagDown, u.UpstreamName, NutsDownIpPort[i])
-			log.Println("$$$$$$$$$$$$", err)
-		}
-	}
-
-	//for _, v := range u.Pool {
-	//	if v.Status == "up" {
-	//		_ = kvnuts.SAdd(tc.TagUp, u.UpstreamName, v.IPPort)
-	//	} else {
-	//		_ = kvnuts.SAdd(tc.TagDown, u.UpstreamName, v.IPPort)
-	//	}
+	//TEST INFO
+	//for i := 0; i < len(NutsUpIpPort); i++ {
+	//	log.Println("AAAAAAAAA", string(NutsUpIpPort[i]))
+	//}
+	//
+	//for i := 0; i < len(NutsDownIpPort); i++ {
+	//	log.Println("BBBBBBBBB", string(NutsDownIpPort[i]))
 	//}
 
-	for i := 0; i < len(NutsUpIpPort); i++ {
-		log.Println("////////////////", string(NutsUpIpPort[i]))
+	//delete all up list
+	if len(NutsUpIpPort) > 0 {
+		for i := 0; i < len(NutsUpIpPort); i++ {
+			//need to use "c.NutsDB.Tag.Up" delete
+			_ = kvnuts.SRem(c.NutsDB.Tag.Up, u.UpstreamName, NutsUpIpPort[i])
+		}
 	}
 
-	for i := 0; i < len(NutsDownIpPort); i++ {
-		log.Println("^^^^^^^^^^^^^^^^", string(NutsDownIpPort[i]))
+	//delete all down list
+	if len(NutsDownIpPort) > 0 {
+		for i := 0; i < len(NutsDownIpPort); i++ {
+			//need to use "c.NutsDB.Tag.Down" delete
+			_ = kvnuts.SRem(c.NutsDB.Tag.Down, u.UpstreamName, NutsDownIpPort[i])
+		}
 	}
 
+	//add new up and dow list to nutsDB
+	for _, v := range u.Pool {
+		if v.Status == "up" {
+			_ = kvnuts.SAdd(c.NutsDB.Tag.Up, u.UpstreamName, v.IPPort)
+		} else {
+			_ = kvnuts.SAdd(c.NutsDB.Tag.Up, u.UpstreamName, v.IPPort)
+		}
+	}
+
+	//TEST INFO
+	////get up ip port from nuts
+	//NutsUpIpPort, _ = kvnuts.SMem(c.NutsDB.Tag.Up, u.UpstreamName)
+	//
+	////get down ip port from nuts
+	//NutsDownIpPort, _ = kvnuts.SMem(c.NutsDB.Tag.Down, u.UpstreamName)
+	//
+	//for i := 0; i < len(NutsUpIpPort); i++ {
+	//	log.Println("EXIST NutsUpIpPort", string(NutsUpIpPort[i]))
+	//}
+	//
+	//for i := 0; i < len(NutsDownIpPort); i++ {
+	//	log.Println("EXIST NutsDownIpPort", string(NutsDownIpPort[i]))
+	//}
+
+	//set flag
 	kvnuts.SetFlagUpstreamReadyTo()
 }
 

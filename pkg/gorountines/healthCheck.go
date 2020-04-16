@@ -212,26 +212,40 @@ func upstreamList(ctx context.Context, upstreamList [][]byte) {
 					go dhc.downOneStart(ctx)
 					ctxDownOneStartChan <- 1
 
-					go test(k)
+					go test(ctx, k)
 				}
 			}
 		}
 	}
 }
 
-func test(v []byte) {
+//test: print logs about nutsDB all up and down list
+func test(ctx context.Context, v []byte) {
 	var l [][]byte
+	q := 1
+
+	//periodically round
 	for {
-		time.Sleep(2 * time.Second)
-		l, _ = kvnuts.SMem(c.NutsDB.Tag.Up, v)
-		for _, s := range l {
-			log.Println(string(v), "Success:", string(s))
-		}
-		l, _ = kvnuts.SMem(c.NutsDB.Tag.Down, v)
-		for _, s := range l {
-			log.Println(string(v), "Failure:", string(s))
+		select {
+		//if ctx cancel function is triggered, exit
+		case <-ctx.Done():
+			return
+
+		//default to hc
+		default:
+			time.Sleep(2 * time.Second)
+			l, _ = kvnuts.SMem(c.NutsDB.Tag.Up, v)
+			for _, s := range l {
+				log.Println("[LOG PRINT] Success - Times:", q, " - Upstream:", string(v), " - IP PORT:", string(s))
+			}
+			l, _ = kvnuts.SMem(c.NutsDB.Tag.Down, v)
+			for _, s := range l {
+				log.Println("[LOG PRINT] Failure - Times:", q, " - Upstream:", string(v), " - IP PORT:", string(s))
+			}
+			q += 1
 		}
 	}
+
 }
 
 //UpOneStart : up status health check driver

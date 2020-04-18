@@ -116,8 +116,8 @@ pipeline {
         stage('YAML') {
             steps {
                 echo "5. Change YAML File Stage"
-                sh "sed -i 's/<BUILD_TAG>/${build_tag}/' /irishman/irishman-deployment.yaml"
-                sh "sed -i 's/<BRANCH_NAME>/${env.BRANCH_NAME}/' /irishman/irishman-deployment.yaml"
+                sh "sed -i 'sed -i 's!.*image:.*!      - image: ${build_tag}!' /irishman/irishman-deployment.yaml"
+                sh "sed -i 's!.*value:.*!          value: ${env.BRANCH_NAME}!' /irishman/irishman-deployment.yaml"
             }
         }
         

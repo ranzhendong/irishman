@@ -3,14 +3,17 @@ module github.com/ranzhendong/irishman
 go 1.13
 
 require (
+	github.com/StackExchange/wmi v0.0.0-20190523213315-cbe66965904d // indirect
 	github.com/coreos/etcd v3.3.18+incompatible
 	github.com/etcd-io/etcd v3.3.18+incompatible
 	github.com/fsnotify/fsnotify v1.4.9
+	github.com/go-autumn/lib-metrics v1.0.0 // indirect
+	github.com/go-ole/go-ole v1.2.4 // indirect
 	github.com/google/uuid v1.1.1 // indirect
 	github.com/json-iterator/go v1.1.9 // indirect
 	github.com/mitchellh/mapstructure v1.1.2
-	github.com/modern-go/reflect2 v1.0.1 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
+	github.com/shirou/gopsutil v2.20.3+incompatible // indirect
 	github.com/smokezl/govalidators v0.0.0-20181012065008-5fded539f530
 	github.com/spf13/viper v1.6.2
 	github.com/thinkeridea/go-extend v1.1.1

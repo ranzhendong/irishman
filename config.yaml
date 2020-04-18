@@ -7,6 +7,13 @@ server:
   readtimeout: 15
   writetimeout: 15
 
+# metrics config
+metrics:
+  bind: 0.0.0.0:8000
+  interval: 1000
+  readtimeout: 15
+  writetimeout: 15
+
 # etcd config
 etcd:
   host: 172.16.0.51:2379

@@ -3,13 +3,15 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/ranzhendong/irishman/pkg/datastruck"
 	MyERR "github.com/ranzhendong/irishman/pkg/errorhandle"
-	Gc "github.com/ranzhendong/irishman/pkg/gorountines"
+	_ "github.com/ranzhendong/irishman/pkg/gorountines"
 	"github.com/ranzhendong/irishman/pkg/healthcheck"
 	MyInit "github.com/ranzhendong/irishman/pkg/init"
-	"github.com/ranzhendong/irishman/pkg/kvnuts"
 	"github.com/ranzhendong/irishman/pkg/upstream"
+	"github.com/shirou/gopsutil/mem"
 	"io"
 	"io/ioutil"
 	"log"
@@ -22,6 +24,12 @@ var (
 	mux = make(map[string]func(http.ResponseWriter, *http.Request))
 	c   datastruck.Config
 	err error
+
+	diskPercent = prometheus.NewGaugeVec(
+		prometheus.GaugeOpts{
+			Name: "memory_percent",
+			Help: "memory use percent",
+		}, []string{"percent"})
 )
 
 type myHandler struct{}
@@ -38,10 +46,12 @@ func init() {
 	//set route
 	mux["/upstream"] = myUpstream
 	mux["/healthcheck"] = healthCheck
-	mux["/nutsdb"] = nutsDB
+	//mux["/metrics"] = metrics
 }
 
 func main() {
+	var v *mem.VirtualMemoryStat
+
 	//config loading
 	if err = c.Config(); err != nil {
 		log.Println(MyERR.ErrorLog(0012), fmt.Sprintf("%v", err))
@@ -62,9 +72,17 @@ func main() {
 		return
 	}
 
-	//goroutines controller factory: hc, etcd, nutsDB watcher
-	if !Gc.Factory() {
-		return
+	////goroutines controller factory: hc, etcd, nutsDB watcher
+	//if !Gc.Factory() {
+	//	return
+	//}
+
+	//config about metrics server
+	metrics := http.Server{
+		Addr:         c.Metrics.Bind,
+		Handler:      promhttp.Handler(),
+		ReadTimeout:  time.Duration(c.Metrics.ReadTimeout) * time.Second,
+		WriteTimeout: time.Duration(c.Metrics.WriteTimeout) * time.Second,
 	}
 
 	//config about server
@@ -74,6 +92,25 @@ func main() {
 		ReadTimeout:  time.Duration(c.Server.ReadTimeout) * time.Second,
 		WriteTimeout: time.Duration(c.Server.WriteTimeout) * time.Second,
 	}
+
+	prometheus.MustRegister(diskPercent)
+
+	// metrics start
+	go func() {
+		if err = metrics.ListenAndServe(); err != nil {
+			log.Printf(MyERR.ErrorLog(0011, fmt.Sprintf("%v", err)))
+		}
+	}()
+
+	go func() {
+		for {
+			time.Sleep(time.Duration(c.Metrics.Interval) * time.Millisecond)
+			if v, err = mem.VirtualMemory(); err != nil {
+			}
+			usedPercent := v.UsedPercent
+			diskPercent.WithLabelValues("usedMemory").Set(usedPercent)
+		}
+	}()
 
 	// server start
 	log.Println(MyERR.ErrorLog(142))
@@ -91,11 +128,6 @@ func (myHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	log.Printf(MyERR.ErrorLog(0010, fmt.Sprintf("%v", r.URL.String())))
 	res := &MyERR.MyError{Code: 0010, Error: fmt.Sprintf("%v", r.URL.String())}
 	response(w, res)
-}
-
-func nutsDB(w http.ResponseWriter, r *http.Request) {
-	log.Println("kvNutsDB Route.....")
-	kvnuts.SetFlagHC()
 }
 
 func myUpstream(w http.ResponseWriter, r *http.Request) {

@@ -10,6 +10,7 @@ import (
 //Config is struck of config.yaml
 type Config struct {
 	Server      server      `yaml:"server"`
+	Metrics     metrics     `yaml:"metrics"`
 	Etcd        etcd        `yaml:"etcd"`
 	Resource    resource    `yaml:"resource"`
 	NutsDB      nutsDB      `yaml:"nutsdb"`
@@ -19,6 +20,13 @@ type Config struct {
 
 type server struct {
 	Bind         string `yaml:"bind"`
+	ReadTimeout  int    `yaml:"readtimeout"`
+	WriteTimeout int    `yaml:"writetimeout"`
+}
+
+type metrics struct {
+	Bind         string `yaml:"bind"`
+	Interval     int    `yaml:"interval"`
 	ReadTimeout  int    `yaml:"readtimeout"`
 	WriteTimeout int    `yaml:"writetimeout"`
 }

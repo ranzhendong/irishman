@@ -6,6 +6,7 @@ import (
 	"github.com/ranzhendong/irishman/pkg/datastruck"
 	MyERR "github.com/ranzhendong/irishman/pkg/errorhandle"
 	"github.com/ranzhendong/irishman/pkg/etcd"
+	"github.com/ranzhendong/irishman/pkg/healthcheck"
 	"log"
 	"time"
 )
@@ -176,6 +177,10 @@ func (r *RStruck) PostUpstream() *MyERR.MyError {
 		log.Printf(MyERR.ErrorLog(3101, fmt.Sprintf("%v", err)))
 		return &MyERR.MyError{Error: err.Error(), Code: 3101, TimeStamp: r.T}
 	}
+
+	//Synchronize health check template to etcd and nutsDB
+	healthcheck.PostHealthCheckTemplateToEtcd(u.UpstreamName)
+	healthcheck.PostHealthCheckTemplateToNutsDB(u.UpstreamName)
 
 	log.Println(MyERR.ErrorLog(000, fmt.Sprintf(" Set Key [%v], Values [%v]", EtcUpstreamName, string(jsonU))))
 	return &MyERR.MyError{Code: 000, TimeStamp: r.T}
@@ -438,6 +443,10 @@ DELETEUPSTREAM:
 		log.Printf(MyERR.ErrorLog(5105, fmt.Sprintf("%v", err)))
 		return &MyERR.MyError{Error: err.Error(), Code: 5105, TimeStamp: r.T}
 	}
+
+	//Deleting templates is not allowed
+	healthcheck.DeleteHealthCheckTemplateToEtcd(du.UpstreamName)
+
 	return &MyERR.MyError{Code: 000, TimeStamp: r.T}
 
 DELETENOTHING:

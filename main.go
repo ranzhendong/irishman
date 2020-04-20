@@ -39,7 +39,6 @@ func init() {
 	//set route
 	mux["/upstream"] = myUpstream
 	mux["/healthcheck"] = healthCheck
-	//mux["/metrics"] = metrics
 }
 
 func main() {

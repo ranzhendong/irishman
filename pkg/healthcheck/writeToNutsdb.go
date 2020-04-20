@@ -59,15 +59,18 @@ func (tc TConfig) SeparateUpstreamFromEtcdToNutsForOne(v string) {
 		NutsUpIpPort, NutsDownIpPort [][]byte
 	)
 
+	defer kvnuts.SetFlagUpstreamReadyTo()
 	//config loading
 	_ = c.Config()
 
 	//get change key from etcd
 	if val, err = etcd.EtcGet(v); err != nil {
 		log.Println(MyERR.ErrorLog(11102), fmt.Sprintf("; %v", err))
+		return
 	}
 	if err := json.Unmarshal([]byte(val), &u); err != nil {
 		log.Println(MyERR.ErrorLog(11005))
+		return
 	}
 
 	//Separate pool server
@@ -111,7 +114,7 @@ PATCH:
 	}
 
 	//set flag
-	kvnuts.SetFlagUpstreamReadyTo()
+	//kvnuts.SetFlagUpstreamReadyTo()
 
 	return
 
@@ -166,7 +169,7 @@ OTHERS:
 	//}
 
 	//set flag
-	kvnuts.SetFlagUpstreamReadyTo()
+	//kvnuts.SetFlagUpstreamReadyTo()
 }
 
 /*

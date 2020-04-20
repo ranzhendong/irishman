@@ -125,10 +125,10 @@ func FlagStartUpstreamNutsDB() {
 				_ = kvnuts.SAdd(c.NutsDB.Tag.UpstreamList, c.NutsDB.Tag.UpstreamList, u.UpstreamName)
 			}
 
-			//UpstreamList, _ = kvnuts.SMem(c.NutsDB.Tag.UpstreamList, c.NutsDB.Tag.UpstreamList)
-			//for i := 0; i < len(UpstreamList); i++ {
-			//	log.Println("*****************************", string(UpstreamList[i]))
-			//}
+			UpstreamList, _ = kvnuts.SMem(c.NutsDB.Tag.UpstreamList, c.NutsDB.Tag.UpstreamList)
+			for i := 0; i < len(UpstreamList); i++ {
+				log.Println("*****************************", string(UpstreamList[i]))
+			}
 
 			_ = kvnuts.Put("FlagUpstreamNutsDB", "FlagUpstreamNutsDBFinishUpstream", 1)
 		}

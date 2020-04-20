@@ -191,13 +191,13 @@ func Watcher(ctx context.Context, watchRespChan <-chan clientv3.WatchResponse) {
 
 				//be triggered when method is put, post, patch
 				case mvccpb.PUT:
-					//log.Println("EtcWatcher PUT", string(event.Kv.Key), string(event.Kv.Value), "&&&&", event.Type.String())
+					log.Println("EtcWatcher PUT", string(event.Kv.Key), string(event.Kv.Value), "&&&&", event.Type.String())
 					//set flag SetFlagNutsDB, nutsDB watcher is triggered
 					kvnuts.SetFlagUpstreamNutsDB(ctx.Value("watcherFlag").(interface{}).(string), string(event.Kv.Key))
 
 				//be triggered when method is delete
 				case mvccpb.DELETE:
-					//log.Println("EtcWatcher DELETE", string(event.Kv.Key))
+					log.Println("EtcWatcher DELETE", string(event.Kv.Key))
 					kvnuts.SetFlagUpstreamNutsDB(ctx.Value("watcherFlag").(interface{}).(string), string(event.Kv.Key))
 
 				default:

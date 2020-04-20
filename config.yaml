@@ -16,7 +16,7 @@ metrics:
 
 # etcd config
 etcd:
-  host: 172.16.0.51:2379
+  host: 115.29.201.122:2389
   format: json
   timeout: 2
 

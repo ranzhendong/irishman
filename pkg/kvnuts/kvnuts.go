@@ -6,6 +6,7 @@ import (
 	MyERR "github.com/ranzhendong/irishman/pkg/errorhandle"
 	"github.com/xujiajun/nutsdb"
 	"log"
+	"time"
 )
 
 //connect to nutsDB
@@ -22,6 +23,7 @@ func connect() (db *nutsdb.DB) {
 	opt := nutsdb.DefaultOptions
 	opt.Dir = c.NutsDB.Path
 
+	time.Sleep(80 * time.Millisecond)
 	if db, err = nutsdb.Open(opt); err != nil {
 		log.Println(MyERR.ErrorLog(12161), fmt.Sprintf("%v", err))
 		return

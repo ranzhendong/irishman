@@ -39,5 +39,8 @@ func Factory() bool {
 	//create watcher about monitor nutsDB health check flag
 	go FlagHCNutsDB()
 
+	//create watcher about monitor nutsDB upstream flag, and generate upstream
+	go FlagStartUpstreamNutsDB()
+
 	return true
 }

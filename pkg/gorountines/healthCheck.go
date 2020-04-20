@@ -334,6 +334,7 @@ func (uhc upHCS) upHC() {
 
 		if CodeCount(name+string(ip), "f", int(uhc.ft)) {
 			_ = kvnuts.SRem(c.NutsDB.Tag.Up, name, ip)
+			time.Sleep(50 * time.Millisecond)
 			_ = kvnuts.SAdd(c.NutsDB.Tag.Down, name, ip)
 		}
 	}

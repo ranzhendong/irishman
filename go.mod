@@ -13,7 +13,8 @@ require (
 	github.com/json-iterator/go v1.1.9 // indirect
 	github.com/mitchellh/mapstructure v1.1.2
 	github.com/pkg/errors v0.9.1 // indirect
-	github.com/shirou/gopsutil v2.20.3+incompatible // indirect
+	github.com/prometheus/client_golang v1.0.0
+	github.com/shirou/gopsutil v2.20.3+incompatible
 	github.com/smokezl/govalidators v0.0.0-20181012065008-5fded539f530
 	github.com/spf13/viper v1.6.2
 	github.com/thinkeridea/go-extend v1.1.1

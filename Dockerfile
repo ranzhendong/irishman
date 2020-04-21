@@ -16,5 +16,10 @@ RUN ln -sf /usr/share/zoneinfo/Asia/Shanghai  /etc/localtime
 COPY --from=build-env /home/irishman/irishman  /usr/local/bin/irishman
 COPY --from=build-env /home/irishman/config.yaml  /config.yaml
 
+# web port
 EXPOSE 8080
+
+# metrics port
+EXPOSE 8000
+
 CMD ["irishman"]

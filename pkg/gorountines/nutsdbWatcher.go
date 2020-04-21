@@ -16,7 +16,7 @@ type upstream struct {
 	UpstreamName string `json:"upstreamName"`
 }
 
-//nutsWatcher : Flag NutsDB Upstream watcher
+//FlagUpstreamNutsDB : Flag NutsDB Upstream watcher
 func FlagUpstreamNutsDB() {
 	var (
 		val  string
@@ -29,7 +29,7 @@ func FlagUpstreamNutsDB() {
 			_ = kvnuts.Del("FlagUpstreamNutsDB", "FlagUpstreamNutsDB")
 
 			WatcherFlag, _, _ := kvnuts.Get("FlagUpstreamNutsDB", "FlagUpstreamNutsDBWatcherFlag", "s")
-			log.Println("++++++++++++++", WatcherFlag)
+			//log.Println("++++++++++++++", WatcherFlag)
 
 			//set upstream list storage to nutsDB, set flag
 			go func() {
@@ -41,16 +41,16 @@ func FlagUpstreamNutsDB() {
 			}()
 
 			for {
-				time.Sleep(100 * time.Millisecond)
-				log.Println("111111111111111111")
+				time.Sleep(50 * time.Millisecond)
+				//log.Println("111111111111111111")
 				if _, _, err := kvnuts.Get("SetFlagUpstreamReadyTo", "SetFlagUpstreamReadyTo", "i"); err == nil {
-					log.Println("time.Sleep(100 * time.Millisecond)time.Sleep(100 * time.Millisecond)time.Sleep(100 * time.Millisecond)time.Sleep(100 * time.Millisecond)")
+					//log.Println("time.Sleep(100 * time.Millisecond)time.Sleep(100 * time.Millisecond)time.Sleep(100 * time.Millisecond)time.Sleep(100 * time.Millisecond)")
 					_ = kvnuts.Del("SetFlagUpstreamReadyTo", "SetFlagUpstreamReadyTo")
 
-					log.Println("##################")
+					//log.Println("##################")
 					//trigger restart hc
 					kvnuts.SetFlagHC()
-					log.Println("##################")
+					//log.Println("##################")
 					goto BREAKFOR
 				}
 			}
@@ -59,35 +59,38 @@ func FlagUpstreamNutsDB() {
 	}
 }
 
-//nutsWatcher : Flag NutsDB Health check watcher
+//FlagHCNutsDB : Flag NutsDB Health check watcher
 func FlagHCNutsDB() {
-	var (
-		val []*mvccpb.KeyValue
-	)
 
 	for {
 		time.Sleep(200 * time.Millisecond)
 		if _, _, err := kvnuts.Get("FlagHCNutsDB", "FlagHCNutsDB", "i"); err == nil {
 			_ = kvnuts.Del("FlagHCNutsDB", "FlagHCNutsDB")
 
-			//get upstream list key from etcd, using upstream prefix
-			if _, val, err = etcd.EtcGetAll(c.Upstream.EtcdPrefix); err != nil {
-				log.Println(MyERR.ErrorLog(0104), fmt.Sprintf("%v", err))
-			}
-
-			//set upstream list storage to nutsDB, set flag
-			utnf := healthcheck.UpstreamToNutsDBFlag{
-				SeparateUpstreamEtcdToNuts: 0,
-				HealthCheckEtcdToNuts:      1}.UpstreamAndHCFromEtcdToNutsDB
-			utnf(val)
+			WatcherFlag, _, _ := kvnuts.Get("FlagHCNutsDB", "FlagHCNutsDBWatcherFlag", "s")
+			healthcheck.PostHealthCheckTemplateToNutsDB(WatcherFlag)
 
 			//trigger restart hc
-			kvnuts.SetFlagHC()
+			for {
+				time.Sleep(50 * time.Millisecond)
+				//log.Println("77777777777777777")
+				if _, _, err := kvnuts.Get("SetFlagHealthCheckReadyTo", "SetFlagHealthCheckReadyTo", "i"); err == nil {
+					//log.Println("time.Sleep(100 * time.Millisecond)time.Sleep(100 * time.Millisecond)time.Sleep(100 * time.Millisecond)time.Sleep(100 * time.Millisecond)")
+					_ = kvnuts.Del("SetFlagHealthCheckReadyTo", "SetFlagHealthCheckReadyTo")
+					//log.Println("77777777777777777")
+					//trigger restart hc
+					_ = kvnuts.Put("FlagUpstreamNutsDB", "FlagUpstreamNutsDBFinishUpstream", 1)
+					kvnuts.SetFlagHC()
+					//log.Println("77777777777777777")
+					goto BREAKFOR
+				}
+			}
 		}
+	BREAKFOR:
 	}
 }
 
-//nutsWatcher : Flag NutsDB Start Upstream watcher
+//FlagStartUpstreamNutsDB : Flag NutsDB Start Upstream list recueillir watcher
 func FlagStartUpstreamNutsDB() {
 	var (
 		val []*mvccpb.KeyValue
@@ -116,7 +119,7 @@ func FlagStartUpstreamNutsDB() {
 			}
 
 			//add upstream list to nutsDB
-			log.Println("!!!!!1", val)
+			//log.Println("!!!!!1", val)
 			for _, v := range val {
 				if err := json.Unmarshal(v.Value, &u); err != nil {
 					continue
@@ -125,10 +128,10 @@ func FlagStartUpstreamNutsDB() {
 				_ = kvnuts.SAdd(c.NutsDB.Tag.UpstreamList, c.NutsDB.Tag.UpstreamList, u.UpstreamName)
 			}
 
-			UpstreamList, _ = kvnuts.SMem(c.NutsDB.Tag.UpstreamList, c.NutsDB.Tag.UpstreamList)
-			for i := 0; i < len(UpstreamList); i++ {
-				log.Println("*****************************", string(UpstreamList[i]))
-			}
+			//UpstreamList, _ = kvnuts.SMem(c.NutsDB.Tag.UpstreamList, c.NutsDB.Tag.UpstreamList)
+			//for i := 0; i < len(UpstreamList); i++ {
+			//	log.Println("*****************************", string(UpstreamList[i]))
+			//}
 
 			_ = kvnuts.Put("FlagUpstreamNutsDB", "FlagUpstreamNutsDBFinishUpstream", 1)
 		}

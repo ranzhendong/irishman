@@ -178,8 +178,13 @@ OTHERS:
 storage health check info as list, but success code and failures code as set.
 */
 //HealthCheckToNuts : set health check from etcd to nutsDB
-func (tc TConfig) HealthCheckEtcdToNuts(v []byte) {
+func (tc TConfig) HealthCheckEtcdToNuts(v []byte, flag string) {
 	var h datastruck.HealthCheck
+
+	if flag != "init" {
+		//set flag Health Check Ready To, Keyword differentiation
+		defer kvnuts.SetFlagHealthCheckReadyTo()
+	}
 
 	//health check to nuts
 	if val, err = etcd.EtcGet(tc.HealthCheckEtcPrefix + strFirstToUpper(string(v))); err != nil {

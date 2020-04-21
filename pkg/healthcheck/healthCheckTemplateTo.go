@@ -66,7 +66,7 @@ func PostHealthCheckTemplateToNutsDB(name string) {
 		tc.TagSuccessCode,
 		tc.TagFailureCode,
 	}
-	T.HealthCheckEtcdToNuts([]byte(name))
+	T.HealthCheckEtcdToNuts([]byte(name), "the one")
 }
 
 //DeleteHealthCheckTemplateToEtcd: Delete Health Check

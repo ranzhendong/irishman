@@ -53,7 +53,7 @@ func (f UpstreamToNutsDBFlag) UpstreamAndHCFromEtcdToNutsDB(vals []*mvccpb.KeyVa
 		//HealthCheck Etcd To Nuts
 		if f.HealthCheckEtcdToNuts != 0 {
 			//HealthCheck Template To Nuts
-			T.HealthCheckEtcdToNuts([]byte(u.UpstreamName))
+			T.HealthCheckEtcdToNuts([]byte(u.UpstreamName), "init")
 		}
 
 		//set upstream list to nutsDB, as set

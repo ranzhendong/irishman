@@ -9,6 +9,16 @@ import (
 	"time"
 )
 
+//func StartHealthCheck() {
+//
+//}
+
+type GoroutinesMessage struct {
+	FlagStartHeathCheck chan int
+	StartHealthCheck    func()
+	//Error func(*framework.QueuedPodInfo, error)
+}
+
 var c datastruck.Config
 
 //Factory: goroutines
@@ -27,8 +37,19 @@ func Factory() bool {
 		return false
 	}
 
+	goChan := GoroutinesMessage{
+		FlagStartHeathCheck: make(chan int, 1),
+	}
+
 	//start health check
-	go startHealthCheck()
+	go goChan.startHealthCheck()
+
+	go func() {
+		for {
+			time.Sleep(30 * time.Second)
+			goChan.FlagStartHeathCheck <- 1
+		}
+	}()
 
 	//create watcher based prefix , c.HealthCheck.EtcdPrefix
 	go etcWatcher(c.Upstream.EtcdPrefix, c.HealthCheck.EtcdPrefix)

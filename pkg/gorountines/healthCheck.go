@@ -74,12 +74,21 @@ var (
 )
 
 //HC : new health check
-func startHealthCheck() {
+
+func (gm GoroutinesMessage) startHealthCheck() {
 	var (
 		rootCtx context.Context
 		cancel  context.CancelFunc
 	)
-
+	go func() {
+		for {
+			select {
+			//if ctx cancel function is triggered, exit
+			case ll := <-gm.FlagStartHeathCheck:
+				log.Println("llllllllllllllll", ll)
+			}
+		}
+	}()
 	//first goroutines to hc
 	ctx := context.Background()
 	rootCtx, cancel = context.WithCancel(ctx)
@@ -88,7 +97,11 @@ func startHealthCheck() {
 	ctxCancelChan <- cancel
 
 	//check flag if exist
-	go FlagHC()
+	go gm.FlagHC()
+
+	log.Println("????????????????")
+	//gm.StartHealthCheck()
+	log.Println("????????????????")
 
 	//if cancel function be triggered
 	go ifCancel()
@@ -128,7 +141,7 @@ func ifCancel() {
 }
 
 //FlagHC: check flag if exist
-func FlagHC() {
+func (gm GoroutinesMessage) FlagHC() {
 	var (
 		st ctxStart
 	)
@@ -144,8 +157,10 @@ func FlagHC() {
 
 	//check flag if exist
 	for {
-		time.Sleep(1 * time.Second)
-		if _, _, err := kvnuts.Get("FlagHC", "FlagHC", "i"); err == nil {
+		select {
+		//if ctx cancel function is triggered, exit
+		case ll := <-gm.FlagStartHeathCheck:
+			log.Println("llllllllllllllll", ll)
 			upstreamListBytes, _ = kvnuts.SMem(c.NutsDB.Tag.UpstreamList, c.NutsDB.Tag.UpstreamList)
 			_ = kvnuts.Del("FlagHC", "FlagHC")
 			for i := 0; i < len(upstreamListBytes); i++ {
@@ -161,10 +176,31 @@ func FlagHC() {
 
 			//restart next hc, using the new upstreamListBytes
 			ctxRestartHCChan <- st
-		} else {
-			log.Println("nothing.....")
 		}
 	}
+
+	//for {
+	//	time.Sleep(1 * time.Second)
+	//	if _, _, err := kvnuts.Get("FlagHC", "FlagHC", "i"); err == nil {
+	//		upstreamListBytes, _ = kvnuts.SMem(c.NutsDB.Tag.UpstreamList, c.NutsDB.Tag.UpstreamList)
+	//		_ = kvnuts.Del("FlagHC", "FlagHC")
+	//		for i := 0; i < len(upstreamListBytes); i++ {
+	//			log.Println("&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&", string(upstreamListBytes[i]))
+	//		}
+	//		log.Println("kvNuts.Del....")
+	//
+	//		//if flag exist, trigger ctx cancel function
+	//		ctxStartCancelChan <- 1
+	//
+	//		//ready for next hc
+	//		st.upstreamListBytes = upstreamListBytes
+	//
+	//		//restart next hc, using the new upstreamListBytes
+	//		ctxRestartHCChan <- st
+	//	} else {
+	//		log.Println("nothing.....")
+	//	}
+	//}
 }
 
 //upstreamList: distribute function about hc

@@ -25,7 +25,9 @@ var (
 	err error
 )
 
-type myHandler struct{}
+type serverHandler struct{}
+
+//type subPubHandler struct{}
 
 func init() {
 	log.SetFlags(log.Ldate | log.Ltime | log.Lshortfile)
@@ -39,6 +41,8 @@ func init() {
 	//set route
 	mux["/upstream"] = myUpstream
 	mux["/healthcheck"] = healthCheck
+	//mux["/sub"] = sub
+	//mux["/pub"] = pub
 }
 
 func main() {
@@ -67,7 +71,15 @@ func main() {
 		return
 	}
 
-	//config about metrics server
+	//Published&Subscribe server config
+	//subPub := http.Server{
+	//	Addr:         c.PubSub.Bind,
+	//	Handler:      &subPubHandler{},
+	//	ReadTimeout:  time.Duration(c.PubSub.ReadTimeout) * time.Second,
+	//	WriteTimeout: time.Duration(c.PubSub.WriteTimeout) * time.Second,
+	//}
+
+	//metrics server config
 	metrics := http.Server{
 		Addr:         c.Metrics.Bind,
 		Handler:      promhttp.Handler(),
@@ -75,13 +87,20 @@ func main() {
 		WriteTimeout: time.Duration(c.Metrics.WriteTimeout) * time.Second,
 	}
 
-	//config about server
+	//server config
 	server := http.Server{
 		Addr:         c.Server.Bind,
-		Handler:      &myHandler{},
+		Handler:      &serverHandler{},
 		ReadTimeout:  time.Duration(c.Server.ReadTimeout) * time.Second,
 		WriteTimeout: time.Duration(c.Server.WriteTimeout) * time.Second,
 	}
+
+	//// subPub start
+	//go func() {
+	//	if err = subPub.ListenAndServe(); err != nil {
+	//		log.Printf(MyERR.ErrorLog(0011, fmt.Sprintf("%v", err)))
+	//	}
+	//}()
 
 	//metrics registered
 	metrics2.IrishManMetrics(c.Metrics.Interval)
@@ -99,8 +118,8 @@ func main() {
 	}
 }
 
-//route handler
-func (myHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+//server route handler
+func (serverHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if h, ok := mux[r.URL.String()]; ok {
 		h(w, r)
 		return
@@ -109,6 +128,35 @@ func (myHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	res := &MyERR.MyError{Code: 0010, Error: fmt.Sprintf("%v", r.URL.String())}
 	response(w, res)
 }
+
+////subPub route handler
+//func (subPubHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+//	if h, ok := mux[r.URL.String()]; ok {
+//		h(w, r)
+//		return
+//	}
+//	log.Printf(MyERR.ErrorLog(0010, fmt.Sprintf("%v", r.URL.String())))
+//	res := &MyERR.MyError{Code: 0010, Error: fmt.Sprintf("%v", r.URL.String())}
+//	response(w, res)
+//}
+//
+//func pub(w http.ResponseWriter, r *http.Request) {
+//	_, _ = w.Write([]byte("pub"))
+//}
+//
+//func sub(w http.ResponseWriter, r *http.Request) {
+//	//_, _ = w.Write([]byte("sub"))
+//	flusher, ok := w.(http.Flusher)
+//	if !ok {
+//		panic("expected http.ResponseWriter to be an http.Flusher")
+//	}
+//	w.Header().Set("X-Content-Type-Options", "nosniff")
+//	for i := 1; i <= 10; i++ {
+//		fmt.Fprintf(w, "Chunk #%d\n", i)
+//		flusher.Flush() // Trigger "chunked" encoding and send a chunk...
+//		time.Sleep(500 * time.Millisecond)
+//	}
+//}
 
 func myUpstream(w http.ResponseWriter, r *http.Request) {
 	var (

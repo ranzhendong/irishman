@@ -7,6 +7,12 @@ server:
   readtimeout: 15
   writetimeout: 15
 
+# Published&Subscribe server config
+pubsub:
+  bind: 0.0.0.0:9000
+  readtimeout: 15
+  writetimeout: 15
+
 # metrics config
 metrics:
   bind: 0.0.0.0:8000

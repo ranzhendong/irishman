@@ -12,8 +12,8 @@ import (
 //connect to nutsDB
 func connect() (db *nutsdb.DB) {
 	var (
-		err error
 		c   datastruck.Config
+		err error
 	)
 
 	if err = c.Config(); err != nil {
@@ -23,11 +23,15 @@ func connect() (db *nutsdb.DB) {
 	opt := nutsdb.DefaultOptions
 	opt.Dir = c.NutsDB.Path
 
-	time.Sleep(80 * time.Millisecond)
-	if db, err = nutsdb.Open(opt); err != nil {
-		log.Println(MyERR.ErrorLog(12161), fmt.Sprintf("%v", err))
-		return
+	for {
+		time.Sleep(5 * time.Millisecond)
+		if db, err = nutsdb.Open(opt); err == nil {
+			goto GETDB
+		} else {
+			log.Println(MyERR.ErrorLog(12161), fmt.Sprintf("%v", err))
+		}
 	}
+GETDB:
 	return
 }
 
@@ -36,9 +40,10 @@ func Put(bct string, key, val interface{}) error {
 	var (
 		keyByte, valByte []byte
 		err              error
+		db               *nutsdb.DB
 	)
 
-	db := connect()
+	db = connect()
 	defer func() {
 		_ = db.Close()
 	}()
